@@ -44,10 +44,7 @@ public class SerializedQueryPlanDescFunctionalTest extends DivTestSetting
         if (!(io instanceof InumOptimizer))
             return;
         
-        candidates = readCandidateIndexes();
-        System.out.println(" space budget: " + B
-                        + " number of candidate indexes: " + candidates.size());
-        
+       
         // reset the counter in Index class
         int maxID = -1;
         for (Index index : candidates)

@@ -1,6 +1,7 @@
 package edu.ucsc.dbtune.bip.util;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -100,6 +101,23 @@ public class LogListener
         }
     }
 
+    /**
+     * Retrieve the total running time
+     * @return
+     */
+    public double getTotalRunningTime()
+    {
+        double total = 0.0;
+        Iterator iter = mapEventTime.entrySet().iterator();
+        Map.Entry entry;
+        
+        while (iter.hasNext()) {
+            entry = (Map.Entry) iter.next();
+            total += (Double) entry.getValue();
+        }
+        return total;
+    }
+    
     @Override
     public String toString() 
     {

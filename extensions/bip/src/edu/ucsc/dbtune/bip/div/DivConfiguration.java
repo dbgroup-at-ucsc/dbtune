@@ -11,8 +11,8 @@ import edu.ucsc.dbtune.metadata.Index;
 
 public class DivConfiguration extends IndexTuningOutput
 {
-    private int              nReplicas;
-    private int              loadfactor;
+    private int nReplicas;
+    private int loadfactor;
     private List<Set<Index>> indexReplicas;
     
     /**
@@ -204,5 +204,86 @@ public class DivConfiguration extends IndexTuningOutput
         }
         
         return result.toString();
+    }
+    
+    /**
+     * Compute the transition cost from the given {@code initial} configuration
+     * to this configuration.
+     * 
+     * @param intial
+     *      The initial configuration
+     *      
+     * @return
+     *      The transition cost from {@code initial} to this configuration
+     */
+    public double transitionCost(DivConfiguration initial, boolean isParallelMode)
+    {
+        double transCost;
+        double tranCostReplica;
+        // Heuristic solution
+        // Order the replica in the decreasing order of their indexes
+        // For each replica, find the most matching         
+        Set<Integer> hasMatchedReplicas = new HashSet<Integer>();
+        Set<Integer> hasMatchedInitial = new HashSet<Integer>();
+        Set<Index> initialReplica;
+        int maxIndexes, minNewIndexes;
+        int rMax, rMin;
+        
+        transCost = 0.0;
+        while (true) {
+            
+            maxIndexes = -1;
+            rMax = -1;
+            for (int r = 0; r < nReplicas; r++){
+                if (hasMatchedReplicas.contains(r))
+                    continue;
+                
+                if (indexReplicas.get(r).size() > maxIndexes){
+                    rMax = r;
+                    maxIndexes = indexReplicas.get(r).size();
+                }
+            }
+            
+            // we are done
+            if (rMax == -1)
+                break;
+            
+            hasMatchedReplicas.add(rMax);
+            
+            rMin = -1;
+            minNewIndexes = 9999;
+            for (int r = 0; r < initial.getNumberReplicas(); r++){
+                if (hasMatchedInitial.contains(r))
+                    continue;
+                
+                initialReplica = new HashSet<Index>(indexReplicas.get(rMax));
+                initialReplica.removeAll(initial.indexesAtReplica(r));
+                if (initialReplica.size() < minNewIndexes){
+                    minNewIndexes = initialReplica.size();
+                    rMin = r;
+                }
+            }
+            
+            hasMatchedInitial.add(rMin);
+            initialReplica = new HashSet<Index>(indexReplicas.get(rMax));
+            initialReplica.removeAll(initial.indexesAtReplica(rMin));
+            
+            tranCostReplica = 0.0;
+            for (Index index : initialReplica)
+                tranCostReplica += index.getCreationCost();
+            
+            if (!isParallelMode)
+                transCost += tranCostReplica;
+            else {
+                // parallel mode
+                // thus get the maximum transformation cost
+                // at each replica
+                if (tranCostReplica > transCost)
+                    transCost = tranCostReplica;
+            }
+                
+        }    
+        
+        return transCost;
     }
 }

@@ -1,18 +1,22 @@
 package edu.ucsc.dbtune.advisor.db2;
 
+
 import java.sql.CallableStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+
+import java.util.Map;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.Advisor;
 import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
-import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -50,20 +54,20 @@ public class DB2Advisor extends Advisor
     public void process(Workload workload) throws SQLException
     {
         Statement stmt = dbms.getConnection().createStatement();
-
+        
         stmt.execute("DELETE FROM systools.advise_index");
         stmt.execute("DELETE FROM systools.advise_workload");
 
         int i = 0;
 
-        for (SQLStatement sql : workload)
+        for (SQLStatement sql : workload) 
             stmt.execute(
                     "INSERT INTO systools.advise_workload VALUES(" +
                     "   'dbtuneworkload'," +
                     "    " + i++ + ", " +
                     "   '" + sql.getSQL().replace("'", "''") + "'," +
                     "   '',1,0,0,0,0,'')");
-
+        
         stmt.close();
     }
 
@@ -80,10 +84,12 @@ public class DB2Advisor extends Advisor
      * {@inheritDoc}
      */
     @Override
-    public Set<Index> getRecommendation() throws SQLException
-    {
-        int budget = Environment.getInstance().getSpaceBudget();
-
+    public Set<Index> getRecommendation(int budget) throws SQLException
+    {   
+        ResultSet rs;
+        double sizeInMB;
+        Map<String, Long> indexBytes;
+        
         CallableStatement cstmt =
             dbms.getConnection().prepareCall(
                 "CALL SYSPROC.DESIGN_ADVISOR(" +
@@ -109,20 +115,29 @@ public class DB2Advisor extends Advisor
         cstmt.setString(3, "en_US");
         cstmt.registerOutParameter(4, Types.BLOB);
         cstmt.registerOutParameter(5, Types.BLOB);
-        cstmt.execute();
-
+        
+        rs = cstmt.executeQuery();
+        indexBytes = new HashMap<String, Long>();
+        
+        while (rs.next()) {
+            sizeInMB = Double.valueOf(rs.getString("DISKUSE").trim());
+            indexBytes.put(rs.getString("NAME"), 
+                        (long) (sizeInMB * Math.pow(2, 20)));
+        }
+        
         Set<ByContentIndex> unique = new HashSet<ByContentIndex>();
-
-        for (Index i : DB2Optimizer.readAdviseIndexTable(dbms.getConnection(), dbms.getCatalog()))
+        
+        for (Index i : DB2Optimizer.readAdviseIndexTable(dbms.getConnection(), dbms.getCatalog(), indexBytes))
             unique.add(new ByContentIndex(i));
-
-        //double space = 0;
-        //for (Index i : unique)
-            //space += i.getBytes();
-
-        //System.out.println("Count:  " + unique.size());
-        //System.out.println("Budget: " + budget);
-        //System.out.println("Actual: " + space / 1000000);
+        
+        
+        double space = 0;
+        for (Index i : unique) 
+            space += i.getBytes();
+        
+        System.out.println("Count:  " + unique.size());
+        System.out.println("Budget: " + budget);
+        System.out.println("Actual: " + space / 1000000);
 
         return new HashSet<Index>(unique);
     }

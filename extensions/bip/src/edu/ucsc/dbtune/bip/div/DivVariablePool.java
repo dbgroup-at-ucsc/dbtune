@@ -86,11 +86,17 @@ public class DivVariablePool extends AbstractBIPVariablePool
         if (typeVariable == VAR_SUM_Y)
             nameComponent.add(Integer.toString(queryId));
         
+        
+        if (typeVariable == VAR_X 
+                || typeVariable == VAR_XO || typeVariable == VAR_U
+                || typeVariable == VAR_COMBINE_X) {
+                nameComponent.add(Integer.toString(slotId));
+        }
+        
         if (typeVariable == VAR_X || typeVariable == VAR_S 
             || typeVariable == VAR_DIV || typeVariable == VAR_MOD
             || typeVariable == VAR_XO || typeVariable == VAR_U
             || typeVariable == VAR_COMBINE_X) {
-            nameComponent.add(Integer.toString(slotId));
             nameComponent.add(Integer.toString(idx));
         }
         

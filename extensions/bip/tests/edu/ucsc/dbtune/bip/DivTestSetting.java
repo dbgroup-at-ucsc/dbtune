@@ -6,21 +6,12 @@ import static edu.ucsc.dbtune.util.TestUtils.workload;
 import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
 import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.junit.Test;
-
-
-
 import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.metadata.Index;
@@ -28,6 +19,7 @@ import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
  
@@ -73,6 +65,8 @@ public class DivTestSetting
     protected static double sf;
     protected static String folder;
     
+    protected static DB2Advisor db2Advis;
+    
     // for Debugging purpose only
     protected static double totalIndexSize;
     protected static boolean isExportToFile = false;
@@ -104,8 +98,10 @@ public class DivTestSetting
         
         // get workload and candidates
         workload = workload(folder);
-        candidates = readCandidateIndexes();
-        System.out.println(" # statements in the workload: " + workload.size()
+        db2Advis = new DB2Advisor(db);
+        candidates = readCandidateIndexes(db2Advis);
+        
+        Rt.p(" DivTestSetting: # statements in the workload: " + workload.size()
                 + " # candidates in the workload: " + candidates.size()
                 + " workload folder: " + folder);
         
@@ -142,7 +138,7 @@ public class DivTestSetting
                 sql.setStatementWeight(fUpdate);
         
         // debugging purpose
-        isExportToFile = false;
+        isExportToFile = true;
         isTestCost = false;
         isShowRecommendation = false;        
         isGetAverage = false;
@@ -190,7 +186,7 @@ public class DivTestSetting
         double cost;
         
         db2Cost = 0.0;
-        System.out.println(" # indexes: " + conf.size()
+        Rt.p(" # indexes: " + conf.size()
                         + " # workload: " + workload.size());
         for (SQLStatement sql : workload) {
             cost = io.getDelegate().explain(sql, conf).getTotalCost();
@@ -232,7 +228,8 @@ public class DivTestSetting
      *      
      * @throws Exception
      */
-    protected static List<Double> computeQueryCostsInum(Set<Index> conf) throws Exception
+    protected static List<Double> computeQueryCostsInum(Workload workload, Set<Index> conf) 
+                throws Exception
     {
         InumPreparedSQLStatement inumPrepared;        
         double inumCost;
@@ -252,6 +249,8 @@ public class DivTestSetting
         return costs;
     }
     
+    
+    
     /**
      * Compute the query execution cost for statements in the given workload
      * 
@@ -260,7 +259,7 @@ public class DivTestSetting
      *      
      * @throws Exception
      */
-    protected static List<Double> computeQueryCostsDB2(Set<Index> conf) throws Exception
+    protected static List<Double> computeQueryCostsDB2(Workload workload, Set<Index> conf) throws Exception
     {           
         double db2Cost;
         List<Double> costs = new ArrayList<Double>();
@@ -281,283 +280,57 @@ public class DivTestSetting
      *      
      * @throws Exception
      */
-    protected static void computeQueryCosts(Set<Index> conf) throws Exception
+    protected static void compareDB2InumQueryCosts(Workload workload, Set<Index> conf) throws Exception
     {
         InumPreparedSQLStatement inumPrepared;
         double db2cost;
         double inumcost;
         
-        System.out.println("==============================================");
-        System.out.println("Candidate: " + conf.size()
-                            + " Workload size: " + workload.size());
-        for (Index index : conf)
-            System.out.print(index.getId() + " ");
-        System.out.println("\n ID  TYPE DB2   INUM   DB2/ INUM");
+        Rt.p("==============================================");
+        Rt.p("Candidate: " + conf.size()
+              + " Workload size: " + workload.size());
+        
+        Rt.p("\n ID  TYPE DB2   INUM   DB2/ INUM");
         int id = 0;
+        double totalDB2 = 0.0;
+        double totalInum = 0.0;
         
         for (SQLStatement sql : workload) {
             
             db2cost = io.getDelegate().explain(sql, conf).getTotalCost();
             inumPrepared = (InumPreparedSQLStatement) io.prepareExplain(sql);
             inumcost = inumPrepared.explain(conf).getTotalCost();
-            
-            System.out.println(id + " " + sql.getSQLCategory() + " " + db2cost + " " + inumcost + " " 
+            Rt.p(" stmt: " + sql.getSQL());
+            if (inumcost < 0.0 || inumcost > Math.pow(10, 9)) 
+                Rt.p("WATCH OUT -----------------");
+            Rt.p(id + " " + sql.getSQLCategory() + " " + db2cost + " " + inumcost + " " 
                                 + (double) db2cost / inumcost);
-            
+            totalDB2 += db2cost;
+            totalInum += inumcost;
             id++;
         }
-    }
-
-    @Test
-    public void postProcessKarlWorkload() throws Exception
-    {
-        getEnvironmentParameters();
         
-        if (!isPostprocess)
-            return;
-        
-        //removeLineWithoutSelectClause();
-        //getSubsetUpdateStmts(10);
-        /*
-        List<String> sqls = new ArrayList<String>();
-        String stmt;
-        
-        for (int i = 0; i < workload.size(); i++) { 
-            stmt = workload.get(i).getSQL();
-            
-            if (stmt.contains("SELECT"))
-                sqls.add(postProcessKarlWorkload(stmt));
-            else 
-                sqls.add(stmt + " ; ");
-        }
-        
-        // write to file
-        String fileName;
-       
-        fileName = en.getWorkloadsFoldername() + "/workload1.sql";
-        writeListOfStmtsToFile(sqls, fileName);
-       */
-    }
-    
-    /**
-     * todo
-     * @param sql
-     * @return
-     */
-    protected static String postProcessKarlWorkload(String sql)
-    {   
-        /*
-        if (sql.contains("tpce.trade_type") 
-                || sql.contains("tpce.charge")
-                || sql.contains("tpce.commission_rate")
-                || sql.contains("tpce.news_item")
-                || sql.contains("tpce.news_xref"))
-            return "";
-        */
-        
-        // SELECT 15, COUNT(*) FROM nref.protein table1, nref.source table2, nref.neighboring_seq table0 
-        // WHERE table1.seq_length BETWEEN 1351 AND 6626 AND table1.last_updated BETWEEN 'Fri Aug 09 22:59:05 PDT 2002' AND 'Tue Aug 13 22:59:05 PDT 2002' 
-        // AND table1.nref_id=table2.nref_id;
-        StringBuffer buffer = new StringBuffer(sql);
-        
-        int posFrom, posWhere;
-        String fromClause, whereClause;
-        Map<String, String> relationAlias;
-        
-        // get the position of from and where
-        posFrom = buffer.lastIndexOf("FROM");
-        posWhere = buffer.lastIndexOf("WHERE");
-        
-        fromClause = buffer.substring(posFrom + 4, posWhere);
-        whereClause = buffer.substring(posWhere + 5, buffer.length());
-        
-        relationAlias = mapTableAlias(fromClause);
-        
-        fromClause = " FROM ";
-        
-        for (Map.Entry<String, String> entry : relationAlias.entrySet()) { 
-            whereClause = replace(whereClause, entry.getKey(), entry.getValue());
-            fromClause += entry.getValue();
-            fromClause += ", ";
-        }
-        
-        fromClause = fromClause.substring(0, fromClause.length() - 2);
-        
-        
-        StringBuilder sb = new StringBuilder();
-        sb.append(sql.substring(0, posFrom)).append(fromClause)
-                .append(" WHERE ").append(whereClause);
-        
-        String result = sb.toString() + " ; ";
-        
-        if (!result.contains("tpcc.orderline") && result.contains("tpcc.order"))
-            result = replace(result, "tpcc.order", "tpcc.orders");
-        
-        
-        System.out.println(" result: " + result);
-        return result;
-    }
-    
-    /**
-     * todo
-     * @param fromClause
-     * @return
-     */
-    protected static Map<String, String> mapTableAlias(String fromClause)
-    {
-        Map<String, String> map = new HashMap<String, String>();
-        
-        String[] lists = fromClause.split(",");
-        String[] pairs;
-        int length;
-        
-        for (String s : lists) {
-            pairs = s.split("\\s");
-            
-            length = pairs.length;
-            map.put(pairs[length -  1], pairs[length - 2]);
-        }
-        
-        return map;
-    }
-    
-    /**
-     * todo
-     * @param str
-     * @param pattern
-     * @param replace
-     * @return
-     */
-    protected static String replace(String str, String pattern, String replace) {
-        int s = 0;
-        int e = 0;
-        StringBuffer result = new StringBuffer();
-
-        while ((e = str.indexOf(pattern, s)) >= 0) {
-            result.append(str.substring(s, e));
-            result.append(replace);
-            s = e+pattern.length();
-        }
-        result.append(str.substring(s));
-        return result.toString();
+        Rt.p(" total INUM = " + totalInum
+                + " total DB2 = " + totalDB2
+                + " DB2 / INUM = " + (totalDB2 / totalInum));
     }
 
     /**
-     * todo
-     * @throws Exception
-     */
-    protected static void removeLineWithoutSelectClause() throws Exception
-    {
-        BufferedReader reader;
-        StringBuilder sb;
-        String line;
-
-        String file = en.getWorkloadsFoldername() + "/workload.sql";
-        reader = new BufferedReader(new FileReader(file));
-        sb = new StringBuilder();
-
-        List<String> sqls = new ArrayList<String>();
-        
-        // keep only statement
-        while ((line = reader.readLine()) != null) {
-
-            line = line.trim();
-
-            if (line.startsWith("--"))
-                continue;
-
-            if (line.endsWith(";")) {
-                sb.append(line.substring(0, line.length() - 1));
-
-                final String sql = sb.toString();
-
-                if (!sql.isEmpty()) {
-                    sb.append(";");
-                    sqls.add(sb.toString());
-                }
-                sb = new StringBuilder();
-            }
-        }
-
-        reader.close();
-        
-        // write to file
-        writeListOfStmtsToFile(sqls, file);    
-    }
-    
-    /**
-     * todo
-     * @param count
-     */
-    protected static void getSubsetUpdateStmts(int count) throws Exception
-    {
-        int numQueries;
-        int numUpdates; 
-        
-        numQueries = 0;
-        numUpdates = 0;
-        
-        List<String> updates = new ArrayList<String>();
-        int size = 0;
-        
-        for (int i = 0; i < workload.size(); i++)
-            if (workload.get(i).getSQLCategory().isSame(SELECT))
-                numQueries++;
-            else {
-                numUpdates++;
-                
-                if (size < count) {
-                    updates.add(workload.get(i).getSQL() + " ; ");
-                    size++;
-                }
-            }
-       
-        System.out.println(" Number of queries = " + numQueries + "\n" 
-                           + " Number of updates = " + numUpdates);
-        
-        String file = en.getWorkloadsFoldername() + "/workload.sql";
-        // write to file
-        writeListOfStmtsToFile(updates, file);
-    }
-    
-    /**
-     * todo
-     * @param sqls
-     */
-    protected static void writeListOfStmtsToFile(List<String> sqls, String fileName) throws Exception
-    {
-        
-        // write to file
-        PrintWriter out;
-        out = new PrintWriter(new FileWriter(fileName), false);
-        
-        for (String sql : sqls)
-            out.println(sql);
-               
-        out.close();
-    }
-    
-    
-    
-    /**
-     * Write the experimental results to file
+     * Compute the query execution cost for statements in the given workload
      * 
-     * @param fileName
-     *  todo
-     * @param entries
+     * @param conf
+     *      A configuration
+     *      
      * @throws Exception
      */
-    protected static void writeDivInfoToFile(String fileName, List<DivTestEntry> entries) 
-                        throws Exception
+    protected static void showComputeQueryCostsInum(int q, Set<Index> conf) throws Exception
     {
-        PrintWriter   out;
-        
-        out = new PrintWriter(new FileWriter(fileName), false);
-
-        for (DivTestEntry entry : entries)
-            out.print(entry.toString());
-
-        out.close();
+        InumPreparedSQLStatement inumPrepared;        
+        SQLStatement sql=workload.get(q);
+        inumPrepared = (InumPreparedSQLStatement) io.prepareExplain(sql);
+        Rt.p(" INUM plan: " + inumPrepared.explain(conf)
+                + " cost: " + inumPrepared.explain(conf).getTotalCost());
     }
+    
 }
  

@@ -12,6 +12,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,9 +75,9 @@ public class InteractionComparisonFunctionalTest
                                 //Generation.Strategy.POWER_SET
                                   );
     public static double[] deltas = new double[] {
-                                    0.01, 
+                                    //0.01, 
                                     //0.1, 
-                                    //1.0
+                                    1.0
                                     };
     
     
@@ -98,22 +99,26 @@ public class InteractionComparisonFunctionalTest
         Rt.p(" test interaction");
         if (!(db.getOptimizer() instanceof InumOptimizer))
             return;
+        /*
+        // TODO: set optimization level (MIGHT REMOVE)
+        Statement stmt = db.getConnection().createStatement();
+        stmt.execute("SET CURRENT QUERY OPTIMIZATION 9");
+        stmt.close();
+        // 
+        */
         
         // 1. generate candidate indexes
         generateCandidateIndexes();
         
-        /*
         // 2. Ask Karl's to read from text file and write into his binary object
         for (Generation.Strategy s : strategies)  
-            CandidateGenerationDBTune.readIndexesFromDBTune(s, dbName, tableOwner, subFolder);
-        */
-        /*
+            CandidateGenerationDBTune.readIndexesFromDBTune(s, dbName, tableOwner);
+        
         // 3. Call Analysis from Karl
         AnalysisMain.setWorkload(workload);
         AnalysisMain.runStepsINUM(tableOwner);
-        */
-        
-        
+        //AnalysisMain.runSteps();
+       
         InteractionOutput result;
         Set<IndexInteraction> ibg;
         
@@ -121,20 +126,15 @@ public class InteractionComparisonFunctionalTest
             for (double delta : deltas) {
                 result = analyze(s, delta);
                 
-                /*
                 if (s.equals(Generation.Strategy.UNION_OPTIMAL))
                     ibg = readIBGInteraction(s, delta, optimalCandidates);
-                else if (s.equals(Generation.Strategy.POWER_SET))
-                    ibg = readIBGInteraction(s, delta, powerSetCandidates);
-                else if (s.equals(Generation.Strategy.OPTIMAL_1C))
-                    ibg = readIBGInteraction(s, delta, oneColumnCandidates);
                 else
                     ibg = null;
                 
                 Rt.p("-- Threshold: --- " + delta
                                     + " : " + " f-measure: " + 
                                     result.f_measure(ibg));
-                */                    
+                                   
             }
             
     }
@@ -180,14 +180,13 @@ public class InteractionComparisonFunctionalTest
         
         output = (InteractionOutput) bip.solve();
         Rt.p("Number of interactions: " + output.size()
-              + "\n interactions: " + output);
-        //Rt.p(output);
+                + " output: " + output);
         Rt.p(logger.toString());        
         
         return output;
     }
     
-    /*
+    
     private static Set<IndexInteraction> readIBGInteraction(Generation.Strategy s, double t,
             Set<Index> indexes) throws Exception
     {   
@@ -223,7 +222,7 @@ public class InteractionComparisonFunctionalTest
         
         return result;
     }   
-    */
+    
     
     /**
      * This function generates candidate indexes of different types, write into a text file

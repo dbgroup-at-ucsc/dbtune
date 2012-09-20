@@ -25,6 +25,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
+import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
 import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.BIP_MAX_VALUE;
@@ -56,7 +57,7 @@ public class RestrictModel extends AbstractBIPSolver
     protected double doiOptimizer;
     protected double doiBIP;
       
-    protected IloLinearNumExpr exprIteraction1;
+    protected IloRange rangeIteraction1;
     protected boolean     isApproximation;
     protected Map<Integer, Map<Integer, Double>> mapThetaVarCoef;
     
@@ -105,7 +106,6 @@ public class RestrictModel extends AbstractBIPSolver
         poolVariables = new IIPVariablePool();        
         mapVarSIndex  = new HashMap<String, Index>();   
         cplexVar = new ArrayList<IloNumVar>();
-        
     }
     
     @Override
@@ -184,7 +184,11 @@ public class RestrictModel extends AbstractBIPSolver
         
         if (indexC.getTable() != indexD.getTable()) {
             indexInteractionConstraint1();
-            isInteracting = cplex.solve();            
+            isInteracting = cplex.solve();           
+            
+            //Rt.p("export to file HERE");
+            //String file = environment.getWorkloadsFoldername() + "/test.lp";
+            //this.exportCplexToFile(file);
         }
         else
             isSolveAlternativeOnly = true;
@@ -560,10 +564,10 @@ public class RestrictModel extends AbstractBIPSolver
                 idU = poolVariables.get(theta, VAR_U, q, t, i, fts.getId()).getId();
                 expr.addTerm(-approxCoef * BIP_MAX_VALUE, cplexVar.get(idU));
             }
-                
-            cplex.addLe(expr, approxCoef * desc.getInternalPlanCost(t), "local_" + numConstraints);
-            numConstraints++;
         }
+        
+        cplex.addLe(expr, approxCoef * desc.getInternalPlanCost(t), "local_" + numConstraints);
+        numConstraints++;
     }
     
     /**
@@ -766,8 +770,8 @@ public class RestrictModel extends AbstractBIPSolver
             expr.addTerm(newDelta * coefs.getValue(), cplexVar.get(coefs.getKey()));
         }
         
-        cplex.addLe(expr, 0, "interaction_1");
-        exprIteraction1 = expr;
+        
+        rangeIteraction1 = cplex.addLe(expr, 0, "interaction_1");
     }
     
     /**
@@ -781,10 +785,10 @@ public class RestrictModel extends AbstractBIPSolver
      */
     protected void solveAlternativeBIP(boolean isSolveAlternativeOnly) 
                    throws IloException
-    {       
+    {   
         // delete the first interaction constraint
         if (isSolveAlternativeOnly == false)
-            cplex.delete(exprIteraction1);
+            cplex.delete(rangeIteraction1);
         
         double newDelta = delta - 1;
         IloLinearNumExpr expr = cplex.linearNumExpr();
@@ -809,6 +813,11 @@ public class RestrictModel extends AbstractBIPSolver
             expr.addTerm(newDelta * coefs.getValue(), cplexVar.get(coefs.getKey()));
         }    
         cplex.addLe(expr, 0, "interaction_2");
+        
+        
+        //Rt.p("export to file ALTERNATIVE");
+        //String file = environment.getWorkloadsFoldername() + "/testAlternative.lp";
+        //this.exportCplexToFile(file);
     }
     
     /**

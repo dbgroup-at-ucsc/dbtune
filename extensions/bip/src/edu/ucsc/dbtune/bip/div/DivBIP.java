@@ -15,8 +15,10 @@ import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.Rt;
 
-
+import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_DIV;
+import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_MOD;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_S;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_X;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_Y;
@@ -29,10 +31,11 @@ import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
 import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.modifyCoef;
 import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.maxRatioInList;
 import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.computeVal;
+import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.showComputeVal;
 
 /**
- * Reference {@link http://www-01.ibm.com/support/docview.wss?uid=swg21400034} for tuning 
- * CPLEX solver.
+ * Reference {@link http://www-01.ibm.com/support/docview.wss?uid=swg21400034} 
+ * for tuning CPLEX solver.
  * 
  * @author Quoc Trung Tran
  *
@@ -45,6 +48,9 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     
     protected DivVariablePool   poolVariables;    
     protected Map<String,Index> mapVarSToIndex;
+    
+    protected boolean isUpperTotalCost = false;
+    protected double upperTotalCost;
     
     @Override
     public void setLoadBalanceFactor(int m) 
@@ -65,7 +71,22 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         this.B = B;
     }
     
+    /**
+     * Allow to find only feasible solution
+     */
+    public void checkFeasibleSolutionOnly()
+    {
+        super.isCheckFeasible = true;
+    }
     
+    /**
+     * Allow to set an upper bound on total cost
+     */
+    public void setUpperTotalCost(double upper)
+    {
+        isUpperTotalCost = true;
+        upperTotalCost = upper;
+    }
     
     /**
      * Retrieve the (constant) base table update cost
@@ -86,6 +107,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         // need to time the number of replica
         return totalBaseTableUpdateCost * nReplicas;
     }
+    
     /**
      * Reads the value of variables corresponding to the presence of indexes
      * at each replica and returns indexes to materialize at each replica.
@@ -176,6 +198,12 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                 mapVarSToIndex.put(var.getName(), index);
             }
         
+        // for div_a and mod_a
+        for (int r = 0; r < nReplicas; r++)
+            for (Index index : candidateIndexes) {
+                poolVariables.createAndStore(VAR_DIV, r, 0, 0, 0, index.getId());                 
+                poolVariables.createAndStore(VAR_MOD, r, 0, 0, 0, index.getId());
+            }
     }
     
     /**
@@ -215,6 +243,22 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             obj.add(replicaCost(r));
         
         cplex.addMinimize(obj);        
+    }
+    
+    /**
+     * Set the total cost not to exceed some upper bound constraint
+     * @param upperCost
+     * @throws IloException
+     */
+    protected void totalCostConstraint(double upperCost) throws IloException
+    {
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+        
+        for (int r = 0; r < nReplicas; r++) 
+            expr.add(replicaCost(r));
+        Rt.p("total cost constraint <= " + upperCost);
+        cplex.addLe(expr, upperCost, "total_cost_constraint_" + numConstraints);
+        numConstraints++;
     }
     
     /**
@@ -299,7 +343,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                 expr.addTerm(cplexVar.get(idS), cost);
             }
         }
-         
         
         return expr;
     }
@@ -490,31 +533,36 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      * 
      */
     protected void topMBestCostConstraints() throws IloException
+    {
+        for (QueryPlanDesc desc : queryPlanDescs) {
+            if (desc.getSQLCategory().isSame(INSERT) || desc.getSQLCategory().isSame(DELETE))
+                continue;
+            topMBestCostConstraints(desc);
+        }
+    }
+    /**
+     * 
+     * 
+     */
+    protected void topMBestCostConstraints(QueryPlanDesc desc) throws IloException
     {   
         IloLinearNumExpr expr; 
         int idY;        
         int q;
         int rhs;
         
-        // only applicable for SELECT and UPDATE statement
-        for (QueryPlanDesc desc : queryPlanDescs) {
+        q = desc.getStatementID();
+        expr = cplex.linearNumExpr();
             
-            if (desc.getSQLCategory().isSame(INSERT) || desc.getSQLCategory().isSame(DELETE))
-                continue;
+        for (int r = 0; r < nReplicas; r++)
+            for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+                idY = poolVariables.get(VAR_Y, r, q, k, 0, 0).getId();
+                expr.addTerm(1, cplexVar.get(idY));
+            }
             
-            q = desc.getStatementID();
-            expr = cplex.linearNumExpr();
-            
-            for (int r = 0; r < nReplicas; r++)
-                for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-                    idY = poolVariables.get(VAR_Y, r, q, k, 0, 0).getId();
-                    expr.addTerm(1, cplexVar.get(idY));
-                }
-            
-            rhs = (desc.getSQLCategory().isSame(UPDATE)) ? nReplicas : loadfactor;
-            cplex.addEq(expr, rhs, "top_m_" + numConstraints);            
-            numConstraints++;
-        }
+        rhs = (desc.getSQLCategory().isSame(UPDATE)) ? nReplicas : loadfactor;
+        cplex.addEq(expr, rhs, "top_m_query_" + q);            
+        numConstraints++;
     }
     
     /**
@@ -525,48 +573,36 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      * 
      */
     protected void spaceConstraints() throws IloException
+    {
+        for (int r = 0; r < nReplicas; r++)
+            spaceConstraints(r);
+    }
+    
+    /**
+     * Impose space constraint on the materialized indexes at the given window.
+     * 
+     * @throws IloException
+     *      If there is error in formulating the expression in CPLEX. 
+     * 
+     */
+    protected void spaceConstraints(int r) throws IloException
     {   
         IloLinearNumExpr expr; 
         int idS;       
         
-        for (int r = 0; r < nReplicas; r++) {
-
-            expr = cplex.linearNumExpr();
-            
-            for (Index index : candidateIndexes) {  
-                // not consider FTS index
-                if (!(index instanceof FullTableScanIndex)) {
-                    idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();                
-                    expr.addTerm(index.getBytes(), cplexVar.get(idS));
-                }
-            }
-            
-            cplex.addLe(expr, B, "space_" + numConstraints);
-            numConstraints++;               
-        }
-    }
-    
-    /**
-     * This function sets up the constraint for the set-up cost
-     * not to exceed some upper bound value 
-     */
-    protected IloLinearNumExpr deploymentConstraint() throws IloException
-    {
-        IloLinearNumExpr expr; 
-        int idS;       
-        
         expr = cplex.linearNumExpr();
-        
-        for (int r = 0; r < nReplicas; r++)
-            for (Index index : candidateIndexes)
-                if (!(index instanceof FullTableScanIndex)) {
-                    idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();                
-                    expr.addTerm(index.getCreationCost(), cplexVar.get(idS));
-                }            
-                 
-        return expr;
+            
+        for (Index index : candidateIndexes) {  
+            // not consider FTS index
+            if (!(index instanceof FullTableScanIndex)) {
+                idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();                
+                expr.addTerm(index.getBytes(), cplexVar.get(idS));
+            }
+        }
+            
+        cplex.addLe(expr, B, "space_" + numConstraints);
+        numConstraints++;
     }
-    
     
     
     /**
@@ -644,7 +680,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         double ratio;
         
         for (int rFail = 0; rFail < nReplicas; rFail++) {
-            ratio = computeMaxIncreaseLoadRatio(rFail, queries);
+            ratio = getFailureImbalance(rFail, queries);
             maxRatio = (maxRatio > ratio) ? maxRatio : ratio;                   
         }
         
@@ -660,7 +696,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      * @param increasLoads
      * @throws Exception  
      */
-    private double computeMaxIncreaseLoadRatio(int rFail, List<List<Double>> queries) throws Exception
+    private double getFailureImbalance(int rFail, List<List<Double>> queries) throws Exception
     {
         List<Double> increaseLoad = new ArrayList<Double>();
         List<Double> replicaCost = new ArrayList<Double>();
@@ -692,7 +728,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                         continue;
                     
                     // avoid small value
-                    if (queries.get(q).get(r) > 0.1) {
+                    if (queries.get(q).get(r) > 0.0) {
                         cost = increaseLoad.get(r) + queries.get(q).get(r) 
                                                         / (loadfactor * (loadfactor - 1));
                         increaseLoad.set(r, cost);
@@ -705,22 +741,19 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         
         // compute the ratio
-        double ratio;
-        double maxRatio = -1;
-        
+        double newLoad;
+        List<Double> costs = new ArrayList<Double>();
         for (int r = 0; r < nReplicas; r++) {
             
             if (r == rFail)
                 continue;
             
-            //ratio = increaseLoad.get(r) + replicaCost.get(r);
-            //ratio /= replicaCost.get(r);
-            ratio = (double) increaseLoad.get(r) / replicaCost.get(r); 
-            maxRatio = (maxRatio > ratio) ? maxRatio : ratio;
+            newLoad = replicaCost.get(r) + increaseLoad.get(r);
+            if (newLoad > 0.0)
+                costs.add(newLoad);
         }
-            
         
-        return maxRatio;
+        return maxRatioInList(costs);
     }
     
     /**
@@ -773,23 +806,21 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             queries = new ArrayList<Double>();
             
             for (int r = 0; r < nReplicas; r++) {
-                
                 val = computeVal(queryExpr(r, desc.getStatementID(), desc));
                 
                 if (val > 0.0)
                     queries.add(val);
-                
             }
            
             ratio = maxRatioInList(queries);
             if (ratio > 10000) {
-                System.out.println("WATCH-OUT list: " + queries + " ratio: " + ratio);
+                Rt.p("WATCH-OUT list: " + queries + " ratio: " + ratio);
             }
             
             if (queries.size() != loadfactor) {
-                System.out.println("L793, value: " + queries);
-                throw new RuntimeException("We expect to obtain exactly"
-                          + loadfactor + " value of cost(q,r) that are greater than 0");
+                Rt.p("Query's values: " + queries);
+                //throw new RuntimeException("We expect to obtain exactly"
+                  //        + loadfactor + " value of cost(q,r) that are greater than 0");
             }
             maxRatio = (maxRatio > ratio) ? maxRatio : ratio;
         }
@@ -869,20 +900,32 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     }
     
     /**
-     * Compute the deployment cost
-     * 
-     * @return
-     *      The cost
+     * Use for debugging purpose
+     * @param r
+     * @param q
      * @throws Exception
      */
-    public double getDeploymentCost() throws Exception
+    public void showStepComputeQuery(int r, int q) throws Exception
     {
-        IloLinearNumExpr  expr;
+        IloLinearNumExpr expr;        
+        expr = cplex.linearNumExpr();
         
-        expr = deploymentConstraint();
+        QueryPlanDesc desc = super.queryPlanDescs.get(q);
+        Rt.p("Query plan description: " + desc.getStatementID() 
+                + "\n" + desc);
         
+        // query shell of SELECT or UPDATE statement
+        if (desc.getSQLCategory().isSame(SELECT) ||
+                desc.getSQLCategory().isSame(UPDATE))
+            expr = modifyCoef(queryExpr(r, desc.getStatementID(), desc),
+                            desc.getStatementWeight());
         
+        // update index access cost
+        if (desc.getSQLCategory().isSame(NOT_SELECT)) {
+            expr.add(modifyCoef(indexUpdateCost(r, desc.getStatementID(), desc),
+                    desc.getStatementWeight()));
+        }
         
-        return computeVal(expr);
+        showComputeVal(expr);
     }
 }

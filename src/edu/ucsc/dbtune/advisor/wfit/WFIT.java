@@ -109,7 +109,7 @@ public class WFIT extends Advisor
      *             if the given statement can't be processed
      */
     @Override
-    public Set<Index> getRecommendation() throws SQLException
+    public Set<Index> getRecommendation(int budget) throws SQLException
     {
         Set<Index> recommendation = new HashSet<Index>();
 

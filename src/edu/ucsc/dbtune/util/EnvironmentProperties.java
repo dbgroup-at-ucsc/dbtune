@@ -141,6 +141,10 @@ public final class EnvironmentProperties
      * @see PowerSetOptimalCandidateGenerator
      */
     public static final String POWERSET = "powerset";
+    /**
+     * @see DB2AdvisorCandidateGenerator
+     */
+    public static final String DB2ADVISOR = "db2advisor";
     
 
     /**

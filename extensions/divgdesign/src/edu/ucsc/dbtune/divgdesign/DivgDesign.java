@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -111,11 +112,13 @@ public abstract class DivgDesign
         this.m = loadfactor;
         this.B = B;
 
-        this.maxIters = 30;
+        this.maxIters = 10;
         this.epsilon = 0.05;
         
         // process 
         process();
+        
+        Rt.p(" total cost: " + totalCost);
     }
      
     /**
@@ -144,8 +147,11 @@ public abstract class DivgDesign
             
             // check if we trap in the local optimal
             relativeGap = Math.abs(totalCost - previousCost) /  Math.max(totalCost, previousCost);
-            //System.out.println("L105, iteraction #" + iter
-              //                  + " relative gap: " + relativeGap);
+            Rt.p(" Iteration = " + iter
+                    + " total cost = " + totalCost
+                    + " previous cost = " + previousCost
+                    + "relative gap = " + relativeGap
+                    + " epsilon = " + epsilon);
             
             // we have only one replica, do not need to repartition
             if (relativeGap < epsilon || n == 1)
@@ -335,5 +341,4 @@ public abstract class DivgDesign
                 return 1;
         }
     }
-    
 }

@@ -25,9 +25,12 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.List;
 
+import javassist.bytecode.Descriptor.Iterator;
+
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.bip.InteractionComparisonFunctionalTest;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.Workload;
 
 
@@ -83,8 +86,10 @@ public class AnalysisMain {
 	    File candidateFile = Configuration.candidateFile(strategy);
 	    DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
 
-	    System.out.println(" L84 (Karl, Analysis), candidate set: " + candidateSet.size()
-	                        + " table owner: " + tableOwner);
+	    Rt.p(" L84 (Karl, Analysis), candidate set: " + candidateSet.size()
+	                        + " table owner: " + tableOwner
+	                        + " workload size: "
+	                        + workload.size());
 	   
 	    SerialIndexBenefitGraph.setCatalog(db.getCatalog());
 	    SerialIndexBenefitGraph.fixCandidates(candidateSet, tableOwner);
@@ -99,7 +104,7 @@ public class AnalysisMain {
 	    writeIBGs(ibgs, strategy);
 
 	    long time = System.currentTimeMillis() - start;
-	    System.out.println("L99 (Karl, Analysis Main), the running time: " + time + "\n"
+	    Rt.p("L99 (Karl, Analysis Main), the running time: " + time + "\n"
 	                     + " Time for Populating space: "  + SerialIndexBenefitGraph.timePopulating + "\n"
 	                     + " Time for Plugging indexes: "  + SerialIndexBenefitGraph.timePlugging + "\n"
 	                     + " Time for Matching Strategy: " + SerialIndexBenefitGraph.timeMatching + "\n"
@@ -116,16 +121,16 @@ public class AnalysisMain {
 
 	    /*
         PrintWriter out = new PrintWriter(System.out);
-        System.out.println("Serial log:");
+        Rt.p("Serial log:");
         serial1 = (BasicLog)Files.readObjectFromFile(Configuration.analysisFile(strategy, SERIAL));
         AnalysisLog serial2 = serial1.getAnalysisLog(0.1);
         serial2.output(out);
-        System.out.println("List interactions 0.1: " + serial1.interactions());
+        Rt.p("List interactions 0.1: " + serial1.interactions());
         */
         /*
         AnalysisLog serial3 = serial1.getAnalysisLog(0.01);
         serial3.output(out);
-        System.out.println("List interactions 0.01: " + serial1.interactions());
+        Rt.p("List interactions 0.01: " + serial1.interactions());
          */
 	}
 	
@@ -138,7 +143,7 @@ public class AnalysisMain {
         SerialIndexBenefitGraph[] ibgs;
         int i;
         
-        System.out.println(" workload: " + workload.size());
+        Rt.p(" workload: " + workload.size());
         // Reset timer
         logger.startTimer();
         SerialIndexBenefitGraph.timePopulating = 0.0;
@@ -170,7 +175,7 @@ public class AnalysisMain {
         
         // process arguments
         if (args.length > 0) {
-            System.out.println("No arguments are accepted");
+            Rt.p("No arguments are accepted");
         }
         
         // do the steps
@@ -183,10 +188,11 @@ public class AnalysisMain {
             System.exit(0);
         }
     }
-
+	
+	
 	public static void runSteps() throws SQLException, IOException, ClassNotFoundException {
         
-        SQLWorkload workload = Main.getWorkload();
+	    SQLWorkload workload = Main.getWorkload();
         
         // Connect to database
         DBConnection conn = Main.openConnection();
@@ -210,8 +216,13 @@ public class AnalysisMain {
 		File candidateFile = Configuration.candidateFile(strategy);
 		DB2IndexSet candidateSet = (DB2IndexSet) Files.readObjectFromFile(candidateFile);
 		
-		System.out.println(" L192 (Karl, Analysis), candidate set: " + candidateSet.size());
-        
+		int counter = 0;
+		for (SQLTransaction xact : workload) 
+		    counter++;
+		
+		Rt.p("(Karl, Analysis), candidate set: " + candidateSet.size()
+		        + " workload size: " + counter);
+		
 		conn.fixCandidates(candidateSet);
 		logger = new InteractionLogger(conn, candidateSet);	
 		
@@ -223,7 +234,7 @@ public class AnalysisMain {
 		writeIBGs(ibgs, strategy);
 		
 		long time = System.currentTimeMillis() - start;
-		System.out.println("L205 (Karl, Analysis Main), the running time: " + time);
+		Rt.p("(Karl, Analysis Main), the running time: " + time + " milliseconds");
 		
 		BasicLog serial1 = (BasicLog) Files.readObjectFromFile(
 		                            Configuration.analysisFile(strategy, SERIAL));
@@ -233,16 +244,17 @@ public class AnalysisMain {
 		    writeInteraction(serial1.interactions(), strategy, SERIAL, t);
 		}
 		
+		
 		/*
 		PrintWriter out = new PrintWriter(System.out);
-		System.out.println("Serial log:");
+		Rt.p("Serial log:");
 		serial1 = (BasicLog)Files.readObjectFromFile(Configuration.analysisFile(strategy, SERIAL));
 		AnalysisLog serial2 = serial1.getAnalysisLog(0.1);
 		serial2.output(out);
-		System.out.println("List interactions 0.1: " + serial1.interactions());
+		Rt.p("List interactions 0.1: " + serial1.interactions());
 		AnalysisLog serial3 = serial1.getAnalysisLog(0.01);
         serial3.output(out);
-        System.out.println("List interactions 0.01: " + serial1.interactions());
+        Rt.p("List interactions 0.01: " + serial1.interactions());
         */
 	}
 
@@ -257,11 +269,14 @@ public class AnalysisMain {
 		ibgs = new SerialIndexBenefitGraph[xacts.transactionCount()];
 		i = 0;
 		for (SQLTransaction xact : xacts) {
+		    Rt.p(" process statement: " + i);
 			SerialIndexBenefitGraph ibg = SerialIndexBenefitGraph.build(conn, new SQLWorkload(xact), candidateSet);
 		    SerialIBGAnalyzer analyzer = new SerialIBGAnalyzer(ibg);
 			analyzer.doAnalysis(logger);
 			ibgs[i++] = ibg;
 		}
+		
+		Rt.p(" Number of statements: " + i);
 		
 		//DB2GreedyScheduler.schedule(candidateSet.bitSet(), new SerialIndexBenefitGraph.ScheduleInfo(ibgs)); 
 
@@ -339,9 +354,11 @@ public class AnalysisMain {
                     new BufferedWriter(new FileWriter(
                                         Configuration.logInteractionFile(s, m, t), false), 65536));
             
-            System.out.println(" file name: " + Configuration.logInteractionFile(s, m, t));
-            for (InteractionPair pair : pairs)
+            Rt.p(" file name: " + Configuration.logInteractionFile(s, m, t));
+            for (InteractionPair pair : pairs) {
                 writer.println(pair);
+                Rt.p(pair);
+            }
             
             writer.close();
             

@@ -104,6 +104,10 @@ public class GnuPlotLine {
         }
         maxY *= 1.1;
         int power = (int) Math.floor(Math.log10(minY));
+        // If the value is less than 100, no need to turn into
+        // power
+        if (maxY <= 110)
+            power = 0;
         double factor = Math.pow(10, power);
         if (factor < 0.000001)
             factor = 1;

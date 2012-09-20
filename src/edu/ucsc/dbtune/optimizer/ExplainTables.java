@@ -30,6 +30,7 @@ public class ExplainTables {
     public static boolean showWarnings = false;
     public static boolean dump = false;
     public static int dumpPlanId = -1;
+    public static int optimizationLevel = -1;
 
     public static void dumpResult(ResultSet rs) throws SQLException {
         ResultSetMetaData m = rs.getMetaData();
@@ -113,6 +114,8 @@ public class ExplainTables {
             Catalog catalog, Set<Index> indexes) throws SQLException {
         Statement stmt = connection.createStatement();
 
+        if ( optimizationLevel>=0)
+            stmt.execute("SET CURRENT QUERY OPTIMIZATION "+ optimizationLevel);
         stmt.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
         try {
             stmt.execute(sql.getSQL());

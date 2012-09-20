@@ -41,6 +41,6 @@ public class LatexGenerator
         
         ps.println("\\end{document}\n");
         ps.close();
-        Rt.runAndShowCommand(latex + " -interaction=nonstopmode " + latexFile, outputDir);
+        //Rt.runAndShowCommand(latex + " -interaction=nonstopmode " + latexFile, outputDir);
     }
 }

@@ -26,6 +26,7 @@ import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGenerator;
 import edu.ucsc.dbtune.inum.AbstractSpaceComputation;
 import edu.ucsc.dbtune.inum.DerbyInterestingOrdersExtractor;
+import edu.ucsc.dbtune.inum.IBGSpaceComputation;
 import edu.ucsc.dbtune.inum.InumInterestingOrder;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
@@ -40,6 +41,7 @@ import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.util.InumUtils;
 import edu.ucsc.dbtune.util.ResultTable;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Rx;
@@ -169,7 +171,8 @@ public class InumTest2 {
                         char c1 = tpcds.charAt(i - 1);
                         char c2 = tpcds.charAt(i + s.length());
                         if ((c1 == ' ' || c1 == ',' || c1 == '(' || c1 == '\n' || c1 == '\t')
-                                && (c2 == ' ' || c2 == '.'|| c2 == ',' || c2 == '\n' || c2 == '\t')) {
+                                && (c2 == ' ' || c2 == '.' || c2 == ','
+                                        || c2 == '\n' || c2 == '\t')) {
                             tpcds = tpcds.substring(0, i) + "tpcds."
                                     + tpcds.substring(i);
                             continue next;
@@ -235,6 +238,17 @@ public class InumTest2 {
         double inumIndexAll = 0;
         double inumFtsAll = 0;
         Workload workload = new Workload("", new StringReader(query));
+
+        // Rt.error("load index");
+        // Set<Index> indexes = new HashSet<Index>();
+        // String[] names = Rt.readResourceAsLines(InumTest2.class,
+        // "index.txt");
+        // for (String name2 : names) {
+        // indexes.add(createIndex(db, name2));
+        // }
+
+        // workload = new Workload("", new
+        // StringReader(workload.get(2).getSQL()+";"));
         CandidateGenerator candGen = new OptimizerCandidateGenerator(
                 getBaseOptimizer(db.getOptimizer()));
         Set<Index> indexes = candGen.generate(workload);
@@ -247,38 +261,56 @@ public class InumTest2 {
         Rt.p(name);
         Rt.p("queries: " + workload.size());
         Rt.p("indexes: " + indexes.size());
+        IBGSpaceComputation.maxTime = 15000;
         for (int i = 0; i < workload.size(); i++) {
-            ExplainedSQLStatement db2plan = db2optimizer.explain(workload
-                    .get(i), indexes);
-            double db2index = db2plan.getTotalCost();
+            // Rt.p("start db2");
+            try {
+                ExplainedSQLStatement db2plan = db2optimizer.explain(workload
+                        .get(i), indexes);
+                double db2index = db2plan.getTotalCost();
+                db2plan = db2optimizer.explain(workload.get(i));
+                double db2fts = db2plan.getTotalCost();
 
-            db2plan = db2optimizer.explain(workload.get(i));
-            double db2fts = db2plan.getTotalCost();
+                // Rt.p("start inum");
+                InumPreparedSQLStatement space;
+                space = (InumPreparedSQLStatement) optimizer
+                        .prepareExplain(workload.get(i));
+                ExplainedSQLStatement inumPlan = space.explain(indexes);
+                double inumIndex = inumPlan.getTotalCost();
+                SQLStatementPlan plan = inumPlan.getPlan();
+                InumPlan inumPlan2 = (InumPlan) plan.templatePlan;
+                inumPlan = space.explain(new HashSet<Index>());
+                double inumFts = inumPlan.getTotalCost();
 
-            InumPreparedSQLStatement space;
-            space = (InumPreparedSQLStatement) optimizer
-                    .prepareExplain(workload.get(i));
-            ExplainedSQLStatement inumPlan = space.explain(indexes);
-            double inumIndex = inumPlan.getTotalCost();
-            SQLStatementPlan plan = inumPlan.getPlan();
-            InumPlan inumPlan2 = (InumPlan) plan.templatePlan;
-            inumPlan = optimizer.prepareExplain(workload.get(i)).explain(
-                    new HashSet<Index>());
-            double inumFts = inumPlan.getTotalCost();
-
-            Rt.np("query=%d\tDB2(FTS)=%,.0f\tINUM(FTS)=%,.0f"
-                    + "\tDB2(Index)=%,.0f\tINUM(Index)=%,.0f\tINUM/DB2=%.2f",
-                    i, db2fts, inumFts, db2index, inumIndex, inumIndex
-                            / db2index);
-            db2indexAll += db2index;
-            db2ftsAll += db2fts;
-            inumIndexAll += inumIndex;
-            inumFtsAll += inumFts;
+                Rt
+                        .np(
+                                "-- query=%d\tDB2(FTS)=%,.0f\tINUM(FTS)=%,.0f"
+                                        + "\tDB2(Index)=%,.0f\tINUM(Index)=%,.0f\tINUM/DB2=%.2f",
+                                i, db2fts, inumFts, db2index, inumIndex,
+                                inumIndex / db2index);
+                if (0.9 <= inumIndex / db2index && inumIndex / db2index <= 1.2) {
+                    // Rt.np(workload.get(i).getSQL() + ";");
+                } else {
+                    // Rt.np("-- "+workload.get(i).getSQL() + ";");
+                }
+                db2indexAll += db2index;
+                db2ftsAll += db2fts;
+                inumIndexAll += inumIndex;
+                inumFtsAll += inumFts;
+            } catch (Exception e) {
+                Rt.np("-- query=%d %s", i, e.getMessage());
+                Rt.np("-- " + workload.get(i).getSQL() + ";");
+            }
+            // Rt.np("query=%d\tDB2(FTS)=%,.0f" + "\tDB2(Index)=%,.0f", i,
+            // db2fts,
+            // db2index);
         }
         Rt.np("DB2(FTS)=%,.0f", db2ftsAll);
         Rt.np("INUM(FTS)=%,.0f", inumFtsAll);
         Rt.np("DB2(Index)=%,.0f", db2indexAll);
         Rt.np("INUM(Index)=%,.0f", inumIndexAll);
+        Rt.np("Derby failed count=%,d",
+                AbstractSpaceComputation.derbyFailedCount);
     }
 
     void compareSubset(DatabaseSystem db, String query, String testName)
@@ -439,6 +471,32 @@ public class InumTest2 {
         ps2.close();
     }
 
+    void compareInterestingOrders(DatabaseSystem db, String query)
+            throws Exception {
+        InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
+        DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
+
+        Workload workload = new Workload("", new StringReader(query));
+        for (int queryId = 0; queryId < workload.size(); queryId++) {
+            Rt.np("query " + queryId);
+            Set<InumInterestingOrder> orders = InumUtils
+                    .extractInterestingOrders(workload.get(queryId), db
+                            .getCatalog());
+            Set<InumInterestingOrder> orders2 = AbstractSpaceComputation
+                    .extractInterestingOrderFromDB(workload.get(queryId),
+                            db2optimizer);
+            for (InumInterestingOrder o : orders) {
+                if (!orders2.contains(o))
+                    Rt.np("MISSING " + o);
+            }
+            for (InumInterestingOrder o : orders2) {
+                if (!orders.contains(o))
+                    Rt.np("INCORRECT " + o);
+            }
+        }
+        System.exit(0);
+    }
+
     public InumTest2() throws Exception {
         Environment en = Environment.getInstance();
         String dbName = "test";
@@ -457,11 +515,13 @@ public class InumTest2 {
                 "resources/workloads/db2/tpcds-inum/workload.sql"));
         String tpcds = Rt.readFile(new File(
                 "resources/workloads/db2/tpcds/db2.sql"));
+        String tpcdsinum = Rt.readFile(new File(
+                "resources/workloads/db2/tpcds/inum.sql"));
         String update = Rt.readFile(new File(
                 "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
         // query = Rt.readFile(new File(
         // "resources/workloads/db2/tpch-inum/workload.sql"));
-         sqlTest(tpch10g, tpch, 1);
+        sqlTest(test, tpcds, 8);
         // sqlTest(
         // test,
         // "SELECT 3, COUNT(*)  FROM tpch.lineitem WHERE  tpch.lineitem.l_tax BETWEEN 0.01596699754645524 AND 0.029823160830179565 AND tpch.lineitem.l_extendedprice BETWEEN 19178.598547906164 AND 19756.721297981876 AND tpch.lineitem.l_receiptdate BETWEEN 'Thu Mar 24 14:48:29 PST 1994' AND 'Mon Jan 30 14:48:29 PST 1995';",
@@ -471,7 +531,9 @@ public class InumTest2 {
         // compareSubset(test, tpch);
         // compareSubset(test, update,"update");
         // compareWorkload(test, tpch, "tpch");
-//        compareWorkload(test, tpcds, "tpcds");
+        // compareInterestingOrders(test, tpch);
+        // compareWorkload(tpch10g, tpch, "tpch10g");
+        compareWorkload(test, tpcdsinum, "tpcds");
         // compareWorkload(test, update, "update");
         test.getConnection().close();
         tpch10g.getConnection().close();
@@ -481,25 +543,42 @@ public class InumTest2 {
         InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
         DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
         Set<Index> indexes = new HashSet<Index>();
-        // String[] names = Rt.readResourceAsLines(InumTest2.class,
-        // "index.txt");
-        // for (String name : names) {
-        // indexes.add(createIndex(db, name));
-        // }
+        Rt.error("load index");
+        String[] names = Rt.readResourceAsLines(InumTest2.class, "index.txt");
+        for (String name : names) {
+            indexes.add(createIndex(db, name));
+        }
         // ExplainTables.showWarnings = true;
 
         Workload workload = new Workload("", new StringReader(query));
-        CandidateGenerator candGen = new OptimizerCandidateGenerator(
-                getBaseOptimizer(db.getOptimizer()));
-        indexes = candGen.generate(workload);
-        Rt.np("Generated Indexes:");
-        for (Index index : indexes) {
-            Rt.np(index);
-        }
 
         String sql = workload.get(queryId).getSQL();
         Rt.np("SQL:");
         Rt.p(sql);
+
+        // Set<InumInterestingOrder> orders =
+        // InumUtils.extractInterestingOrders(
+        // workload.get(queryId), db.getCatalog());
+        // Set<InumInterestingOrder> orders2 = AbstractSpaceComputation
+        // .extractInterestingOrderFromDB(workload.get(queryId),
+        // db2optimizer, true);
+        // for (InumInterestingOrder o : orders) {
+        // if (!orders2.contains(o))
+        // Rt.np("MISSING " + o);
+        // }
+        // for (InumInterestingOrder o : orders2) {
+        // if (!orders.contains(o))
+        // Rt.np("INCORRECT " + o);
+        // }
+        // System.exit(0);
+
+        // CandidateGenerator candGen = new OptimizerCandidateGenerator(
+        // getBaseOptimizer(db.getOptimizer()));
+        // indexes = candGen.generate(workload);
+        // Rt.np("Generated Indexes:");
+        // for (Index index : indexes) {
+        // Rt.np(index);
+        // }
 
         // ExplainTables.dump=true;
         ExplainedSQLStatement db2plan = db2optimizer.explain(sql, indexes);
@@ -534,7 +613,7 @@ public class InumTest2 {
     }
 
     public static void main(String[] args) throws Exception {
-//        formatTpcds();
+        // formatTpcds();
         // analyzeNLJ();
 
         // query = Rt.readFile(new File(

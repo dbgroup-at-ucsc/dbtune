@@ -431,7 +431,6 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
                 // then the plan is dead also
                 // This plan will not be used
                 if (slotBIP.isDead) {
-                    Rt.p(" WATCH-OUT, plan is DEAD");
                     isDead = true;
                     break;
                     

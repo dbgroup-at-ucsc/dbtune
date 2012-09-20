@@ -42,11 +42,13 @@ public abstract class Advisor
     /**
      * Returns the configuration obtained by the Advisor.
      *
+     * @param budget
+     *      Space budget (in MB)
      * @return
      *      a {@code Configuration} object containing the information related to
      *      the recommendation produced by the advisor.
      * @throws SQLException
      *      if the given statement can't be processed
      */
-    public abstract Set<Index> getRecommendation() throws SQLException;
+    public abstract Set<Index> getRecommendation(int budget) throws SQLException;
 }

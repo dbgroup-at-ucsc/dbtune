@@ -306,7 +306,7 @@ public class DB2Index implements Serializable, Identifiable {
         
         // construct the object
         String indexName = indexNameBase + id;
-        String indexOwner = "DB2INST1";        
+        String indexOwner = "DB2INST2";        
         String indexExists = "N";
         int systemRequired = 0;
         

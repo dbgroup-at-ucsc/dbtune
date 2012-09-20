@@ -55,7 +55,7 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getReferencedTables;
 public class InumPlan extends SQLStatementPlan
 {
     /** used to represent an incompatible instantiation. */
-    private static final Operator INCOMPATIBLE = new Operator("INUM_INCOMPATIBLE", -1, -1);
+    protected static final Operator INCOMPATIBLE = new Operator("INUM_INCOMPATIBLE", -1, -1);
 
     /**
      * Convenience object that maps tables to slots. This is done so that the {@link
@@ -431,24 +431,25 @@ public class InumPlan extends SQLStatementPlan
                 || slot.getIndex().equalsContent(index)) {
             // if we have the same index as when we built the template
             Operator o = makeOperatorFromSlot(slot);
-            if (o != INCOMPATIBLE) {
-                if (o.getDatabaseObjects().size() == 0)
-                    throw new Error();
-                o.slot = slot;
-                return o;
-            } else {
-            }
+            if (o.getDatabaseObjects().size() == 0)
+                throw new Error();
+            o.slot = slot;
+            return o;
         } else if (!slot.isCreatedFromFullTableScan()
                 && !slot.isCompatible(index))
             // if we DON'T have FTS, we have to check that sent index is
             // compatible
             ;
 
-        else if (isWhatIfCallAvoidableViaFullTableScan(slot, index))
+        else if (isWhatIfCallAvoidableViaFullTableScan(slot, index)) {
             // if we do a what-if call, we know the optimizer will return
             // FTS, so let's not do it
-            ;
-        else {
+            Operator o = makeOperatorFromSlot(slot);
+            if (o.getDatabaseObjects().size() == 0)
+                throw new Error();
+            o.slot = slot;
+            return o;
+        } else {
             Operator o = instantiate(slot, index);
             if (o != INCOMPATIBLE) {
                 if (o.getDatabaseObjects().size() == 0)
@@ -528,6 +529,8 @@ public class InumPlan extends SQLStatementPlan
             }
             
             Operator o = instantiate2(slot, bestIndexForSlot);
+            if (o== INCOMPATIBLE)
+                return null;
             operators.add(o);
         }
 
@@ -676,7 +679,7 @@ public class InumPlan extends SQLStatementPlan
             Rt.p("need " + neededColumns.size());
             Rt.p(neededColumns);
             cost=plan.getRootOperator().getAccumulatedCost();
-            throw new Error();
+//            throw new Error();
         }
         
 /**
@@ -1127,6 +1130,7 @@ RETURN(cost=1470.4276123046875 rows=0 id=1 object=NONE alias= rawColumns=null ra
         Operator parent;
         TableAccessSlot slot;
         double cost = 0;
+//        Rt.p(templatePlan.id);
         for (Operator newLeaf : instantiatedOperators) {
             DatabaseObject dbo = newLeaf.getDatabaseObjects().get(0);
 
@@ -1160,6 +1164,8 @@ RETURN(cost=1470.4276123046875 rows=0 id=1 object=NONE alias= rawColumns=null ra
                 plan.setChild(parent, newLeaf,index);
             }
 
+//            Rt.p(newLeaf);
+//            Rt.p(newLeaf.scanCost*newLeaf.coefficient+" "+cost);
             cost += newLeaf.scanCost*newLeaf.coefficient;//.getAccumulatedCost();
         }
 

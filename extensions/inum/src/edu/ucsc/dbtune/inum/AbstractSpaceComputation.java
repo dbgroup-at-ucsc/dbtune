@@ -3,7 +3,9 @@ package edu.ucsc.dbtune.inum;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
@@ -53,6 +55,146 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
             overrideInumSpacePopulateIndexSet.add(order);
         }
     }
+    
+    private static InumInterestingOrder getInterestingOrder(
+            Map<String, Table> qidToTable,Map<String, Table> columnNameToTable, String c) throws SQLException {
+        c=c.trim();
+        if (c.length() == 0 || c.contains("$RID$") || c.contains("$C"))
+            return null;
+        if (c.startsWith("'"))
+            return null;
+        // Rt.np(c);
+        String[] ss = c.split("\\.");
+        if (ss.length!=2)
+            return null;
+        String columnName = ss[1];
+        boolean asc = true;
+        int t = columnName.indexOf("(");
+        if (t > 0) {
+            String order = columnName.substring(t);
+            columnName = columnName.substring(0, t);
+            if ("(A)".equals(order))
+                asc = true;
+            else if ("(D)".equals(order))
+                asc = false;
+            else
+                throw new Error();
+        }
+        Table table = qidToTable.get(ss[0]);
+        // Rt.p(ss[0]+" "+table);
+        if (table == null) {
+            //TODO temporary workaround. Need to trace where the column comes from.
+/*
+For example,find out where Q6.O_ORDERDATE(A) comes from
+   RETURN(id=1 cost=161206.53 card=0.00 coeff=1.0 object=NONE rawColumns=null rawPredicate=null fetch=NONE internal=0.00)
+    └── TABLE.SCAN(id=2 cost=161206.53 card=317674.59 coeff=1.0 object=NONE rawColumns=+Q6.REVENUE(D)+Q6.O_ORDERDATE(A)+Q6.O_SHIPPRIORITY+Q6.L_ORDERKEY rawPredicate=null fetch=NONE internal=15.00)
+        └── SORT(id=3 cost=161191.53 rows=317675 rowWidth=28 card=317674.59 coeff=1.0 object=NONE rawColumns=+Q5.$C1(D)+Q5.O_ORDERDATE(A)+Q5.O_SHIPPRIORITY+Q5.L_ORDERKEY rawPredicate=null fetch=NONE internal=300.72)
+            └── GRPBY(id=4 cost=160890.81 card=317674.59 coeff=1.0 object=NONE rawColumns=+Q5.O_SHIPPRIORITY+Q5.O_ORDERDATE+Q5.$C1+Q5.L_ORDERKEY rawPredicate=null fetch=NONE internal=15.00)
+                └── TABLE.SCAN(id=5 cost=160875.81 card=317674.63 coeff=1.0 object=NONE rawColumns=+Q4.L_ORDERKEY(A)+Q4.O_ORDERDATE(A)+Q4.O_SHIPPRIORITY(A)+Q4.L_DISCOUNT+Q4.L_EXTENDEDPRICE rawPredicate=null fetch=NONE internal=1538.72)
+                    └── SORT(id=6 cost=159337.09 rows=317675 rowWidth=32 card=317674.63 coeff=1.0 object=NONE rawColumns=+Q4.L_ORDERKEY(A)+Q4.O_ORDERDATE(A)+Q4.O_SHIPPRIORITY(A)+Q4.L_DISCOUNT+Q4.L_EXTENDEDPRICE rawPredicate=null fetch=NONE internal=10920.30)
+                        └── HASH.JOIN(id=7 cost=148416.80 card=317674.63 coeff=1.0 object=NONE rawColumns=+Q4.L_DISCOUNT+Q4.L_EXTENDEDPRICE+Q4.O_SHIPPRIORITY+Q4.O_ORDERDATE+Q4.L_ORDERKEY rawPredicate=[(Q1.L_ORDERKEY = Q2.O_ORDERKEY)] fetch=NONE internal=18010.94)
+                            ├── TABLE.SCAN(id=8 OUTER cost=104584.35 card=3219266.00 coeff=1.0 object=TPCH.LINEITEM rawColumns=+Q1.L_DISCOUNT+Q1.L_EXTENDEDPRICE+Q1.L_ORDERKEY+Q1.$RID$+Q1.L_DISCOUNT+Q1.L_EXTENDEDPRICE+Q1.L_SHIPDATE+Q1.L_ORDERKEY rawPredicate=[('1995-03-17' < Q1.L_SHIPDATE)] fetch=[+TPCH.LINEITEM.L_DISCOUNT(A)+TPCH.LINEITEM.L_EXTENDEDPRICE(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_ORDERKEY(A)] internal=0.00)
+                            └── HASH.JOIN(id=9 INNER cost=25821.50 card=155852.95 coeff=1.0 object=NONE rawColumns=+Q2.O_SHIPPRIORITY+Q2.O_ORDERDATE+Q2.O_ORDERKEY+Q2.O_CUSTKEY+Q3.C_CUSTKEY rawPredicate=[(Q3.C_CUSTKEY = Q2.O_CUSTKEY)] fetch=NONE internal=27.89)
+                                ├── TABLE.SCAN(id=10 OUTER cost=22400.94 card=760345.88 coeff=1.0 object=TPCH.ORDERS rawColumns=+Q2.O_SHIPPRIORITY+Q2.O_ORDERDATE+Q2.O_ORDERKEY+Q2.O_CUSTKEY+Q2.$RID$+Q2.O_SHIPPRIORITY+Q2.O_ORDERDATE+Q2.O_ORDERKEY+Q2.O_CUSTKEY rawPredicate=[(Q2.O_ORDERDATE < '1995-03-17')] fetch=[+TPCH.ORDERS.O_SHIPPRIORITY(A)+TPCH.ORDERS.O_ORDERDATE(A)+TPCH.ORDERS.O_ORDERKEY(A)+TPCH.ORDERS.O_CUSTKEY(A)] internal=0.00)
+                                └── TABLE.SCAN(id=11 INNER cost=3392.67 card=30225.00 coeff=1.0 object=TPCH.CUSTOMER rawColumns=+Q3.C_CUSTKEY+Q3.$RID$+Q3.C_CUSTKEY+Q3.C_MKTSEGMENT rawPredicate=[(Q3.C_MKTSEGMENT = 'FURNITURE ')] fetch=[+TPCH.CUSTOMER.C_CUSTKEY(A)+TPCH.CUSTOMER.C_MKTSEGMENT(A)] internal=0.00)
+
+ */
+            table=columnNameToTable.get(columnName);
+            if (table == null)
+                return null;
+        }
+        Column column = (Column) table.find(columnName);
+        if (column==null)
+            return null;
+        return new InumInterestingOrder(column, asc);
+    }
+    
+    /**
+     * Extract interesting order by parsing db plan
+     * 
+     * @param statement
+     * @param delegate
+     * @return
+     * @throws SQLException
+     */
+    public static Set<InumInterestingOrder> extractInterestingOrderFromDB(
+            SQLStatement statement, Optimizer delegate) throws SQLException {
+        return extractInterestingOrderFromDB(statement, delegate,false);
+    }
+    
+    /**
+     * Extract interesting order by parsing db plan
+     * 
+     * @param statement
+     * @param delegate
+     * @param debug show debug information
+     * @return
+     * @throws SQLException
+     */
+    public static Set<InumInterestingOrder> extractInterestingOrderFromDB(
+            SQLStatement statement, Optimizer delegate,boolean debug) throws SQLException {
+        Set<InumInterestingOrder> indexes2 = new HashSet<InumInterestingOrder>();
+        ExplainedSQLStatement db2plan = delegate.explain(statement);
+        SQLStatementPlan plan = db2plan.getPlan();
+        Map<String, Table> qidToTable = new Hashtable<String, Table>();
+        Map<String, Table> columnNameToTable = new Hashtable<String, Table>();
+        for (Operator op : plan.nodes()) {
+            if (op.rawColumnNames == null)
+                continue;
+            for (String c : op.rawColumnNames.split("\\+")) {
+                if (c.length() == 0 || c.contains("$RID$") || c.contains("$C"))
+                    continue;
+                Table table = op.getTable();
+                if (table == null)
+                    continue;
+                String[] ss = c.split("\\.", 2);
+                qidToTable.put(ss[0], table);
+                if (ss[1].indexOf("(")>0)
+                    ss[1]=ss[1].substring(0,ss[1].indexOf("("));
+                columnNameToTable.put(ss[1], table);
+//                Rt.p(ss[0]+" "+table);
+            }
+       }
+       if (debug)
+            Rt.np(plan);
+        for (Operator op : plan.nodes()) {
+            if (op.rawColumnNames != null) {
+                for (String c : op.rawColumnNames.split("\\+")) {
+                    if (!c.contains("("))
+                        continue;
+    //                Rt.p(column);
+                    InumInterestingOrder order=getInterestingOrder(qidToTable,columnNameToTable, c);
+                    if (order!=null)
+                        indexes2.add(order);
+                }
+            }
+            if (op.rawPredicateList!=null) {
+                for (String predicate : op.rawPredicateList) {
+                    String[] ss= predicate.split("\\(|\\)");
+                    for (String s : ss) {
+                        s=s.trim();
+                        if (s.length()==0)
+                            continue;
+                        String[] ss2=s.split(" = | < | > | <= | >= | <> | LIKE ");
+                        if (ss2.length!=2)
+                            continue;
+                        InumInterestingOrder[] orders=new InumInterestingOrder[ss2.length];
+                        for (int i=0;i<ss2.length;i++) {
+                            orders[i]=getInterestingOrder(qidToTable,columnNameToTable, ss2[i]);
+                        }
+                        if (orders[0]!=null&&orders[1]!=null) {
+                            indexes2.add(orders[0]);
+                            indexes2.add(orders[1]);
+                        }
+                    }
+                }
+            }
+        }
+        return indexes2;
+    }
+    
+    public static int derbyFailedCount=0;
+    
     /**
      * Computes the INUM space by extracting interesting orders using the {@link 
      * DerbyInterestingOrdersExtractor}. The configuration associated to each table is completed 
@@ -94,26 +236,10 @@ public abstract class AbstractSpaceComputation implements InumSpaceComputation
         else {
             try {
                 indexes=extractInterestingOrders(statement, catalog);
-            } catch (java.sql.SQLSyntaxErrorException e) {
-                Rt.error(e.getMessage());
-                Set<Index> indexes2=new HashSet<Index>();
-                ExplainedSQLStatement db2plan = delegate.explain(statement);
-                for (Operator op : db2plan.getPlan().nodes()) {
-                    InterestingOrder order=op.getColumnsFetched();
-                    if (order==null)
-                        continue;
-                    List<DatabaseObject> columns=order.getAll();
-                    List<Boolean> ascendings=order.getAscending();
-                    for (int i=0;i<ascendings.size();i++) {
-                        Object o=columns.get(i+1);
-                        if (!(o instanceof Column))
-                            continue;
-                        Column c=(Column)o;
-                        boolean b= ascendings.get(i);
-                        indexes2.add(new InumInterestingOrder(c,b));
-                    }
-                }
-                indexes=indexes2;
+            } catch (Exception e) {
+                derbyFailedCount++;
+//                Rt.error(e.getClass().getName()+": "+e.getMessage());
+                indexes=extractInterestingOrderFromDB(statement,delegate);
             }
         }
         

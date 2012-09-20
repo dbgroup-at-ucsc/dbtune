@@ -2,7 +2,9 @@ package edu.ucsc.dbtune.inum;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
@@ -11,6 +13,8 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
+import edu.ucsc.dbtune.seq.utils.RTimer;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static com.google.common.collect.Sets.cartesianProduct;
@@ -38,6 +42,19 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
      * the algorithm will switch to use combination.
      */
     public int maxAllowedWhatIfCount = 0;
+    
+    /**
+     * Tested configurations
+     */
+    private HashSet<BitSet> tested;
+    
+    /**
+     * Give each index an unique id
+     */
+    private Hashtable<Index,Integer> indexToId;
+    
+    private RTimer timer;
+    public static int maxTime=0;
 
     /**
      * TODO: complete.
@@ -61,8 +78,19 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
         if (whatIfCount > maxAllowedWhatIfCount)
             return;
 
-//        Rt.p("index=" + indexes.size() + " space=" + inumSpace.size()
-//                + " whatif=" + whatIfCount + " " + path);
+        long timePassed=timer.get();
+        if (maxTime > 0 && timePassed > maxTime)
+            throw new SQLException("IBG timeout");
+        timer.next("index=" + indexes.size() + " space=" + inumSpace.size()
+                + " whatif=" + whatIfCount + " " + path);
+        BitSet bitset=new BitSet();
+        for (Index index : indexes) {
+            int id= indexToId.get(index);
+            bitset.set(id);
+        }
+        if ( tested.contains(bitset))
+            return;
+        tested.add(bitset);
         ExplainedSQLStatement estmt = delegate.explain(statement, indexes);
         whatIfCount++;
 
@@ -148,6 +176,15 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
             Optimizer delegate) throws SQLException {
         whatIfCount = 0;
         maxAllowedWhatIfCount = (int) Math.pow(2, indexes.size());
+        tested=new HashSet<BitSet>();
+        indexToId=new Hashtable<Index, Integer>();
+        int id=0;
+        for (Index index : indexes) {
+//            Rt.p(index);
+            indexToId.put(index, id++);
+        }
+        timer=new RTimer();
+        timer.interval=10000;
         ibg(statement, delegate, new HashSet<Index>(indexes), space, "");
         if (whatIfCount > maxAllowedWhatIfCount) {
             // use powerset instead

@@ -2,6 +2,8 @@ package interaction;
 
 import java.io.File;
 
+import edu.ucsc.dbtune.util.Rt;
+
 import interaction.cand.Generation;
 import interaction.cand.Generation.Strategy;
 import interaction.ibg.AnalysisMode;
@@ -11,7 +13,7 @@ public abstract class Configuration {
 	// These are defaults
 	// Actual values may be taken from command line
 	public static Generation.Strategy candidates = Generation.Strategy.UNION_OPTIMAL;
-	public static double interactionThreshold = 0.01;
+	public static double interactionThreshold = 0.1;
 	public static String subdir = "tpch"; // subdirectory of resultsRoot, see below
 	
 	/*
@@ -25,16 +27,16 @@ public abstract class Configuration {
 	// File management 
 	private static File root = new File("/Users/karlsch/school/chameleon-dbms/bengraph/results");
 	*/
-	public static String dbName = "ONEGB";
-	public static String userName = "db2inst1";
+	public static String dbName = "TPCH10GB";
+	public static String userName = "db2inst2";
 	public static String password = "db2inst1admin";
 	//public static String url = "jdbc:db2://192.168.56.101:50000/test";
-	public static String url = "jdbc:db2://localhost:50000/ONEGB";
+	public static String url = "jdbc:db2://localhost:50001/TPCH10GB";
 	public static String driverClass = "com.ibm.db2.jcc.DB2Driver";
 	public static String db2Advis = "/home/db2inst1/sqllib/bin/db2advis";	
 	
     private static File root =
-        new File("/home/tqtrung/previous_source_code/interaction/src/interaction/results");
+        new File("/home/tqtrung/previous_source_code/interaction/src/interaction/results/");
         //new File("/home/ivo/projects/chameleon/bengraph/results/");
 		
 	private static File resultsDir() {
