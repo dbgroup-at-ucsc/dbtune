@@ -132,9 +132,9 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
                     
 
             // show imbalance query & replica
-            System.out.println(" IMBALANCE REPLICA: " + div.getMaxImbalanceReplica());
-            System.out.println(" IMBALANCE QUERY: " + div.getMaxImbalanceQuery());
-            System.out.println(" NODE FAILURE: " + div.getMaxNodeFailure());
+            System.out.println(" NODE IMBALANCE: " + div.getNodeImbalance());
+            System.out.println(" QUERY IMBALANCE: " + div.getQueryImbalance());
+            System.out.println(" FAILURE IMBALANCE: " + div.getFailureImbalance());
             
             if (isShowRecommendation)
                 System.out.println(" solution: " + output);

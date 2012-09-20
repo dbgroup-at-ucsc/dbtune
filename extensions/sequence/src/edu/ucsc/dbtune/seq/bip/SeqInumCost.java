@@ -120,6 +120,69 @@ public class SeqInumCost implements Serializable {
 
         RTimerN timer = new RTimerN();
         PerfTest.startTimer();
+        InumQueryPlanDesc desc = (InumQueryPlanDesc) InumQueryPlanDesc
+                .getQueryPlanDescInstance(statement);
+        // Rt.p(id);
+        // Rt.p(statement.getSQL());
+        // Populate the INUM space
+        desc.generateQueryPlanDesc(optimizer, inumIndices);
+        PerfTest.addTimer("inum");
+        PerfTest.startTimer();
+        plugInTime += desc.pluginTime / 1000000000.0;
+        populateTime += desc.populateTime / 1000000000.0;
+        // Rt.p("BIP INUM populate time: " + timer.getSecondElapse());
+        q.plans = new SeqInumPlan[desc.getNumberOfTemplatePlans()];
+        q.baseTableUpdateCost = desc.getBaseTableUpdateCost();
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+            SeqInumPlan plan = new SeqInumPlan(q, k);
+            plan.plan=desc.plans.get(k).toString();
+            plan.internalCost = desc.getInternalPlanCost(k);
+            plan.slots = new SeqInumSlot[desc.getNumberOfSlots()];
+            for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+                SeqInumSlot slot = new SeqInumSlot(plan,i);
+                slot.fullTableScanCost = Double.MAX_VALUE;
+                for (Index index : desc.getIndexesAtSlot(i)) {
+                    timer = new RTimerN();
+                    if (index instanceof FullTableScanIndex) {
+                        slot.fullTableScanCost = desc.getAccessCost(k, index);
+                        // Rt.p(index);
+                        plugInFCount++;
+                    } else {
+                        SeqInumSlotIndexCost c = new SeqInumSlotIndexCost();
+                        c.index = indexToInumIndex.get(index);
+                        if (c.index == null)
+                            throw new SQLException("Can't map index "
+                                    + index.toString());
+                        c.cost = desc.getAccessCost(k, index);
+                        c.updateCost = desc.getUpdateCost(index);
+                        // Rt.p(index);
+                        slot.costs.add(c);
+                        // Rt
+                        // .p("BIP INUM plugin time: "
+                        // + timer.getSecondElapse());
+                    }
+                    // plugInTime += timer.getSecondElapse();
+                    plugInCount++;
+                    // Rt.p("%f %f",timer.getSecondElapse(),plugInTime);
+                }
+                plan.slots[i] = slot;
+            }
+            q.plans[k] = plan;
+        }
+        PerfTest.addTimer("inumRest");
+        return q;
+    }
+    
+    public SeqInumQuery addQuery2(SQLStatement statement) throws SQLException {
+        int id = queries.size();
+        SeqInumQuery q = new SeqInumQuery(id);
+        q.name = "Q" + id;
+        q.sql = statement;
+        queryHash.put(q.name, q);
+        queries.add(q);
+
+        RTimerN timer = new RTimerN();
+        PerfTest.startTimer();
         InumPreparedSQLStatement space = (InumPreparedSQLStatement) optimizer
                 .prepareExplain(statement);
         InumPlan[] plans = space.getTemplatePlans().toArray(new InumPlan[0]);

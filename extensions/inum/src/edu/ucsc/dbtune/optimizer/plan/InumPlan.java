@@ -371,7 +371,7 @@ public class InumPlan extends SQLStatementPlan
         Operator o = instantiate2(slot,index);
         if (o== INCOMPATIBLE)
             return Double.POSITIVE_INFINITY;
-        return o.getAccumulatedCost();
+        return o.getAccumulatedCost()*o.coefficient;
     }
     
     /**
@@ -640,7 +640,7 @@ public class InumPlan extends SQLStatementPlan
             int t=c.lastIndexOf('.');
             if (t>0)
                 c=c.substring(t+1);
-            if (c.length()>0&&!c.startsWith("$RID$"))
+            if (c.length()>0&&!c.startsWith("$RID$")&&!c.startsWith("$C"))
                 neededColumns.add(c);
         }
         while (indexScan != null) {

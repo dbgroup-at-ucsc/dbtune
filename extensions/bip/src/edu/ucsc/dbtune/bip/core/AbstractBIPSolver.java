@@ -14,6 +14,7 @@ import java.io.ObjectOutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -54,6 +55,10 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected LogListener   logger;
     protected double        objVal;
     protected double        gapObj;
+    protected boolean       communicateInumOnTheFly = false;
+    // the default value indicating that
+    // we can utilize serialized InumQueryPlanDesc 
+    // objects if necessary
     
     protected String fileQueryPlanDesc;
     
@@ -66,7 +71,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     @Override
     public void setCandidateIndexes(Set<Index> candidateIndexes) 
     {
-        this.candidateIndexes = candidateIndexes;
+        this.candidateIndexes = new HashSet<Index>(candidateIndexes);
     }
     
     @Override
@@ -79,12 +84,22 @@ public abstract class AbstractBIPSolver implements BIPSolver
     }
    
     @Override
+    public void setCommunicatingInumOnTheFly(boolean isOnTheFly)
+    {
+        this.communicateInumOnTheFly = isOnTheFly;
+    }
+    
+    @Override
     public IndexTuningOutput solve() throws Exception
     {   
         // 1. Communicate with INUM 
-        // to derive the query plan descriptions including internal cost, index access cost, etc.
+        // to derive the query plan descriptions 
+        // including internal cost, index access cost, etc.
         logger.setStartTimer();
-        populatePlanDescriptionForStatements();
+        if (communicateInumOnTheFly)
+            populatePlanDescriptionOnTheFly();
+        else 
+            populatePlanDescriptionForStatements();
         logger.onLogEvent(LogListener.EVENT_POPULATING_INUM);
         
         // 2. Build BIP    
@@ -188,6 +203,34 @@ public abstract class AbstractBIPSolver implements BIPSolver
      * @throws SQLException
      *      if the connection to INUM fails
      */
+    protected void populatePlanDescriptionOnTheFly() throws SQLException
+    {
+        queryPlanDescs = new ArrayList<QueryPlanDesc>();        
+        
+        for (int i = 0; i < workload.size(); i++) {
+            // Set the corresponding SQL statement
+            QueryPlanDesc desc = InumQueryPlanDesc.getQueryPlanDescInstance(workload.get(i));
+            // Populate the INUM space 
+            desc.generateQueryPlanDesc(inumOptimizer, candidateIndexes);            
+            queryPlanDescs.add(desc);
+        }
+            
+        // Add FTS indexes
+        for (QueryPlanDesc desc : queryPlanDescs)
+             candidateIndexes.addAll(desc.getFullTableScanIndexes());
+        
+    }
+    
+    /**
+     * Communicate with INUM to populate the query plan description 
+     * (e.g, internal plan cost, index access costs, etc.)
+     * for each statement in the given workload. Note that if the plan
+     * has been serialized into files before, we simply read 
+     * from the corresponding files. 
+     *      
+     * @throws SQLException
+     *      if the connection to INUM fails
+     */
     protected void populatePlanDescriptionForStatements() throws SQLException
     {   
         File file;
@@ -228,6 +271,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
             for (QueryPlanDesc desc : queryPlanDescs)
                 candidateIndexes.addAll(desc.getFullTableScanIndexes());
         }
+        
     }
     
     /**

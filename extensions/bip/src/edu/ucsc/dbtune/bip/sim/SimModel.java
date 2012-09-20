@@ -191,7 +191,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
             for (int w = 0; w < W; w++)
                 poolVariables.createAndStore(VAR_PRESENT, w, 0, 0, index.getId());                      
         
-        
+        /*
         // for TYPE_Y, TYPE_X
         for (QueryPlanDesc desc : queryPlanDescs){
             
@@ -203,13 +203,13 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                     poolVariables.createAndStore(VAR_Y, w, q, k, 0);
                     
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++)
-                        for (Index index : desc.getIndexesAtSlot(i)) 
+                    for (int i = 0; i < desc.getNumberOfSlots(null); i++)
+                        for (Index index : desc.getIndexesAtSlot(null, i)) 
                             poolVariables.createAndStore(VAR_X, w, q, k, index.getId());
                            
             }
         }
-        
+        */
         super.createCplexVariable(poolVariables.variables());
     }
     
@@ -319,7 +319,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
         IloLinearNumExpr expr = cplex.linearNumExpr(); 
         int id;
         int q;
-        
+        /*
         for (QueryPlanDesc desc : queryPlanDescs){
             
             q = desc.getStatementID();
@@ -335,18 +335,18 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                 // Index access cost                            
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) { 
                     
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+                    for (int i = 0; i < desc.getNumberOfSlots(null); i++) {
                         
-                        for (Index index : desc.getIndexesAtSlot(i)) {
+                        for (Index index : desc.getIndexesAtSlot(null, i)) {
                             
                             id = poolVariables.get(VAR_X, w, q, k, index.getId()).getId();
-                            expr.addTerm(desc.getAccessCost(k, index), cplexVar.get(id));        
+                            expr.addTerm(desc.getAccessCost(k, null, index), cplexVar.get(id));        
                         }
                     }
                 }
             }
         }
-        
+        */
         cplex.addMinimize(expr);
     }
     
@@ -366,7 +366,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
         IloLinearNumExpr expr;
         int id;
         int idY;
-        
+        /*
         for (QueryPlanDesc desc : queryPlanDescs){
             int q = desc.getStatementID();
         
@@ -388,12 +388,12 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                     
                     idY = poolVariables.get(VAR_Y, w, q, k, 0).getId();
                     
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+                    for (int i = 0; i < desc.getNumberOfSlots(null); i++) {
                         
                         expr = cplex.linearNumExpr(); 
                         expr.addTerm(-1, cplexVar.get(idY));
                         
-                        for (Index index : desc.getIndexesAtSlot(i)) {
+                        for (Index index : desc.getIndexesAtSlot(null, i)) {
                             
                             id = poolVariables.get(VAR_X, w, q, k, index.getId()).getId();
                             expr.addTerm(1, cplexVar.get(id));
@@ -405,6 +405,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                 }       
             }
         }
+        */
     }
     
     /**
@@ -416,7 +417,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
         IloLinearNumExpr expr;
         int id;
         int idPresent;
-        
+        /*
         for (QueryPlanDesc desc : queryPlanDescs){
             int q = desc.getStatementID();
         
@@ -424,11 +425,11 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                 
                 for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
                     
-                    for (int i = 0; i < desc.getNumberOfSlots(); i++) {
+                    for (int i = 0; i < desc.getNumberOfSlots(null); i++) {
                         
                         //for (Index index : desc.getListIndexesAtSlot(i)) {
                         // NOT constraint for FTS
-                        for (Index index : desc.getIndexesWithoutFTSAtSlot(i)) {
+                        for (Index index : desc.getIndexesWithoutFTSAtSlot(null, i)) {
                             
                             expr = cplex.linearNumExpr(); 
                             id = poolVariables.get(VAR_X, w, q, k, index.getId()).getId();
@@ -445,6 +446,7 @@ public class SimModel extends AbstractBIPSolver implements ScheduleBIPSolver
                 }       
             }
         }
+        */
     }
     /**
      * Time constraint on the materialized indexes at all maintenance window

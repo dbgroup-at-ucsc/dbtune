@@ -46,16 +46,18 @@ public class DivVariablePool extends AbstractBIPVariablePool
      *      The replica ID
      * @param queryId
      *      The identifier of the processing query 
-     * @param k
+     * @param planId
      *      The template plan identifier
-     * @param a 
+     * @param slotId
+     *      The slot Id     
+     * @param idx 
      *      The index ID
      * 
      * @return
      *      The variable object
      */
     public DivVariable createAndStore(int typeVariable, int replica, int queryId, 
-                                      int k, int a)
+                                      int planId, int slotId, int idx)
     {
         // Name of variables in the form:
         //
@@ -64,7 +66,7 @@ public class DivVariablePool extends AbstractBIPVariablePool
         // yo(r, q, k), xo(r, q, k, i, a), u(r, q, k, i, a), 
         // sum_y(r, q), combine_y(r, q, k), combine_x(r, q, k, i, a)
         //
-        
+
         StringBuilder varName = new StringBuilder();
         
         varName.append(strHeaderVariable[typeVariable])
@@ -78,8 +80,7 @@ public class DivVariablePool extends AbstractBIPVariablePool
             || typeVariable == VAR_COMBINE_X || typeVariable == VAR_COMBINE_Y) {
             
             nameComponent.add(Integer.toString(queryId));
-            nameComponent.add(Integer.toString(k));
-        
+            nameComponent.add(Integer.toString(planId));
         }
         
         if (typeVariable == VAR_SUM_Y)
@@ -88,8 +89,10 @@ public class DivVariablePool extends AbstractBIPVariablePool
         if (typeVariable == VAR_X || typeVariable == VAR_S 
             || typeVariable == VAR_DIV || typeVariable == VAR_MOD
             || typeVariable == VAR_XO || typeVariable == VAR_U
-            || typeVariable == VAR_COMBINE_X)
-            nameComponent.add(Integer.toString(a));
+            || typeVariable == VAR_COMBINE_X) {
+            nameComponent.add(Integer.toString(slotId));
+            nameComponent.add(Integer.toString(idx));
+        }
         
         varName.append(Strings.concatenate(",", nameComponent))
                .append(")");
@@ -97,9 +100,10 @@ public class DivVariablePool extends AbstractBIPVariablePool
         DivVariable var = new DivVariable(varName.toString(), typeVariable, replica);
         add(var);
         
-        // Create a mapping  
-        DivVariableIndicator iai = new DivVariableIndicator(typeVariable, replica, queryId, k, a);
-        mapHighDimensionVar.put(iai, var);
+        // Create a mapping
+        mapHighDimensionVar.put
+                (new DivVariableIndicator(typeVariable, replica, queryId, 
+                            planId, slotId, idx), var);
         
         return var;
     }
@@ -111,20 +115,22 @@ public class DivVariablePool extends AbstractBIPVariablePool
      *      the type of variables defined in the model
      * @param replica
      *      replica ID
-     * @queryId     
+     * @param queryId     
      *      the ID of the select-statement      
-     * @param k
+     * @param planId
      *      template plan ID
-     * @param i
+     * @param slotId
      *      slot ID
-     * @param a
+     * @param idx
      *      index's ID
      * @return
      *      BIP Variable
      */
-    public DivVariable get(int typeVariable, int replica, int queryId, int k, int a)
+    public DivVariable get(int typeVariable, int replica, int queryId, 
+                        int planId, int slotId, int idx)
     {   
-        DivVariableIndicator iai = new DivVariableIndicator(typeVariable, replica, queryId, k, a);
-        return mapHighDimensionVar.get(iai);
+        return mapHighDimensionVar.get(new DivVariableIndicator
+                                            (typeVariable, replica, queryId, 
+                                            planId, slotId, idx));
     }
 }

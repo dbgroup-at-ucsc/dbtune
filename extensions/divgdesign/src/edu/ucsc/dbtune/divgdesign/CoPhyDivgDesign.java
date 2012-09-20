@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.divgdesign;
 
-import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,18 +97,6 @@ public class CoPhyDivgDesign extends DivgDesign
         // record the INUM time and analysis time
         timeInum = logger.getRunningTime(EVENT_POPULATING_INUM);
         timeAnalysis = runningTime - timeInum;
-        
-        // remove the file of QueryPlanDesc
-        String fileQueryPlanDesc = environment.getWorkloadsFoldername() + "/query-plan-desc.bin";
-        File file = new File(fileQueryPlanDesc);
-        if (file.exists())
-            file.delete();
-        
-        // remove the file of candidate indexes
-        String fileIndexes = environment.getWorkloadsFoldername() + "/candiate-optimizer.bin";
-        file = new File(fileIndexes);
-        if (file.exists())
-            file.delete();
     }
     
        
@@ -118,8 +105,6 @@ public class CoPhyDivgDesign extends DivgDesign
             throws Exception 
     {
         Set<Index> candidates = new HashSet<Index>();
-        String fileQueryPlanDesc;
-        File file;
         
         // check if we already generate candidate for this statement before
         for (SQLStatement sql : sqls)
@@ -132,12 +117,7 @@ public class CoPhyDivgDesign extends DivgDesign
         cophy.setOptimizer(io);
         cophy.setSpaceBudget(B);
         cophy.setLogListenter(logger);
-        
-        // remove the file of QueryPlanDesc
-        fileQueryPlanDesc = environment.getWorkloadsFoldername() + "/query-plan-desc.bin";
-        file = new File(fileQueryPlanDesc);
-        if (file.exists())
-            file.delete();
+        cophy.setCommunicatingInumOnTheFly(true);
         
         return cophy.solve().getRecommendation();
     }

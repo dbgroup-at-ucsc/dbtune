@@ -152,6 +152,37 @@ public class InumTest2 {
         System.exit(0);
     }
 
+    static void formatTpcds() throws Exception {
+        String tpcds = Rt.readFile(new File(
+                "resources/workloads/db2/tpcds/db2.sql"));
+        String[] ss = { "customer_address", "customer_demographics",
+                "date_dim", "warehouse", "ship_mode", "time_dim", "reason",
+                "income_band", "item", "store", "call_center", "customer",
+                "web_site", "store_returns", "household_demographics",
+                "web_page", "promotion", "catalog_page", "inventory",
+                "catalog_returns", "web_returns", "web_sales", "catalog_sales",
+                "store_sales", };
+        for (String s : ss) {
+            next: while (true) {
+                for (int i = 0; i < tpcds.length() - s.length(); i++) {
+                    if (tpcds.substring(i).startsWith(s)) {
+                        char c1 = tpcds.charAt(i - 1);
+                        char c2 = tpcds.charAt(i + s.length());
+                        if ((c1 == ' ' || c1 == ',' || c1 == '(' || c1 == '\n' || c1 == '\t')
+                                && (c2 == ' ' || c2 == '.'|| c2 == ',' || c2 == '\n' || c2 == '\t')) {
+                            tpcds = tpcds.substring(0, i) + "tpcds."
+                                    + tpcds.substring(i);
+                            continue next;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+        Rt.np(tpcds);
+        System.exit(0);
+    }
+
     static Index createIndex(DatabaseSystem db, String cs) throws SQLException {
         if (cs.startsWith("["))
             cs = cs.substring(1);
@@ -422,16 +453,26 @@ public class InumTest2 {
 
         String tpch = Rt.readFile(new File(
                 "resources/workloads/db2/tpch/complete.sql"));
-        String tpcds = Rt.readFile(new File(
+        String tpcds25 = Rt.readFile(new File(
                 "resources/workloads/db2/tpcds-inum/workload.sql"));
+        String tpcds = Rt.readFile(new File(
+                "resources/workloads/db2/tpcds/db2.sql"));
+        String update = Rt.readFile(new File(
+                "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
         // query = Rt.readFile(new File(
         // "resources/workloads/db2/tpch-inum/workload.sql"));
-//        sqlTest(tpch10g, tpch, 3);
+         sqlTest(tpch10g, tpch, 1);
+        // sqlTest(
+        // test,
+        // "SELECT 3, COUNT(*)  FROM tpch.lineitem WHERE  tpch.lineitem.l_tax BETWEEN 0.01596699754645524 AND 0.029823160830179565 AND tpch.lineitem.l_extendedprice BETWEEN 19178.598547906164 AND 19756.721297981876 AND tpch.lineitem.l_receiptdate BETWEEN 'Thu Mar 24 14:48:29 PST 1994' AND 'Mon Jan 30 14:48:29 PST 1995';",
+        // 0);
         // compareSubset(tpch10g, tpch, "tpch10g");
         // compareSubset(test, tpcds, "tpcds");
         // compareSubset(test, tpch);
-        compareWorkload(tpch10g, tpch, "tpch");
-        compareWorkload(test, tpcds, "tpcds");
+        // compareSubset(test, update,"update");
+        // compareWorkload(test, tpch, "tpch");
+//        compareWorkload(test, tpcds, "tpcds");
+        // compareWorkload(test, update, "update");
         test.getConnection().close();
         tpch10g.getConnection().close();
     }
@@ -451,17 +492,21 @@ public class InumTest2 {
         CandidateGenerator candGen = new OptimizerCandidateGenerator(
                 getBaseOptimizer(db.getOptimizer()));
         indexes = candGen.generate(workload);
+        Rt.np("Generated Indexes:");
         for (Index index : indexes) {
             Rt.np(index);
         }
 
         String sql = workload.get(queryId).getSQL();
+        Rt.np("SQL:");
         Rt.p(sql);
 
-//        ExplainTables.dump=true;
+        // ExplainTables.dump=true;
         ExplainedSQLStatement db2plan = db2optimizer.explain(sql, indexes);
+        Rt.np("DB2 plan:");
         Rt.p(db2plan);
-//        System.exit(0);
+        // System.exit(0);
+        Rt.np("Index used by DB2 plan:");
         for (Index index2 : db2plan.getUsedConfiguration())
             Rt.np(index2);
         InumPreparedSQLStatement space;
@@ -471,21 +516,25 @@ public class InumTest2 {
                 .get(queryId));
         ExplainedSQLStatement inumPlan = space.explain(indexes);
         SQLStatementPlan plan = inumPlan.getPlan();
+        Rt.np("INUM plan:");
         Rt.p(plan);
         InumPlan templatePlan = (InumPlan) plan.templatePlan;
+        Rt.np("Template plan:");
         Rt.p(templatePlan);
         Rt.p(templatePlan.orgPlan);
+        Rt.np("Index used by INUM:");
         for (Index index2 : inumPlan.getUsedConfiguration())
             Rt.np(index2);
 
-        Rt.p("%,.0f",db2plan.getTotalCost());
-        Rt.p("%,.0f",inumPlan.getTotalCost());
+        Rt.p("DB2: %,.0f", db2plan.getTotalCost());
+        Rt.p("INUM: %,.0f", inumPlan.getTotalCost());
         // Rt.p(plan);
 
         System.exit(0);
     }
 
     public static void main(String[] args) throws Exception {
+//        formatTpcds();
         // analyzeNLJ();
 
         // query = Rt.readFile(new File(

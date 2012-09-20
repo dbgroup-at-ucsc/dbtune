@@ -258,9 +258,9 @@ public final class EnvironmentProperties
      */
     public static final String IMBALANCE_FACTOR = "imbalance.factor";
     
-    public static final String IMBALANCE_QUERY = "imbalance.query";
-    public static final String IMBALANCE_REPLICA = "imbalance.replica";
-    public static final String NODE_FAILURE = "node.failure";
+    public static final String QUERY_IMBALANCE = "query.imbalance";
+    public static final String NODE_IMBALANCE = "node.imbalance";
+    public static final String FAILURE_IMBALANCE = "failure.imbalance";
     
     
     /**

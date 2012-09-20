@@ -1,7 +1,6 @@
 package edu.ucsc.dbtune.bip.div;
 
 
-
 public class SortableObject implements Comparable<SortableObject>
 {
     private int id;

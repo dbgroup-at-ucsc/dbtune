@@ -69,4 +69,10 @@ public class BIPVariable
     {
         return inMemoryID;
     }
+    
+    @Override
+    public String toString()
+    {
+        return getName() + " " + getId();
+    }
 }
