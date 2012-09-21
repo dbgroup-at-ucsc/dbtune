@@ -57,16 +57,28 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected double        objVal;
     protected double        gapObj;
     
+    // control knob
     // the default value indicating that
     // we can utilize serialized InumQueryPlanDesc 
     // objects if necessary
     protected boolean communicateInumOnTheFly = false;
     // default value: find optimal solution
     protected boolean isCheckFeasible = false;
-    
+    // default setting QueryPlanDesc
+    protected boolean isSetPlanDesc = false;
     
     protected String fileQueryPlanDesc;
     
+    
+    /**
+     * Set the list of query plan descs
+     * @param descs
+     */
+    public void setQueryPlanDesc(List<QueryPlanDesc> descs)
+    {
+        this.queryPlanDescs = descs;
+        this.isSetPlanDesc = true;
+    }
     @Override    
     public void setWorkload(Workload wl)
     {
@@ -101,10 +113,13 @@ public abstract class AbstractBIPSolver implements BIPSolver
         // to derive the query plan descriptions 
         // including internal cost, index access cost, etc.
         logger.setStartTimer();
-        if (communicateInumOnTheFly)
-            populatePlanDescriptionOnTheFly();
-        else 
-            populatePlanDescriptionForStatements();
+        // only popuplate the plan descs if they have not been assigned
+        if (!isSetPlanDesc){
+            if (communicateInumOnTheFly)
+                populatePlanDescriptionOnTheFly();
+            else 
+                populatePlanDescriptionForStatements();
+        }
         logger.onLogEvent(LogListener.EVENT_POPULATING_INUM);
         
         // 2. Build BIP    
