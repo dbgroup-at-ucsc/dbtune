@@ -3,6 +3,8 @@ package edu.ucsc.dbtune.bip;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Test;
+
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.bip.util.LatexGenerator.Plot;
 import edu.ucsc.dbtune.util.Rt;
@@ -11,6 +13,49 @@ import edu.ucsc.dbtune.workload.Workload;
 
 public class DivElasticPaperTest extends DIVPaper 
 {
+    // number of statements to create the initial configuration
+    protected static int numStatementsInitialConfiguration;
+    // number of statements to generate graphs 
+    protected static int numStatementsOnline;
+    
+    /**
+    *
+    * Generate paper results
+    */
+   @Test
+   public void main() throws Exception
+   {
+       // 1. initialize file locations & necessary 
+       // data structures
+       initialize();
+       
+       // get database instances, candidate indexes
+       getEnvironmentParameters(dbNames[0], wlNames[0]);
+       
+       // get parameters
+       setParameters();
+       
+       // set control knobs
+       controlKnobs();
+       
+       // default parameter
+       nReplicas = 3;
+       B = 2.5 * Math.pow(2, 30);
+       getInitialConfiguration();
+   }
+    
+   /**
+    * Set the control knobs
+    */
+   protected static void controlKnobs()
+   {
+       // control knobs
+       numStatementsInitialConfiguration = 10;
+       numStatementsOnline = workload.size();
+       
+       // initialize set of QueryPlanDesc
+   }
+    
     /**
      * Testing the elasticity aspect
      * @param dbName

@@ -48,12 +48,14 @@ public class DivBIPFunctionalTest extends DivTestSetting
                 
                 
         // 3. Test the benefit of indexes
-        //compareDB2InumQueryCosts(workload, candidates);
+        compareDB2InumQueryCosts(workload, candidates);
         
+        /*
         // 3. test divergent
         for (double B1 : listBudgets) 
             for (int n : listNumberReplicas)
                 testDiv(n, B1, false);
+                */
     }
     
     
@@ -162,8 +164,15 @@ public class DivBIPFunctionalTest extends DivTestSetting
             div.exportCplexToFile(en.getWorkloadsFoldername() + "/test.lp");
         
         if (output != null) {
-            divConf = (DivConfiguration) output;  
-            return getDB2CostDivConf();
+            divConf = (DivConfiguration) output;
+            double costDB2 = getDB2CostDivConf();
+            Rt.p(" n = " + _n + " B = " + _B
+                    + " cost in INUM = "
+                    + div.getObjValue());
+            Rt.p(" cost in DB2 = " + costDB2);
+            Rt.p(" RATIO = " + (costDB2 / div.getObjValue()));
+            
+            return costDB2;
         }
         else {
             Rt.p(" NO SOLUTION ");
