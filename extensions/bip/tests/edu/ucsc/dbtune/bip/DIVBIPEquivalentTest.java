@@ -19,6 +19,9 @@ public class DIVBIPEquivalentTest extends DIVPaper
         // 2. special data structures for this class
         entries = new HashMap<DivPaperEntry, Double>();
         divFile = new File(rawDataDir, DIV_DB2_FILE);
+        divFile.delete();
+        divFile = new File(rawDataDir, DIV_DB2_FILE);
+        divFile.createNewFile();
         
         // experiment for DIV equivalent to BIP
         for (int i = 0; i < dbNames.length; i++) 

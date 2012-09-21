@@ -79,7 +79,7 @@ public class WFITFunctionalTest
             for (SQLStatement sql : wl) {
                 wfit.process(sql);
                 System.out.println("Recommendation: ");
-                for (Index i : wfit.getRecommendation())
+                for (Index i : wfit.getRecommendation(-1))
                     System.out.println("   " + getCreateStatement(i));
             }
         }

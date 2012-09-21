@@ -20,6 +20,10 @@ public class UNIFDB2AdvisorTest extends DIVPaper
         // 2. special data structures for this class
         entries = new HashMap<DivPaperEntry, Double>();
         unifFile = new File(rawDataDir, UNIF_DB2_FILE);
+        unifFile.delete();
+        unifFile = new File(rawDataDir, UNIF_DB2_FILE);
+        unifFile.createNewFile();
+        
         
         // 3. for each (dbname, wlname) derive 
         // the UNIF cost

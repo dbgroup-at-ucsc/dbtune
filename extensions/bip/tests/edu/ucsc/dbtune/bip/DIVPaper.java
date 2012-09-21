@@ -27,6 +27,7 @@ import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.util.LatexGenerator;
 import edu.ucsc.dbtune.bip.util.LatexGenerator.Plot;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.GnuPlotLine;
@@ -55,8 +56,8 @@ public class DIVPaper extends DivTestSetting
     protected static DivConfiguration initialConf;
     protected static int nDeploys;
     
-    protected static String dbNames[] = {"test", "test"}; 
-    protected static String wlNames[] = {"tpcds", "online-benchmark-100"};
+    protected static String dbNames[] = {"test"}; 
+    protected static String wlNames[] = {"tpcds"};
     
     protected static Map<DivPaperEntry, Double> entries;
     
@@ -116,8 +117,7 @@ public class DIVPaper extends DivTestSetting
      * Read the data from files and draw the graphs
      */
     public static void drawGraphDIVEquivBIP(String dbName, String wlName) throws Exception
-    {
-        
+    {   
         DivPaperEntry entry;
         
         // 1. Read the result from UNIF file
@@ -127,18 +127,18 @@ public class DIVPaper extends DivTestSetting
         // 2. Read the result from DIV file
         divFile = new File(rawDataDir, DIV_DB2_FILE);
         mapDiv = readDivResult(divFile);
-        
+        Rt.p(" map div: " + mapDiv);
         // 2. Read the result from DIV file
-        designFile = new File(rawDataDir, DESIGN_DB2_FILE);
-        mapDesign = readDivResult(designFile);
+        //designFile = new File(rawDataDir, DESIGN_DB2_FILE);
+        //mapDesign = readDivResult(designFile);
         
         String[] competitors;
         boolean drawRatio = false;
         // 3. draw graphs
         if (drawRatio)
-            competitors = new String[] {"1 - DIV-BIP/UNIF", " 1 - DIVGDESIGN/UNIF"};
+            competitors = new String[] {"1 - DIV-BIP/UNIF"}; //, " 1 - DIVGDESIGN/UNIF"};
         else 
-            competitors = new String[] {"DIV-BIP", "DIVGDESIGN", "UNIF"};
+            competitors = new String[] {"DIV-BIP", "UNIF"};
         int numX;
         double ratio; 
         long budget;
@@ -166,7 +166,10 @@ public class DIVPaper extends DivTestSetting
             ratio = (double) B / Math.pow(2, 30) / 10;
             plotName = dbName + "_" + wlName + "_space_" + Double.toString(ratio) + "x";
             xname = "# replicas";
-            yname = "TotalCost improvement (%)";
+            if (drawRatio)
+                yname = "TotalCost improvement (%)";
+            else 
+                yname = "TotalCost";
          
             drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                     competitors, figsDir, points);
@@ -175,6 +178,7 @@ public class DIVPaper extends DivTestSetting
                     " Database = " + dbName + " workload = " + wlName +
                     " Varying \\# replicas, B = " + Double.toString(ratio) + "x", 0.5));
         }
+        
         
         // varying space budget
         for (int n : listNumberReplicas) {
@@ -200,8 +204,11 @@ public class DIVPaper extends DivTestSetting
             
             plotName = dbName + "_" + wlName + "_number_replica" + Integer.toString(n);
             xname = "Space budget";
-            yname = "TotalCost improvement (%)";
-         
+            if (drawRatio)
+                yname = "TotalCost improvement (%)";
+            else 
+                yname = "TotalCost";
+            
             drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                     competitors, figsDir, points);
             
@@ -209,7 +216,6 @@ public class DIVPaper extends DivTestSetting
                     " Database = " + dbName + " workload = " + wlName +
                     " Varying space budgets, n = " + Integer.toString(n), 0.5));
         }
-        
     }
     
     
@@ -226,30 +232,31 @@ public class DIVPaper extends DivTestSetting
         
         costDiv = mapDiv.get(entry);
         costUnif = mapUnif.get(entry);
-        costDesign = mapDesign.get(entry);
+        //costDesign = mapDesign.get(entry);
         
         Rt.p(" entry: " + entry);
         Rt.p(" cost UNIF = " + (costUnif / Math.pow(10, 6)));
         Rt.p(" cost DIV = " + (costDiv / Math.pow(10, 6)));
-        Rt.p(" cost DESIGN = " + (costDesign / Math.pow(10, 6)));
+        //Rt.p(" cost DESIGN = " + (costDesign / Math.pow(10, 6)));
         
         ratioDiv = 1 - (double) costDiv / costUnif;
-        ratioDesign = 1 - (double) costDesign / costUnif;
+        //ratioDesign = 1 - (double) costDesign / costUnif;
         ratioDiv = ratioDiv * 100;
-        ratioDesign = ratioDesign * 100;
+        //ratioDesign = ratioDesign * 100;
         if (ratioDiv < 0.0) {
             Rt.p(" watch out, entry = " + entry
                     + ", ratio DIV = " + ratioDiv);
             ratioDiv = 0.05;  
         }
-        
+        /*
         if (ratioDesign < 0.0){
             Rt.p("watch out, entry = " + entry 
                     + ", ratioDesign = " + ratioDesign);
             ratioDesign = 0.05;
         }
+        */
         points.add(new Point(xcoordinate, ratioDiv));
-        points.add(new Point(xcoordinate, ratioDesign));
+        //points.add(new Point(xcoordinate, ratioDesign));
     }
     
     /**
@@ -261,14 +268,14 @@ public class DIVPaper extends DivTestSetting
     protected static void addPointDIVEquivBIP(double xcoordinate, DivPaperEntry entry, List<Point> points)
     {
         double costDiv, costUnif, costDesign;
-         
+        Rt.p(" entry = " + entry); 
         costDiv = mapDiv.get(entry);
         costUnif = mapUnif.get(entry);
-        costDesign = mapDesign.get(entry);
+        //costDesign = mapDesign.get(entry);
         
         
         points.add(new Point(xcoordinate, costDiv));
-        points.add(new Point(xcoordinate, costDesign));
+        //points.add(new Point(xcoordinate, costDesign));
         points.add(new Point(xcoordinate, costUnif));
     }
     
@@ -301,6 +308,10 @@ public class DIVPaper extends DivTestSetting
         db2Advis = new DB2Advisor(db);
         candidates = readCandidateIndexes(db2Advis);
         
+        long totalSize = 0;
+        for (Index i : candidates)
+            totalSize += i.getBytes();
+        
         fUpdate = 1;
         fQuery = 1;
         sf = 15000;
@@ -323,9 +334,10 @@ public class DIVPaper extends DivTestSetting
         
         div = new DivBIP();
         
-        Rt.p("DIVpaper: # statements in the workload: " + workload.size()
-                + " # candidates in the workload: " + candidates.size()
-                + " workload folder: " + folder);
+        Rt.p("DIVpaper: # statements in the workload =  " + workload.size()
+                + " # candidates in the workload = " + candidates.size()
+                + " Total size = " + (totalSize / Math.pow(2, 20))
+                + " workload folder = " + folder);
     }
     
     /**
@@ -336,7 +348,7 @@ public class DIVPaper extends DivTestSetting
     public static void setParameters() throws Exception
     {   
         // Debugging parameters
-        isExportToFile = true;
+        isExportToFile = false;
         isTestCost = false;
         isShowRecommendation = true;        
         isGetAverage = false;
@@ -346,9 +358,10 @@ public class DIVPaper extends DivTestSetting
         // space budget -- 10GB
         double tenGB = 10 * Math.pow(2, 30);
         listBudgets = new ArrayList<Double>();
+        
         for (int i = -2; i <= 0; i++)
             listBudgets.add(tenGB * Math.pow(2, i));
-        listBudgets.add(10 * tenGB);
+        listBudgets.add(5 * tenGB);
         
         // number of replicas
         listNumberReplicas = new ArrayList<Integer>();
@@ -433,7 +446,7 @@ public class DIVPaper extends DivTestSetting
         ObjectOutputStream write;
         
         try {
-            FileOutputStream fileOut = new FileOutputStream(file);
+            FileOutputStream fileOut = new FileOutputStream(file, false);
             write = new ObjectOutputStream(fileOut);
             write.writeObject(maps);
             write.close();
