@@ -119,14 +119,22 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
     @Override
     public IndexTuningOutput solve() throws Exception
     {   
-        // 1. Communicate with INUM 
+     // 1. Communicate with INUM 
         // to derive the query plan descriptions 
         // including internal cost, index access cost, etc.
         logger.setStartTimer();
-        if (communicateInumOnTheFly)
-            populatePlanDescriptionOnTheFly();
-        else 
-            populatePlanDescriptionForStatements();
+        // only popuplate the plan descs if they have not been assigned
+        if (!isSetPlanDesc){
+            if (communicateInumOnTheFly)
+                populatePlanDescriptionOnTheFly();
+            else 
+                populatePlanDescriptionForStatements();
+        } else {
+            // re-use the set of query plan description
+            candidateIndexes.clear();
+            for (QueryPlanDesc desc : queryPlanDescs)
+                candidateIndexes.addAll(desc.getIndexes());
+        }
         logger.onLogEvent(LogListener.EVENT_POPULATING_INUM);
         
         // 2. Build BIP    

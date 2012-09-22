@@ -37,6 +37,14 @@ public class DivVariablePool extends AbstractBIPVariablePool
     }
     
     /**
+     * Clear all the data structures used
+     */
+    public void clear()
+    {
+        mapHighDimensionVar.clear();
+    }
+    
+    /**
      * 
      * Construct the variable name.   
      *  

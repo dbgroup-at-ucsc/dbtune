@@ -9,7 +9,9 @@ import java.util.Map;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
+import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
@@ -21,6 +23,18 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
     protected DivConfiguration initialConf; 
     // map the cost of statements w.r.t  initial configuration
     protected Map<Integer, Double> mapStmtInitialCost;
+    protected double initialCost;
+    protected boolean isReconfiguration;
+    
+    // The threshold to raise an alert
+    protected double threshold = 0.5;
+    // Number of consecutive times that 
+    protected int maxNumOverThreshod = 4;
+    
+    // counter
+    protected int numOverThreshold;
+    
+    
     
     @Override
     protected void buildBIP() 
@@ -34,6 +48,16 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
         throw new RuntimeException("This method is not applicable");
     }
     
+    @Override
+    public void setWindowDuration(int w) 
+    {
+        window = w;
+        startID = 0;
+        endID = -1;
+        
+        numOverThreshold = 0;
+    }
+    
     /**
      * Populate the set of query plan descriptions
      * @throws Exception
@@ -44,9 +68,13 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
         super.populatePlanDescriptionForStatements();
     }
 
+    // TODO: check feasibility instead of compute
+    // the actual improvement
     @Override
     public void next() throws Exception
     {
+        logger.setStartTimer();
+        
         // Advance one more statement
         endID++;
         if (endID >= workload.size())
@@ -63,16 +91,46 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
         // Set the set of query plan description
         divBIP.setQueryPlanDesc(descs);
         divBIP.solve();
+        logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
+        
+        computeInitialCost();
+        double improvementRatio = 1 - getTotalCost() / initialCost;
+        if (improvementRatio >= threshold)
+            numOverThreshold++;
+        else  // reset
+            numOverThreshold = 0;
+        Rt.p(" improvement ratio: " + improvementRatio
+                + " num over treshold: " + numOverThreshold);
+        if (numOverThreshold >= maxNumOverThreshod){
+            // reconfiguration
+            isReconfiguration = true;
+            initialConf = (DivConfiguration) divBIP.getOutput();
+            
+            // reset
+            mapStmtInitialCost.clear();
+            numOverThreshold = 0;
+        } else 
+            isReconfiguration = false;
+        
+        // clear cache
+        divBIP.clear();
     }
 
-    @Override
-    public void setWindowDuration(int w) 
+    /**
+     * Retrieve list of query plan desc
+     * @param startID
+     * @param endID
+     * @return
+     */
+    public List<QueryPlanDesc> getQueryPlanDescs(int startID, int endID)
     {
-        window = w;
-        startID = 0;
-        endID = -1;
+        List<QueryPlanDesc> descs = new ArrayList<QueryPlanDesc>();
+        for (int id = startID; id <= endID; id++)
+            descs.add(this.queryPlanDescs.get(id));
+        
+        return descs;
     }
-
+    
     @Override
     public double getTotalCost() 
     {   
@@ -81,19 +139,29 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
 
     @Override
     public double getTotalCostInitialConfiguration() throws Exception
+    {   
+        return initialCost;
+    }
+    
+    /**
+     * Compute initial cost
+     * @throws Exception
+     */
+    protected void computeInitialCost() throws Exception
     {
-        double totalCost = 0.0;
+        logger.setStartTimer();
+        initialCost = 0.0;
         double cost;
         for (int id = startID; id <= endID; id++){
-            if (this.mapStmtInitialCost.containsKey(id))
-                totalCost += this.mapStmtInitialCost.get(id);
+            if (mapStmtInitialCost.containsKey(id))
+                initialCost += mapStmtInitialCost.get(id);
             else  {
-                cost = this.computeInitialCost(workload.get(id));
-                this.mapStmtInitialCost.put(id, cost);
-                totalCost += cost;
+                cost = computeInitialCost(workload.get(id));
+                mapStmtInitialCost.put(id, cost);
+                initialCost += cost;
             }
         }
-        return totalCost;
+        logger.onLogEvent(LogListener.EVENT_POPULATING_INUM);
     }
     
     /**
@@ -113,6 +181,8 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
      */
     public void setDivBIP(DivBIP divBIP)
     {
+        // TODO: might need to implement copy constructor
+        // for DIVBIP
         this.divBIP = divBIP;
     }
     
@@ -145,4 +215,9 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
         return (double) cost / initialConf.getLoadFactor();
     }
 
+    @Override
+    public boolean isNeedToReconfiguration()
+    {
+        return isReconfiguration;
+    }
 }

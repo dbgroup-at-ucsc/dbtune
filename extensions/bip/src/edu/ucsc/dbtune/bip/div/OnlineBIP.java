@@ -1,9 +1,5 @@
 package edu.ucsc.dbtune.bip.div;
 
-import java.util.List;
-
-import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
-
 public interface OnlineBIP 
 {
     /**
@@ -36,4 +32,9 @@ public interface OnlineBIP
      * @return
      */
     double getTotalCostInitialConfiguration() throws Exception;
+    
+    /**
+     * Check if we need to re-configuration
+     */
+    boolean isNeedToReconfiguration();
 }
