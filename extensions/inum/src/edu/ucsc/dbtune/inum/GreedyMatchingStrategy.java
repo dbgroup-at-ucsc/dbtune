@@ -84,6 +84,7 @@ public class GreedyMatchingStrategy extends AbstractMatchingStrategy
                 bestAtomicConfiguration.add(bestIndexForSlot);
             }
 
+//            Rt.p(template);
             if (bestAtomicConfiguration.size() != slots.size()) {
                 // not all indexes where compatible, check the next template
                 continue;
