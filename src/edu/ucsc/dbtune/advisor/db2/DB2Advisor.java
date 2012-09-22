@@ -6,8 +6,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import java.util.Map;
@@ -76,8 +78,11 @@ public class DB2Advisor extends Advisor
      */
     @Override
     public void process(SQLStatement sql) throws SQLException
-    {
-        throw new SQLException("Can't recommend single statements");
+    {   
+        List<SQLStatement> sqls = new ArrayList<SQLStatement>();
+        sqls.add(sql);
+        Workload wl = new Workload(sqls);
+        process(wl);
     }
 
     /**
@@ -127,9 +132,19 @@ public class DB2Advisor extends Advisor
         
         Set<ByContentIndex> unique = new HashSet<ByContentIndex>();
         
-        for (Index i : DB2Optimizer.readAdviseIndexTable(dbms.getConnection(), dbms.getCatalog(), indexBytes))
-            unique.add(new ByContentIndex(i));
+        DB2Optimizer optimizer;
+        if (dbms.getOptimizer() instanceof DB2Optimizer)
+            optimizer = (DB2Optimizer) dbms.getOptimizer();
+        else 
+            optimizer = (DB2Optimizer)dbms.getOptimizer().getDelegate();
         
+        // TODO: add a knob when we do not want
+        // to compute the index creation cost
+        // avoid what-if optimization
+        for (Index i : DB2Optimizer.readAdviseIndexTable(dbms.getConnection(), dbms.getCatalog(), indexBytes)){
+            i.setCreationCost(DB2Optimizer.getCreationCost(optimizer, new HashSet<Index>(), i));
+            unique.add(new ByContentIndex(i));
+        }
         
         double space = 0;
         for (Index i : unique) 
@@ -137,7 +152,7 @@ public class DB2Advisor extends Advisor
         
         System.out.println("Count:  " + unique.size());
         System.out.println("Budget: " + budget);
-        System.out.println("Actual: " + space / 1000000);
+        System.out.println("Actual: " + space / Math.pow(2, 20));
 
         return new HashSet<Index>(unique);
     }
