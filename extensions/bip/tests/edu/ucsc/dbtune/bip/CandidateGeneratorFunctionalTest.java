@@ -21,8 +21,10 @@ import java.util.ArrayList;
 
 
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 
 
@@ -89,19 +91,28 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         
         // temporary get only SELECT statements
         List<SQLStatement> sqls = new ArrayList<SQLStatement>();
+        Map<String, Integer> mapSQL = new HashMap<String, Integer>();
         
         for (SQLStatement sql : workload)
-            if (sql.getSQLCategory().isSame(SELECT))
-                sqls.add(sql);
+            if (sql.getSQLCategory().isSame(SELECT)) {
+                // remove duplicate query
+                // to speed up DB2Advisor
+                if (!mapSQL.containsKey(sql.getSQL())) {
+                    sqls.add(sql);
+                    mapSQL.put(sql.getSQL(), 1);
+                }
+            }
         
         Workload wlCandidate = new Workload(sqls);
+        Rt.p(" size of wl candidates: " + wlCandidate.size());
         candidates = candGen.generate(wlCandidate);
         
         // Calculate the total size (for solely information)
         long totalSize = 0;
         for (Index i : candidates) {
             totalSize += i.getBytes();
-            Rt.p(" Index i = " + i + " size = " + (i.getBytes() / Math.pow(2, 20)));
+            Rt.p(" Index i = " + i + " size = " + (i.getBytes() / Math.pow(2, 20))
+                    + " creation cost = " + i.getCreationCost());
         }
         totalSize = (long) (totalSize / Math.pow(2, 20));
         
@@ -285,5 +296,4 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         
         return candidates;       
     }
-    
 }

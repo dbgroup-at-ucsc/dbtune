@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
+import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.util.LogListener;
@@ -46,16 +47,15 @@ public class DivBIPFunctionalTest extends DivTestSetting
         db2Advis = new DB2Advisor(db);
         candidates = readCandidateIndexes(db2Advis);
                 
-                
         // 3. Test the benefit of indexes
-        compareDB2InumQueryCosts(workload, candidates);
+        //compareDB2InumQueryCosts(workload, candidates);
         
-        /*
+        
         // 3. test divergent
         for (double B1 : listBudgets) 
             for (int n : listNumberReplicas)
                 testDiv(n, B1, false);
-                */
+              
     }
     
     
@@ -94,7 +94,6 @@ public class DivBIPFunctionalTest extends DivTestSetting
         double queryCost;
         
         if (output != null) {
-            
             divConf = (DivConfiguration) output;           
             updateCost = div.getUpdateCostFromCplex();
             queryCost = div.getObjValue() - updateCost;
@@ -123,7 +122,97 @@ public class DivBIPFunctionalTest extends DivTestSetting
             Rt.p(" NODE IMBALANCE: " + div.getNodeImbalance());
             Rt.p(" PREDICTABILITY IMBALANCE: " + div.getQueryImbalance());   
             Rt.p(" FAILURE IMBALANCE: " + div.getFailureImbalance());
+            // check for node balance constraint
+            /*
+            div.setUpperReplicaCost(totalCostBIP * 1.1 / nReplicas);
+            output = div.solve();
+            Rt.p(logger.toString());
+            if (output != null)
+                Rt.p(" COST OF NODE-BALANCE CONSTRAINT " + div.getObjValue()
+                        + " NODE IMBALANCE: " + div.getNodeImbalance()
+                        + " NEW RATIO: " + (div.getObjValue() / totalCostBIP));
+            */
+            return totalCostBIP;
             
+        } else {
+            Rt.p(" NO SOLUTION ");
+            return -1;
+        }
+    }
+    
+    /**
+     * Run the BIP with the parameters set by other functions
+     * @throws Exception
+     */
+    public static double testDiv(int _n, double _B, List<QueryPlanDesc> descs) throws Exception
+    {
+        div = new DivBIP();
+        // Derive corresponding parameters
+        nReplicas = _n;
+        B = _B;
+        loadfactor = (int) Math.ceil( (double) nReplicas / 2);
+        
+        Optimizer io = db.getOptimizer();
+         
+        LogListener logger = LogListener.getInstance();
+        div.setCandidateIndexes(candidates);
+        div.setWorkload(workload); 
+        div.setOptimizer((InumOptimizer) io);
+        div.setNumberReplicas(nReplicas);
+        div.setLoadBalanceFactor(loadfactor);
+        div.setSpaceBudget(B);
+        div.setLogListenter(logger);
+        div.setQueryPlanDesc(descs);
+        
+        IndexTuningOutput output = div.solve();
+        Rt.p(logger.toString());
+        
+        if (isExportToFile)
+            div.exportCplexToFile(en.getWorkloadsFoldername() + "/test.lp");
+        
+        double totalCostBIP;
+        double updateCost;
+        double queryCost;
+        
+        if (output != null) {
+            divConf = (DivConfiguration) output;           
+            updateCost = div.getUpdateCostFromCplex();
+            queryCost = div.getObjValue() - updateCost;
+            
+            // NOT sum-up base table access cost for now
+            //updateCost += div.getTotalBaseTableUpdateCost();
+            // add the update-base-table-constant costs
+            totalCostBIP = div.getObjValue(); // + div.getTotalBaseTableUpdateCost();
+            
+            Rt.p("CPLEX result: number of replicas: " + nReplicas + "\n" 
+                    + " TOTAL cost:  " + totalCostBIP + "\n"
+                    + " QUERY cost:  " + queryCost   + "\n"
+                    + " UPDATE cost: " + updateCost  + "\n"
+                    + " ----- Update cost details: "  + "\n"
+                    + "          + query shell & update indexes: " 
+                                        + div.getUpdateCostFromCplex() + "\n"
+                    + " ----- CPLEX info: \n"
+                    + "          + obj value: " + div.getObjValue() + "\n"
+                    + "          + gap from the optimal: " + div.getObjectiveGap() + "\n"
+                    + " NUMBER of distinct indexes: " + divConf.countDistinctIndexes()+ "\n"
+                    + " NUMBER OF queries:          " + 
+                            div.computeNumberQueriesSpecializeForReplica()
+                    );
+            
+            Rt.p(" TOTAL COST(INUM): " + totalCostBIP);
+            Rt.p(" NODE IMBALANCE: " + div.getNodeImbalance());
+            Rt.p(" PREDICTABILITY IMBALANCE: " + div.getQueryImbalance());   
+            Rt.p(" FAILURE IMBALANCE: " + div.getFailureImbalance());
+            // check for node balance constraint
+            /*
+            div.setUpperReplicaCost(totalCostBIP * 1.1 / nReplicas);
+            output = div.solve();
+            Rt.p(logger.toString());
+            if (output != null)
+                Rt.p(" COST OF NODE-BALANCE CONSTRAINT " + div.getObjValue()
+                        + " NODE IMBALANCE: " + div.getNodeImbalance()
+                        + " NEW RATIO: " + (div.getObjValue() / totalCostBIP));
+            */
             return totalCostBIP;
             
         } else {
@@ -190,7 +279,6 @@ public class DivBIPFunctionalTest extends DivTestSetting
         B = B1;
         nReplicas = 1;
         loadfactor = 1;
-        
         
         double queryCost = testDivSimplify(1, B, false);
         Rt.p("----------------------------------------");

@@ -8,6 +8,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 
+import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.div.ElasticDivBIP;
 import edu.ucsc.dbtune.bip.util.LogListener;
@@ -116,7 +117,8 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
      */
     public static List<Double> testElasticity(DivConfiguration initial, 
                                         List<Double> costs,
-                                        int nDeploys, LogListener logger)
+                                        int nDeploys, LogListener logger,
+                                        List<QueryPlanDesc> descs)
             throws Exception
     {   
         Optimizer io = db.getOptimizer();
@@ -127,11 +129,13 @@ public class ElasticDivBIPFunctionalTest extends DivTestSetting
         elastic.setOptimizer((InumOptimizer) io);
         elastic.setSpaceBudget(B);
         elastic.setLogListenter(logger);
+        elastic.setQueryPlanDesc(descs);
         
         elastic.setInitialConfiguration(initial);
         elastic.setNumberDeployReplicas(nDeploys);
         elastic.setUpperDeployCost(costs);
-        
+        Rt.p(" workload size = " + workload.size()
+                + " descs = " + descs.size());
         elastic.solve();
         Rt.p("Running time: " + logger);
         return elastic.getTotalCosts();

@@ -32,11 +32,11 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
        
         List<DivConstraint> constraints;
         double upperTotalCost;
-        
+        /*
         // get the total cost of the normal setting
         upperTotalCost = DivBIPFunctionalTest.testDiv(nReplicas, B, false);
         upperTotalCost *= 1.2;
-        
+        */
         
         // 2. Set constraints
         /*
@@ -74,10 +74,12 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
                 constraints = new ArrayList<DivConstraint>();
                 constraints.add(iReplica);                
                 constraintDiv = new ConstraintDivBIP(constraints, true);
+                /*
                 Rt.p("Check feasible solution only");
                 constraintDiv.checkFeasibleSolutionOnly();
                 Rt.p("set upper cost");
                 constraintDiv.setUpperTotalCost(upperTotalCost);
+                */
                 runConstraintBIP(constraintDiv);
             }
         }
