@@ -982,7 +982,22 @@ RETURN(cost=1470.4276123046875 rows=0 id=1 object=NONE alias= rawColumns=null ra
         if (fetch == null)
             // no FETCH found
             return leaf.getAccumulatedCost();
-
+/*
+            │   │   ├── FETCH(id=6 OUTER cost=57206.05 card=5315.52 coeff=1.0 object=TPCDS.STORE_SALES rawColumns=+Q4.SS_STORE_SK+Q4.SS_HDEMO_SK+Q4.SS_SOLD_TIME_SK+Q4.SS_STORE_SK+Q4.SS_HDEMO_SK+Q4.SS_SOLD_TIME_SK rawPredicate=null fetch=[+TPCDS.STORE_SALES.SS_STORE_SK(A)+TPCDS.STORE_SALES.SS_HDEMO_SK(A)+TPCDS.STORE_SALES.SS_SOLD_TIME_SK(A)] internal=25380.52)
+            │   │   │   └── RID.SCAN(id=7 cost=31825.53 rows=5316 card=5315.52 coeff=1.0 object=NONE rawColumns=+Q4.$RID$(A) rawPredicate=null fetch=NONE internal=0.00)
+            │   │   │       └── SORT(id=8 cost=31825.53 rows=5316 rowWidth=20 card=5315.52 coeff=1.0 object=NONE rawColumns=+Q4.$RID$(A) rawPredicate=null fetch=NONE internal=2.07)
+            │   │   │           └── INDEX.AND(id=9 cost=31823.46 card=5315.52 coeff=1.0 object=NONE rawColumns=+Q4.$RID$ rawPredicate=null fetch=NONE internal=946.49)
+            │   │   │               ├── NESTED.LOOP.JOIN(id=10 cost=28521.87 card=529263.75 coeff=1.0 object=NONE rawColumns=null rawPredicate=[(Q4.SS_SOLD_TIME_SK = Q2.T_TIME_SK)] fetch=NONE internal=0.00)
+            │   │   │               │   ├── TABLE.SCAN(id=11 OUTER cost=1282.83 card=1800.00/1798.99 coeff=1.0 object=TPCDS.TIME_DIM rawColumns=+Q2.T_TIME_SK+Q2.$RID$+Q2.T_MINUTE+Q2.T_HOUR+Q2.T_TIME_SK rawPredicate=[(30 <= Q2.T_MINUTE), (Q2.T_HOUR = 8)] fetch=[+TPCDS.TIME_DIM.T_MINUTE(A)+TPCDS.TIME_DIM.T_HOUR(A)+TPCDS.TIME_DIM.T_TIME_SK(A)] internal=1282.83)
+            │   │   │               │   └── INDEX.SCAN(id=12 INNER cost=15.14 card=294.04 coeff=1799.0 object=[+TPCDS.STORE_SALES.SS_SOLD_TIME_SK(A)] rawColumns=+Q4.SS_SOLD_TIME_SK(A)+Q4.SS_SOLD_TIME_SK(A)+Q4.$RID$ rawPredicate=[(Q4.SS_SOLD_TIME_SK = Q2.T_TIME_SK), (Q4.SS_SOLD_TIME_SK = Q2.T_TIME_SK)] fetch=[+TPCDS.STORE_SALES.SS_SOLD_TIME_SK(D)] internal=15.14)
+            │   │   │               ├── NESTED.LOOP.JOIN(id=13 cost=1714.57 card=2540465.75 coeff=1.0 object=NONE rawColumns=null rawPredicate=[(Q4.SS_STORE_SK = Q1.S_STORE_SK)] fetch=NONE internal=0.00)
+            │   │   │               │   ├── TABLE.SCAN(id=14 OUTER cost=45.42 card=10.20/1.27 coeff=1.0 object=TPCDS.STORE rawColumns=+Q1.S_STORE_SK+Q1.$RID$+Q1.S_STORE_NAME+Q1.S_STORE_SK rawPredicate=[(Q1.S_STORE_NAME = 'ese')] fetch=[+TPCDS.STORE.S_STORE_NAME(A)+TPCDS.STORE.S_STORE_SK(A)] internal=45.42)
+            │   │   │               │   └── INDEX.SCAN(id=15 INNER cost=1318.26 card=249065.28 coeff=1.3 object=[+TPCDS.STORE_SALES.SS_STORE_SK(A)] rawColumns=+Q4.SS_STORE_SK(A)+Q4.SS_STORE_SK(A)+Q4.$RID$ rawPredicate=[(Q4.SS_STORE_SK = Q1.S_STORE_SK), (Q4.SS_STORE_SK = Q1.S_STORE_SK)] fetch=[+TPCDS.STORE_SALES.SS_STORE_SK(D)] internal=1318.26)
+            │   │   │               └── NESTED.LOOP.JOIN(id=16 cost=640.54 card=2551451.25 coeff=1.0 object=NONE rawColumns=null rawPredicate=[(Q4.SS_HDEMO_SK = Q3.HD_DEMO_SK)] fetch=NONE internal=0.00)
+            │   │   │                   ├── TABLE.SCAN(id=17 OUTER cost=50.47 card=720.00/22.50 coeff=1.0 object=TPCDS.HOUSEHOLD_DEMOGRAPHICS rawColumns=+Q3.HD_DEMO_SK+Q3.$RID$+Q3.HD_DEP_COUNT+Q3.HD_DEMO_SK rawPredicate=[(Q3.HD_DEP_COUNT = 2)] fetch=[+TPCDS.HOUSEHOLD_DEMOGRAPHICS.HD_DEP_COUNT(A)+TPCDS.HOUSEHOLD_DEMOGRAPHICS.HD_DEMO_SK(A)] internal=50.47)
+            │   │   │                   └── INDEX.SCAN(id=18 INNER cost=26.23 card=3543.68 coeff=22.5 object=[+TPCDS.STORE_SALES.SS_HDEMO_SK(A)] rawColumns=+Q4.SS_HDEMO_SK(A)+Q4.SS_HDEMO_SK(A)+Q4.$RID$ rawPredicate=[(Q4.SS_HDEMO_SK = Q3.HD_DEMO_SK), (Q4.SS_HDEMO_SK = Q3.HD_DEMO_SK)] fetch=[+TPCDS.STORE_SALES.SS_HDEMO_SK(D)+TPCDS.STORE_SALES.SS_STORE_SK(A)+TPCDS.STORE_SALES.SS_SOLD_TIME_SK(A)] internal=26.23)
+ */
+        
         int numOfLeaves=countLeaves(sqlPlan,fetch,leafs);
         if ( numOfLeaves>1)
             return leaf.getAccumulatedCost();
@@ -1056,11 +1071,10 @@ RETURN(cost=1470.4276123046875 rows=0 id=1 object=NONE alias= rawColumns=null ra
         int count=0;
         for (Operator op : fetchChildern) {
             List<Operator> opChildern=sqlPlan.getChildren(op);
-            if ( opChildern.size()>0) {
-                 count+=countLeaves(sqlPlan, op, leafs);
-            } else if ( leafs.contains(op)) {
+            if (op.getName().equals(INDEX_SCAN) || op.getName().equals(TABLE_SCAN)|| op instanceof TableAccessSlot)
                 count++;
-            }
+            if (opChildern.size()>0)
+                 count+=countLeaves(sqlPlan, op, leafs);
         }
         return count;
     }
