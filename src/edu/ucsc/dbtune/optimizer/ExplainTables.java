@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Hashtable;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -114,8 +115,8 @@ public class ExplainTables {
             Catalog catalog, Set<Index> indexes) throws SQLException {
         Statement stmt = connection.createStatement();
 
-        if ( optimizationLevel>=0)
-            stmt.execute("SET CURRENT QUERY OPTIMIZATION "+ optimizationLevel);
+        if (optimizationLevel >= 0)
+            stmt.execute("SET CURRENT QUERY OPTIMIZATION " + optimizationLevel);
         stmt.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
         try {
             stmt.execute(sql.getSQL());
@@ -157,24 +158,24 @@ public class ExplainTables {
         }
         rs.close();
         st.close();
-        
+
         st = connection.createStatement();
         st.execute("select OPERATOR_ID,ARGUMENT_TYPE,ARGUMENT_VALUE"
-                + " from systools.EXPLAIN_ARGUMENT" +
-                		" where ARGUMENT_TYPE in ('JN INPUT','NUMROWS','ROWWIDTH')");
+                + " from systools.EXPLAIN_ARGUMENT"
+                + " where ARGUMENT_TYPE in ('JN INPUT','NUMROWS','ROWWIDTH')");
         rs = st.getResultSet();
         while (rs.next()) {
             int id = rs.getInt("OPERATOR_ID");
             String type = rs.getString("ARGUMENT_TYPE");
             String value = rs.getString("ARGUMENT_VALUE");
-            type=type.trim();
+            type = type.trim();
             Operator op = hash.get(id);
             if ("JN INPUT".equals(type)) {
-                op.joinInput= value;
+                op.joinInput = value;
             } else if ("NUMROWS".equals(type)) {
-                op.rows= Integer.parseInt(value);
+                op.rows = Integer.parseInt(value);
             } else if ("ROWWIDTH".equals(type)) {
-                op.rowWidth= Integer.parseInt(value);
+                op.rowWidth = Integer.parseInt(value);
             } else
                 throw new Error(type);
         }
@@ -221,7 +222,7 @@ public class ExplainTables {
             String columnNames = rs.getString("COLUMN_NAMES");
             String dboSchema = rs.getString("object_schema");
             String dboName = rs.getString("object_name");
-            if (target_id<0)
+            if (target_id < 0)
                 continue;
             Operator src = source_id < 0 ? null : hash.get(source_id);
             Operator dest = hash.get(target_id);
@@ -303,8 +304,9 @@ public class ExplainTables {
                 continue;
             setChild(operator, srcToDest, plan);
         }
-        DB2Optimizer
-                .calculateOperatorInternalCost(plan, plan.getRootOperator(),1);
+        checkNodes(plan, plan.getRootOperator());
+        DB2Optimizer.calculateOperatorInternalCost(plan,
+                plan.getRootOperator(), 1);
         for (Operator operator : operators) {
             if (operator.id < 0) {
                 Operator parent = srcToDest.get(operator);
@@ -327,6 +329,33 @@ public class ExplainTables {
             }
         }
         return plan;
+    }
+
+    static void checkNodes(SQLStatementPlan plan, Operator node)
+            throws SQLException {
+        List<Operator> children = plan.getChildren(node);
+        if (children.size() == 0 && node.getDatabaseObjects().size() > 0)
+            return;
+        int problemNodes = 0;
+        double sum = 0;
+        for (Operator operator : children) {
+            if (operator.accumulatedCost > node.accumulatedCost)
+                problemNodes++;
+            else
+                sum += operator.accumulatedCost;
+        }
+        if (problemNodes > 1)
+            throw new SQLException("Invalid plan, too many invalid nodes");
+        if (problemNodes == 1) {
+            for (Operator operator : children) {
+                if (operator.accumulatedCost > node.accumulatedCost) {
+                    operator.accumulatedCost = node.accumulatedCost - sum;
+                    break;
+                }
+            }
+        }
+        for (Operator operator : children)
+            checkNodes(plan, operator);
     }
 
     private static void setChild(Operator operator,
