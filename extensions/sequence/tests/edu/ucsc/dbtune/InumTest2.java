@@ -252,9 +252,9 @@ public class InumTest2 {
         CandidateGenerator candGen = new OptimizerCandidateGenerator(
                 getBaseOptimizer(db.getOptimizer()));
         Set<Index> indexes = candGen.generate(workload);
-        // for (Index index : indexes) {
-        // Rt.np(index);
-        // }
+        for (Index index : indexes) {
+            Rt.np(index);
+        }
 
         // AbstractSpaceComputation.setInumSpacePopulateIndexSet(indexes);
 
@@ -289,9 +289,9 @@ public class InumTest2 {
                                 i, db2fts, inumFts, db2index, inumIndex,
                                 inumIndex / db2index);
                 if (0.9 <= inumIndex / db2index && inumIndex / db2index <= 1.2) {
-                    // Rt.np(workload.get(i).getSQL() + ";");
+                    Rt.np(workload.get(i).getSQL() + ";");
                 } else {
-                    // Rt.np("-- "+workload.get(i).getSQL() + ";");
+                    Rt.np("-- " + workload.get(i).getSQL() + ";");
                 }
                 db2indexAll += db2index;
                 db2ftsAll += db2fts;
@@ -521,7 +521,7 @@ public class InumTest2 {
                 "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
         // query = Rt.readFile(new File(
         // "resources/workloads/db2/tpch-inum/workload.sql"));
-        sqlTest(test, tpcds, 8);
+         sqlTest(test, tpcds, 0);
         // sqlTest(
         // test,
         // "SELECT 3, COUNT(*)  FROM tpch.lineitem WHERE  tpch.lineitem.l_tax BETWEEN 0.01596699754645524 AND 0.029823160830179565 AND tpch.lineitem.l_extendedprice BETWEEN 19178.598547906164 AND 19756.721297981876 AND tpch.lineitem.l_receiptdate BETWEEN 'Thu Mar 24 14:48:29 PST 1994' AND 'Mon Jan 30 14:48:29 PST 1995';",
@@ -533,7 +533,7 @@ public class InumTest2 {
         // compareWorkload(test, tpch, "tpch");
         // compareInterestingOrders(test, tpch);
         // compareWorkload(tpch10g, tpch, "tpch10g");
-        compareWorkload(test, tpcdsinum, "tpcds");
+        compareWorkload(test, tpcds, "tpcds");
         // compareWorkload(test, update, "update");
         test.getConnection().close();
         tpch10g.getConnection().close();
@@ -549,9 +549,16 @@ public class InumTest2 {
             indexes.add(createIndex(db, name));
         }
         // ExplainTables.showWarnings = true;
-
+        
         Workload workload = new Workload("", new StringReader(query));
 
+//        indexes = new HashSet<Index>();
+//        Set<InumInterestingOrder> orders = AbstractSpaceComputation
+//                .extractInterestingOrderFromDB(workload.get(queryId), db2optimizer);
+//        for (InumInterestingOrder order : orders) {
+//            indexes.add(order);
+//        }
+        
         String sql = workload.get(queryId).getSQL();
         Rt.np("SQL:");
         Rt.p(sql);
@@ -580,11 +587,11 @@ public class InumTest2 {
         // Rt.np(index);
         // }
 
-        // ExplainTables.dump=true;
+//         ExplainTables.dump=true;
         ExplainedSQLStatement db2plan = db2optimizer.explain(sql, indexes);
         Rt.np("DB2 plan:");
         Rt.p(db2plan);
-        // System.exit(0);
+//         System.exit(0);
         Rt.np("Index used by DB2 plan:");
         for (Index index2 : db2plan.getUsedConfiguration())
             Rt.np(index2);
