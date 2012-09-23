@@ -24,11 +24,14 @@ public class TpcdsUtils {
         Workload workload = new Workload("", new StringReader(tpcdsOld));
         int n = 0;
         for (String line2 : tpcdsNew.split("\n")) {
+            String templateId=line2.substring(0,line2.indexOf(' '));
             line2 = line2.substring(line2.indexOf(' ') + 1).trim();
             String[] ss = line2.split(";");
             for (String line : ss) {
                 line = line.trim();
-                String sql = workload.get(n++).getSQL().trim();
+                String sql = workload.get(n++).getSQL();
+                String original=sql;
+                sql=sql.trim();
                 sql = sql.replaceAll(Pattern.quote("tpcds."), "");
                 line = line.replaceAll("\\s+", " ");
                 sql = sql.replaceAll("\\s+", " ");
@@ -57,6 +60,8 @@ public class TpcdsUtils {
                     Rt.np(line);
                     Rt.np(sql);
                 }
+//                Rt.np("-- "+ templateId);
+//                Rt.np(original+";");
             }
         }
     }
