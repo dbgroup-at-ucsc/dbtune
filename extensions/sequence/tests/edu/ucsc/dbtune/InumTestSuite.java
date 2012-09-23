@@ -180,8 +180,8 @@ public class InumTestSuite {
         }
 
         public void save() throws Exception {
-            Rx rx = new Rx("inumTest");
-            save(rx.createChild("workload"));
+            Rx rx = new Rx("workload");
+            save(rx);
             Rt.write(resultFile, rx.getXml().getBytes());
         }
     }

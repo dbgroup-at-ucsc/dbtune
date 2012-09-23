@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
   <workload dbName="tpch10g" name="TPC-H">
     <file>resources/workloads/db2/tpch/complete.sql</file>
     <indexSet name="U-OPT">
@@ -69,10 +70,10 @@
         <inumIndex>1067860.5327445692</inumIndex>
       </result>
       <result id="2" timeout="false">
-        <db2fts>3928580.25</db2fts>
-        <inumfts>3928580.25</inumfts>
-        <db2Index>3237773.75</db2Index>
-        <inumIndex>3246948.1708984375</inumIndex>
+        <db2fts>4913249.5</db2fts>
+        <inumfts>4913249.5</inumfts>
+        <db2Index>4227311.5</db2Index>
+        <inumIndex>4232376.8974609375</inumIndex>
       </result>
       <result id="3" timeout="false">
         <db2fts>2708547.75</db2fts>
@@ -90,7 +91,7 @@
         <db2fts>2114715.75</db2fts>
         <inumfts>2114715.75</inumfts>
         <db2Index>479143.90625</db2Index>
-        <inumIndex>576465.0</inumIndex>
+        <inumIndex>575991.5</inumIndex>
       </result>
       <result id="6" timeout="false">
         <db2fts>3545953.75</db2fts>
@@ -183,10 +184,10 @@
         <inumIndex>6347999.07534343</inumIndex>
       </result>
       <result id="21" timeout="false">
-        <db2fts>621023.875</db2fts>
-        <inumfts>621023.875</inumfts>
-        <db2Index>314914.28125</db2Index>
-        <inumIndex>321236.46875</inumIndex>
+        <db2fts>621023.4375</db2fts>
+        <inumfts>621023.4375</inumfts>
+        <db2Index>314913.84375</db2Index>
+        <inumIndex>321236.03125</inumIndex>
       </result>
     </indexSet>
     <indexSet name="powerset">
@@ -421,10 +422,10 @@
         <inumIndex>1849085.890625</inumIndex>
       </result>
       <result id="2" timeout="false">
-        <db2fts>3928580.25</db2fts>
-        <inumfts>3928580.25</inumfts>
-        <db2Index>3887946.75</db2Index>
-        <inumIndex>3887946.728515625</inumIndex>
+        <db2fts>4913249.5</db2fts>
+        <inumfts>4913249.5</inumfts>
+        <db2Index>4873358.5</db2Index>
+        <inumIndex>4873358.43359375</inumIndex>
       </result>
       <result id="3" timeout="false">
         <db2fts>2708547.75</db2fts>
@@ -535,10 +536,10 @@
         <inumIndex>6489723.9375</inumIndex>
       </result>
       <result id="21" timeout="false">
-        <db2fts>621023.875</db2fts>
-        <inumfts>621023.875</inumfts>
-        <db2Index>350857.15625</db2Index>
-        <inumIndex>321236.46875</inumIndex>
+        <db2fts>621023.4375</db2fts>
+        <inumfts>621023.4375</inumfts>
+        <db2Index>350856.71875</db2Index>
+        <inumIndex>321236.03125</inumIndex>
       </result>
     </indexSet>
     <indexSet name="one-column-index">
@@ -591,10 +592,10 @@
         <inumIndex>1849093.32421875</inumIndex>
       </result>
       <result id="2" timeout="false">
-        <db2fts>3928580.25</db2fts>
-        <inumfts>3928580.25</inumfts>
-        <db2Index>3928580.25</db2Index>
-        <inumIndex>3928580.25</inumIndex>
+        <db2fts>4913249.5</db2fts>
+        <inumfts>4913249.5</inumfts>
+        <db2Index>4913249.5</db2Index>
+        <inumIndex>4913249.5</inumIndex>
       </result>
       <result id="3" timeout="false">
         <db2fts>2708547.75</db2fts>
@@ -705,10 +706,10 @@
         <inumIndex>7869288.991049767</inumIndex>
       </result>
       <result id="21" timeout="false">
-        <db2fts>621023.875</db2fts>
-        <inumfts>621023.875</inumfts>
-        <db2Index>352992.15625</db2Index>
-        <inumIndex>321236.46875</inumIndex>
+        <db2fts>621023.4375</db2fts>
+        <inumfts>621023.4375</inumfts>
+        <db2Index>352991.71875</db2Index>
+        <inumIndex>321236.03125</inumIndex>
       </result>
     </indexSet>
   </workload>

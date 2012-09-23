@@ -18,7 +18,7 @@ public class InumGenerateHtmlReport {
         // "resources/workloads/db2/tpcds/39.sql"),
         };
         boolean continueFromLastTest = true;
-        // continueFromLastTest = false;
+//         continueFromLastTest = false;
         InumTestSuite suite = new InumTestSuite(workloads, continueFromLastTest);
         for (Workload workload : workloads) {
             PrintStream ps = new PrintStream(new File(suite.resultDir,
