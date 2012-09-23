@@ -269,9 +269,9 @@ public class InumTestSuite {
             }
         }
 
-//        for (String s : workloads[1].indexSets[0].indexNames)
-//            Rt.np(s);
-//        System.exit(0);
+        // for (String s : workloads[1].indexSets[0].indexNames)
+        // Rt.np(s);
+        // System.exit(0);
         for (Workload workload : workloads) {
             Rt.np("Workload:\t" + workload.name);
             Rt.np("query count:\t" + workload.workload.size());
@@ -280,10 +280,12 @@ public class InumTestSuite {
         }
     }
 
-    void showCompactResult(Workload workload) {
+    void showCompactResult(Workload workload, PrintStream ps, boolean hasCost) {
         for (IndexSet set : workload.indexSets)
-            System.out.print("\t" + set.name + " " + set.indexNames.length);
-        System.out.println();
+            ps.print("\t" + set.name + " " + set.indexNames.length);
+        if (hasCost)
+            ps.print("\tFTS");
+        ps.println();
         int n1 = 0;
         int n2 = 0;
         int n3 = 0;
@@ -300,62 +302,56 @@ public class InumTestSuite {
                     problematic2 = true;
             }
             if (problematic)
-                System.out.print("*");
+                ps.print("*");
             if (problematic2)
-                System.out.print("*");
+                ps.print("*");
             if (problematic2)
                 n2++;
             else if (problematic)
                 n1++;
             else
                 n3++;
-            System.out.print(i);
+            ps.print(i);
             for (IndexSet set : workload.indexSets) {
                 Result r = set.results[i];
                 if (set.results[i].timeout)
-                    System.out.print("\ttimeout");
-                else
-                    System.out.format("\t%.2f",
-                    // + r.db2fts + "\t" + r.inumfts + "\t"
-                            // + r.db2Index + "\t" + r.inumIndex + "\t"
-                            (r.inumIndex / r.db2Index));
+                    ps.print("\ttimeout");
+                else {
+                    if (hasCost)
+                        ps.format("\t%,.0f\t%,.0f", r.db2Index, r.inumIndex);
+                    ps.format("\t%.2f", (r.inumIndex / r.db2Index));
+                }
             }
-            System.out.println();
+            Result r = workload.indexSets[0].results[i];
+            if (hasCost)
+                ps.format("\t%,.0f\t%,.0f", r.db2fts, r.inumfts);
+            ps.println();
 
         }
-        Rt.np("unusable=" + n1 + " acceptable=" + n2 + " accurate=" + n3);
+        ps.println("unusable=" + n1 + " acceptable=" + n2 + " accurate=" + n3);
     }
 
-    void showResultWithCosts(Workload workload) {
+    void showResultWithCosts(Workload workload, PrintStream ps) {
         for (IndexSet set : workload.indexSets) {
-            double mean = 0;
             double variance = 0;
             int n = 0;
             for (int i = 0; i < workload.workload.size(); i++) {
                 Result r = set.results[i];
                 if (set.results[i].timeout)
-                    Rt.np(i + " timeout");
+                    ps.println(i + " timeout");
                 else
-                    Rt.np(i + "\t"
+                    ps.println(i + "\t"
                             // + r.db2fts + "\t" + r.inumfts + "\t"
                             + r.db2Index + "\t" + r.inumIndex + "\t"
                             + (r.inumIndex / r.db2Index));
                 if (!set.results[i].timeout) {
-                    mean += r.inumIndex / r.db2Index;
+                    double t = r.inumIndex / r.db2Index - 1;
+                    variance += t * t;
                     n++;
                 }
             }
-            mean /= n;
-            for (int i = 0; i < workload.workload.size(); i++) {
-                Result r = set.results[i];
-                if (!set.results[i].timeout) {
-                    double t = r.inumIndex / r.db2Index - mean;
-                    variance += t * t;
-                }
-            }
             variance /= n;
-            Rt.np("mean:\t" + mean);
-            Rt.np("variance:\t" + variance);
+            ps.println("variance:\t" + variance);
         }
     }
 

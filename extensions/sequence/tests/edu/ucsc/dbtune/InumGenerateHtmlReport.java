@@ -18,14 +18,20 @@ public class InumGenerateHtmlReport {
         // "resources/workloads/db2/tpcds/39.sql"),
         };
         boolean continueFromLastTest = true;
-//        continueFromLastTest = false;
+        // continueFromLastTest = false;
         InumTestSuite suite = new InumTestSuite(workloads, continueFromLastTest);
         for (Workload workload : workloads) {
             PrintStream ps = new PrintStream(new File(suite.resultDir,
                     workload.uuid + ".html"));
-            // suite.showCompactResult(workload);
-            // suite.showResultWithCosts(workload);
             suite.showHtmlResult(workload, ps);
+            ps.close();
+            ps = new PrintStream(new File(suite.resultDir, workload.uuid
+                    + ".txt"));
+            suite.showCompactResult(workload, ps, true);
+            ps.close();
+            ps = new PrintStream(new File(suite.resultDir, workload.uuid
+                    + ".ratio.txt"));
+            suite.showCompactResult(workload, ps, false);
             ps.close();
         }
     }
