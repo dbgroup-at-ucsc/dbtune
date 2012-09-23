@@ -136,6 +136,7 @@ For example,find out where Q6.O_ORDERDATE(A) comes from
         Set<InumInterestingOrder> indexes2 = new HashSet<InumInterestingOrder>();
         ExplainedSQLStatement db2plan = delegate.explain(statement);
         SQLStatementPlan plan = db2plan.getPlan();
+//        Rt.p(plan);
         Map<String, Table> qidToTable = new Hashtable<String, Table>();
         Map<String, Table> columnNameToTable = new Hashtable<String, Table>();
         for (Operator op : plan.nodes()) {
@@ -234,13 +235,15 @@ For example,find out where Q6.O_ORDERDATE(A) comes from
         if (overrideInumSpacePopulateIndexSet!=null)
             indexes=overrideInumSpacePopulateIndexSet;
         else {
-            try {
-                indexes=extractInterestingOrders(statement, catalog);
-            } catch (Exception e) {
-                derbyFailedCount++;
+//            try {
+//                indexes=extractInterestingOrders(statement, catalog);
+// derby interesting order extractor failed to extract [+TPCDS.ITEM.I_MANUFACT(A)] on TPCDS 62th query
+// which made the cost of INUM 145 times higher than DB2
+//            } catch (Exception e) {
+//                derbyFailedCount++;
 //                Rt.error(e.getClass().getName()+": "+e.getMessage());
                 indexes=extractInterestingOrderFromDB(statement,delegate);
-            }
+//            }
         }
         
         // obtain plans for all the extracted interesting orders

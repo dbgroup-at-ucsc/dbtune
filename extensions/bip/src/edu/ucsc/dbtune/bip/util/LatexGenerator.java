@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
 
-import edu.ucsc.dbtune.util.Rt;
 
 public class LatexGenerator 
 {

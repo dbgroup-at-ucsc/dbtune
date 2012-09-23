@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.Workload;
@@ -32,6 +33,7 @@ public class OnlineWorkloadCreator extends DIVPaper
         
         // 2. generate online workload
         generateOnlineWorkload();
+        //partitionWorkload();
     }
     
     /**
@@ -166,6 +168,23 @@ public class OnlineWorkloadCreator extends DIVPaper
         db2Advis.process(wl2);
         candidates2 = db2Advis.getRecommendation(-1);
         
+        // Find the intersection
+        Set<ByContentIndex> firsts = new HashSet<ByContentIndex>();
+        Set<ByContentIndex> seconds = new HashSet<ByContentIndex>();
+        for (Index i : candidates1)
+            firsts.add(new ByContentIndex(i));
+        
+        for (Index i : candidates2)
+            seconds.add(new ByContentIndex(i));
+        
+        firsts.retainAll(seconds);
+        
+        long size = 0;
+        for (Index i : firsts)
+            size += i.getBytes();
+        Rt.p(" Number of common indexes = " + firsts.size()
+                + " Total size = " + (size / Math.pow(2, 20)) + " (MB)");
+        
         // 1. for the first workload
         Rt.p(" The first workload ---------------------");
         double wl1Right = computeWorkloadCostDB2(wl1, candidates1);
@@ -220,7 +239,7 @@ public class OnlineWorkloadCreator extends DIVPaper
             sb.append("--" + name + "\n");
             for (int i = 0; i < sqls.size(); i++){
                 sb.append("-- query " + i + "\n");
-                sb.append(sqls.get(i).getSQL() + "\n");
+                sb.append(sqls.get(i).getSQL() + " ; \n");
             }
               
             return sb.toString();

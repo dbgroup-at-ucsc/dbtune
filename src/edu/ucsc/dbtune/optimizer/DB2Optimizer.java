@@ -1417,7 +1417,7 @@ public class DB2Optimizer extends AbstractOptimizer {
      * @throws SQLException
      *             if something goes wrong while doing the what-if call
      */
-    private static double getCreationCost(Optimizer optimizer,
+    public static double getCreationCost(Optimizer optimizer,
             Set<Index> indexes, Index index) throws SQLException {
         StringBuilder sb = new StringBuilder();
 

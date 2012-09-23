@@ -31,6 +31,11 @@ public class LogListener
     
     private LogListener()
     {
+        reset();
+    }
+    
+    public void reset()
+    {
         mapEventTime = new HashMap<Integer, Double>();
     }
     

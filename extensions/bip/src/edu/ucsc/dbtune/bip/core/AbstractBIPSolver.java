@@ -69,6 +69,19 @@ public abstract class AbstractBIPSolver implements BIPSolver
     
     protected String fileQueryPlanDesc;
     
+    /**
+     * Clear all data structures
+     */
+    public void clear()
+    {
+        try {
+            cplex.clearModel();
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+        
+        cplexVar.clear();
+    }
     
     /**
      * Set the list of query plan descs
@@ -79,6 +92,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
         this.queryPlanDescs = descs;
         this.isSetPlanDesc = true;
     }
+    
     @Override    
     public void setWorkload(Workload wl)
     {
@@ -119,6 +133,11 @@ public abstract class AbstractBIPSolver implements BIPSolver
                 populatePlanDescriptionOnTheFly();
             else 
                 populatePlanDescriptionForStatements();
+        } else {
+            // re-use the set of query plan description
+            candidateIndexes.clear();
+            for (QueryPlanDesc desc : queryPlanDescs)
+                candidateIndexes.addAll(desc.getIndexes());
         }
         logger.onLogEvent(LogListener.EVENT_POPULATING_INUM);
         

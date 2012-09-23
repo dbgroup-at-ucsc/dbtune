@@ -8,8 +8,6 @@ import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_COMBINE_Y;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_X;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_Y;
 
-import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_XO;
-import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_YO;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
@@ -47,7 +45,7 @@ public class ConstraintDivBIP extends DivBIP
 {   
     protected boolean isApproximation;
     protected List<DivConstraint> constraints;
-    protected QueryCostOptimalBuilder queryOptimalBuilder;
+    protected QueryCostOptimalBuilderGeneral queryOptimalBuilder;
     
     
     public ConstraintDivBIP(final List<DivConstraint> constraints, final boolean isApproximation)
@@ -88,7 +86,7 @@ public class ConstraintDivBIP extends DivBIP
             // need to impose top-m best cost constraints
             if (constraints.size() > 0) {
                 // initial auxiliaries classes
-                queryOptimalBuilder = new QueryCostOptimalBuilder(cplex, cplexVar, 
+                queryOptimalBuilder = new QueryCostOptimalBuilderGeneral(cplex, cplexVar, 
                                                                   poolVariables, isApproximation);
                 UtilConstraintBuilder.cplexVar = cplexVar;
                 topMBestCostExplicit();                
@@ -141,8 +139,7 @@ public class ConstraintDivBIP extends DivBIP
      * Sum Y constraint in general
      */
     protected void sumYConstraint() throws IloException
-    {
-        Rt.p(" SUM Y CONSTRAINT ");
+    {   
         // sum_y = sum of y^j_{qk} over all template plans
         for (int r = 0; r < nReplicas; r++)
             for (QueryPlanDesc desc : queryPlanDescs) {
@@ -291,16 +288,7 @@ public class ConstraintDivBIP extends DivBIP
      *      
      */
     protected void constructConstraintVariables(int r, int q, QueryPlanDesc desc)
-    {       
-        // YO: y for local optimal
-        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            poolVariables.createAndStore(VAR_YO, r, q, k, 0, 0);
-            
-        // XO: x for local optimal
-        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
-            for (int i = 0; i < desc.getNumberOfSlots(k); i++)  
-                for (Index index : desc.getIndexesAtSlot(k, i)) 
-                    poolVariables.createAndStore(VAR_XO, r, q, k, i, index.getId());
+    { 
         boolean isFTS;
         // U variables for the local optimal
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
@@ -357,28 +345,12 @@ public class ConstraintDivBIP extends DivBIP
      */
     protected void topMBestCostExplicit() throws IloException
     {   
-        List<IloLinearNumExpr> exprOptimals;
-        List<IloLinearNumExpr> exprQueries;
-
         // only applicable for SELECT and UPDATE statement
         for (QueryPlanDesc desc : queryPlanDescs) {
-            
             if (desc.getSQLCategory().isSame(INSERT) || desc.getSQLCategory().isSame(DELETE))
                 continue;
-            
-            exprOptimals = new ArrayList<IloLinearNumExpr>();
-            exprQueries = new ArrayList<IloLinearNumExpr>();
-            
-            for (int r = 0; r < nReplicas; r++) {
-                exprOptimals.add(queryOptimalBuilder.queryExprOptimal
-                                                    (r, desc.getStatementID(), desc));
-                exprQueries.add(super.queryExpr(r, desc.getStatementID(), desc));   
-                
-                // query cost optimal constraints
+            for (int r = 0; r < nReplicas; r++)  
                 queryOptimalBuilder.optimalConstraints(r, desc.getStatementID(), desc);
-            }
-            
-            topMBestCostExplicit(desc, exprQueries, exprOptimals);
         }
     }
     

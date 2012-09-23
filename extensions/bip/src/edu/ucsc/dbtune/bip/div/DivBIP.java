@@ -52,6 +52,9 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     protected boolean isUpperTotalCost = false;
     protected double upperTotalCost;
     
+    protected boolean isUpperReplicaCost = false;
+    protected double upperReplicaCost;
+    
     @Override
     public void setLoadBalanceFactor(int m) 
     {
@@ -89,6 +92,15 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     }
     
     /**
+     * Allow to set an upper bound on total cost
+     */
+    public void setUpperReplicaCost(double upper)
+    {
+        isUpperReplicaCost = true;
+        upperReplicaCost = upper;
+    }
+    
+    /**
      * Retrieve the (constant) base table update cost
      * 
      * @return
@@ -107,6 +119,16 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         // need to time the number of replica
         return totalBaseTableUpdateCost * nReplicas;
     }
+    
+    /**
+     * Clear all the structures used
+     */
+    public void clear()
+    {   
+        super.clear();
+        this.poolVariables.clear();
+        this.mapVarSToIndex.clear();
+    }   
     
     /**
      * Reads the value of variables corresponding to the presence of indexes
@@ -166,6 +188,13 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             
             // 6. Space constraints
             spaceConstraints();
+            
+            // 7. upper replica constraint if any
+            if (this.isUpperReplicaCost){
+                for (int r = 0; r< nReplicas; r++)
+                    this.upperReplicaConstraint(r);
+            }
+                
         }     
         catch (IloException e) {
             e.printStackTrace();
@@ -178,11 +207,10 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      */
     protected void constructVariables() throws IloException
     {   
-        // reset variable counter
-        BIPVariable.resetIdGenerator();
-        
         DivVariable var;
         
+        // reset variable counter
+        BIPVariable.resetIdGenerator();
         poolVariables = new DivVariablePool();
         mapVarSToIndex = new HashMap<String, Index>();
         
@@ -256,7 +284,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         for (int r = 0; r < nReplicas; r++) 
             expr.add(replicaCost(r));
-        Rt.p("total cost constraint <= " + upperCost);
+        
         cplex.addLe(expr, upperCost, "total_cost_constraint_" + numConstraints);
         numConstraints++;
     }
@@ -604,6 +632,17 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         numConstraints++;
     }
     
+    /**
+     * Set replica constraints
+     * @param r
+     * @throws IloException
+     */
+    protected void upperReplicaConstraint(int r) throws IloException
+    {   
+        IloLinearNumExpr expr = replicaCost(r);
+        cplex.addLe(expr, upperReplicaCost, "replica_" + numConstraints);
+        numConstraints++;
+    }
     
     /**
      * Retrieve the update cost, computed by INUM including the cost for the query shell

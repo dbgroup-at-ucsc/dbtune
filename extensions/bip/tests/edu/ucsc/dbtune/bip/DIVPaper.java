@@ -8,15 +8,18 @@ import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -64,15 +67,27 @@ public class DIVPaper extends DivTestSetting
     protected static final String DIV_DB2_FILE = "div_db2.bin";
     protected static final String UNIF_DB2_FILE = "unif_db2.bin";
     protected static final String DESIGN_DB2_FILE = "design_db2.bin";
+    protected static final String DESIGN_COPHY_FILE = "design_cophy.bin";
+    protected static final String UNIF_COPHY_FILE = "unif_cophy.bin";
+    
+    protected static final String ONLINE_FILE = "online.txt";
     
     protected static File unifFile;
     protected static File divFile;
     protected static File designFile;
+    protected static File unifCoPhyFile;
+    protected static File designCoPhyFile;
+    protected static File onlineFile;
     
     protected static Map<DivPaperEntry, Double> mapUnif;
     protected static Map<DivPaperEntry, Double> mapDiv;
-    protected static Map<DivPaperEntry, Double> mapDesign;
+    protected static Map<DivPaperEntry, Double> mapDesign;    
+    protected static Map<DivPaperEntry, Double> mapDesignCoPhy;
+    protected static Map<DivPaperEntry, Double> mapUnifCoPhy;
     
+    protected static boolean isEquivalent = true;
+    protected static boolean isOnline = false;
+    protected static boolean isLatex = false;
     /**
      *
      * Generate paper results
@@ -86,10 +101,18 @@ public class DIVPaper extends DivTestSetting
         setParameters();
         
         // 2. draw graphs
-        for (int i = 0; i < dbNames.length; i++)
-            drawGraphDIVEquivBIP(dbNames[i], wlNames[i]);
+        if (isEquivalent)
+            for (int i = 0; i < dbNames.length; i++) {
+                drawGraphDIVEquivBIP(dbNames[i], wlNames[i], true);
+                drawGraphDIVEquivBIP(dbNames[i], wlNames[i], false);
+            }
         
-        LatexGenerator.generateLatex(latexFile, outputDir, plots);
+        if (isOnline)
+            drawOnline();
+        
+        isLatex = isOnline || isEquivalent;
+        if (isLatex)
+            LatexGenerator.generateLatex(latexFile, outputDir, plots);
     }
     
     /**
@@ -116,7 +139,8 @@ public class DIVPaper extends DivTestSetting
     /**
      * Read the data from files and draw the graphs
      */
-    public static void drawGraphDIVEquivBIP(String dbName, String wlName) throws Exception
+    public static void drawGraphDIVEquivBIP(String dbName, String wlName, boolean drawRatio) 
+                throws Exception
     {   
         DivPaperEntry entry;
         
@@ -128,17 +152,18 @@ public class DIVPaper extends DivTestSetting
         divFile = new File(rawDataDir, DIV_DB2_FILE);
         mapDiv = readDivResult(divFile);
         Rt.p(" map div: " + mapDiv);
-        // 2. Read the result from DIV file
-        //designFile = new File(rawDataDir, DESIGN_DB2_FILE);
-        //mapDesign = readDivResult(designFile);
+        
+        // 3. Read the result from Design file
+        designFile = new File(rawDataDir, DESIGN_DB2_FILE);
+        mapDesign = readDivResult(designFile);
         
         String[] competitors;
-        boolean drawRatio = false;
+        
         // 3. draw graphs
         if (drawRatio)
-            competitors = new String[] {"1 - DIV-BIP/UNIF"}; //, " 1 - DIVGDESIGN/UNIF"};
+            competitors = new String[] {"1 - DIV-BIP/UNIF", " 1 - DIVGDESIGN/UNIF"};
         else 
-            competitors = new String[] {"DIV-BIP", "UNIF"};
+            competitors = new String[] {"DIV-BIP", "DIVGDESIGN", "UNIF"};
         int numX;
         double ratio; 
         long budget;
@@ -165,6 +190,10 @@ public class DIVPaper extends DivTestSetting
             
             ratio = (double) B / Math.pow(2, 30) / 10;
             plotName = dbName + "_" + wlName + "_space_" + Double.toString(ratio) + "x";
+            if (drawRatio)
+                plotName += "_ratio";
+            else
+                plotName += "_absolute";
             xname = "# replicas";
             if (drawRatio)
                 yname = "TotalCost improvement (%)";
@@ -203,6 +232,11 @@ public class DIVPaper extends DivTestSetting
             
             
             plotName = dbName + "_" + wlName + "_number_replica" + Integer.toString(n);
+            if (drawRatio)
+                plotName += "_ratio";
+            else
+                plotName += "_absolute";
+            
             xname = "Space budget";
             if (drawRatio)
                 yname = "TotalCost improvement (%)";
@@ -232,31 +266,31 @@ public class DIVPaper extends DivTestSetting
         
         costDiv = mapDiv.get(entry);
         costUnif = mapUnif.get(entry);
-        //costDesign = mapDesign.get(entry);
+        costDesign = mapDesign.get(entry);
         
         Rt.p(" entry: " + entry);
         Rt.p(" cost UNIF = " + (costUnif / Math.pow(10, 6)));
         Rt.p(" cost DIV = " + (costDiv / Math.pow(10, 6)));
-        //Rt.p(" cost DESIGN = " + (costDesign / Math.pow(10, 6)));
+        Rt.p(" cost DESIGN = " + (costDesign / Math.pow(10, 6)));
         
         ratioDiv = 1 - (double) costDiv / costUnif;
-        //ratioDesign = 1 - (double) costDesign / costUnif;
+        ratioDesign = 1 - (double) costDesign / costUnif;
         ratioDiv = ratioDiv * 100;
-        //ratioDesign = ratioDesign * 100;
+        ratioDesign = ratioDesign * 100;
         if (ratioDiv < 0.0) {
             Rt.p(" watch out, entry = " + entry
                     + ", ratio DIV = " + ratioDiv);
             ratioDiv = 0.05;  
         }
-        /*
+        
         if (ratioDesign < 0.0){
             Rt.p("watch out, entry = " + entry 
                     + ", ratioDesign = " + ratioDesign);
             ratioDesign = 0.05;
         }
-        */
+        
         points.add(new Point(xcoordinate, ratioDiv));
-        //points.add(new Point(xcoordinate, ratioDesign));
+        points.add(new Point(xcoordinate, ratioDesign));
     }
     
     /**
@@ -271,15 +305,88 @@ public class DIVPaper extends DivTestSetting
         Rt.p(" entry = " + entry); 
         costDiv = mapDiv.get(entry);
         costUnif = mapUnif.get(entry);
-        //costDesign = mapDesign.get(entry);
+        costDesign = mapDesign.get(entry);
         
         
         points.add(new Point(xcoordinate, costDiv));
-        //points.add(new Point(xcoordinate, costDesign));
+        points.add(new Point(xcoordinate, costDesign));
         points.add(new Point(xcoordinate, costUnif));
     }
     
     
+    
+    
+    /*
+     * Draw online graph
+     */
+    /**
+     * Read the data from files and draw the graphs
+     */
+    public static void drawOnline() throws Exception
+    {   
+        onlineFile = new File(rawDataDir, ONLINE_FILE);
+        OnlinePaperEntry entry = readOnlineResult(onlineFile);
+        
+        String[] competitors = {" 1 - OPT / INITIAL"};
+        
+        int numX = entry.getListInitial().size();
+        // the last two for the running time
+        double ratio;
+        double[] xtics = new double[numX];
+        String[] xaxis = new String[numX];
+        List<Point> points = new ArrayList<Point>();
+        Map<Integer, Integer> ticks = new HashMap<Integer, Integer>();
+        for (int id : entry.getReconfigurationStmts())
+            ticks.put(id, id);
+            
+        for (int i = 0; i < numX; i++) {
+            ratio = 1 - entry.getListOpt().get(i) / entry.getListInitial().get(i);
+            ratio = ratio * 100;
+            
+            if (i == 0 || ticks.containsKey(i))
+                xaxis[i] = Integer.toString(i);
+            else
+                xaxis[i] = "null"; // NOT mark this
+            xtics[i] = i;
+            points.add(new Point(i, ratio));
+        }
+        
+        plotName = "online";
+        xname = "#query ID";
+        yname = "TotalCost improvement (%)";
+        
+        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                competitors, figsDir, points);
+        
+        plots.add(new Plot("figs/" + plotName,  
+                " ONLINE, space = 0.5x, n = 3", 0.5));
+        
+        Rt.p("reconfiguration: " + entry.getReconfigurationStmts());
+        Rt.p(" AVG BIP = " + entry.getTimeBIP() / numX / 1000 + " (secs)");
+        Rt.p(" AVG INUM = " + entry.getTimeInum() / numX / 1000 + " (secs) ");
+    }
+    
+    
+    /**
+     * Write into a text file
+     * @param fileName
+     */
+    protected static void readOnlineResultToFile(File file, List<Double> optCosts,
+                                            List<Double> initialCosts) throws Exception
+    {
+        BufferedReader reader;        
+        String line;
+        
+        reader = new BufferedReader(new FileReader(file));
+        String[] tokens;
+        while ((line = reader.readLine()) != null) {
+            line = line.trim();
+            tokens = line.split(",");
+            assert(tokens.length == 2);
+            optCosts.add(Double.parseDouble(tokens[0]));
+            initialCosts.add(Double.parseDouble(tokens[1]));
+        }
+    }
     /**
      * Retrieve the environment parameters set in {@code dbtune.cfg} file
      * 
@@ -478,6 +585,53 @@ public class DIVPaper extends DivTestSetting
     }
     
     /**
+     * Store the maps of divergent results into binary object file
+     * 
+     * @param maps
+     *      The map that stores the result           
+     * @param file
+     *      The filename on which the data is written on
+     *      
+     * @throws Exception
+     */
+    protected static void serializeOnlineResult(OnlinePaperEntry onlineEntry, 
+                                                File file) throws Exception 
+    {    
+        ObjectOutputStream write;
+        
+        try {
+            FileOutputStream fileOut = new FileOutputStream(file, false);
+            write = new ObjectOutputStream(fileOut);
+            write.writeObject(onlineEntry);
+            write.close();
+            fileOut.close();
+        } catch(IOException e) {
+            throw new SQLException(e);
+        }
+    }
+    
+    
+    protected static OnlinePaperEntry readOnlineResult(File file) throws Exception
+    {
+        ObjectInputStream in;
+        OnlinePaperEntry results = null;
+        try {
+            FileInputStream fileIn = new FileInputStream(file);
+            in = new ObjectInputStream(fileIn);
+            results = (OnlinePaperEntry) in.readObject();
+
+            in.close();
+            fileIn.close();
+        } catch(IOException e) {
+            throw new SQLException(e);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException(e);
+        }
+        
+        return results;
+    }
+    
+    /**
      * Class of data points drawn in GnuPlot
      * 
      * @author Quoc Trung Tran
@@ -506,6 +660,65 @@ public class DIVPaper extends DivTestSetting
         //return (long) (B / Math.pow(2, 20));
     }
     
+    public static class OnlinePaperEntry implements Serializable
+    {
+        private static final long serialVersionUID = 1L;
+        private List<Double> initialCosts;
+        private List<Double> optCosts;
+        private List<Integer> stmtReconfiguration;
+        
+        private double timeBIP;
+        private double timeINUM;
+        
+        public OnlinePaperEntry()
+        {
+            initialCosts = new ArrayList<Double>();
+            optCosts = new ArrayList<Double>();
+            stmtReconfiguration = new ArrayList<Integer>();
+        }
+        
+        public void addCosts(double initial, double opt)
+        {
+            this.initialCosts.add(initial);
+            this.optCosts.add(opt);
+        }
+        
+        public void addReconfiguration(int id)
+        {
+            this.stmtReconfiguration.add(id);
+        }
+        
+        public void setTimes(double bip, double inum)
+        {
+            this.timeBIP = bip;
+            this.timeINUM = inum;
+        }
+        
+        public double getTimeBIP()
+        {
+            return timeBIP;
+        }
+        
+        public double getTimeInum()
+        {
+            return timeINUM;
+        }
+        
+        public List<Double> getListInitial()
+        {
+            return this.initialCosts;
+        }
+        
+        public List<Double> getListOpt()
+        {
+            return this.optCosts;
+        }
+        
+        public List<Integer> getReconfigurationStmts()
+        {
+            return this.stmtReconfiguration;
+        }
+    }
     /**
      * This class stores the total cost of 
      * each method (UNIF, DIVBIP, DIVGDESIN)
@@ -577,4 +790,136 @@ public class DIVPaper extends DivTestSetting
         }
     }
     
+    
+    /**
+     * Read the data from files and draw the graphs
+     */
+    public static void drawAllGraphDIVEquivBIP(String dbName, String wlName, boolean drawRatio) 
+            throws Exception
+    {   
+        DivPaperEntry entry;
+        
+        // 1. Read the result from UNIF file
+        unifFile = new File(rawDataDir, UNIF_DB2_FILE);
+        mapUnif = readDivResult(unifFile);
+        
+        // 2. Read the result from DIV file
+        divFile = new File(rawDataDir, DIV_DB2_FILE);
+        mapDiv = readDivResult(divFile);
+        
+        // 3. Read the result from UNIF-COPHY file
+        unifCoPhyFile = new File(rawDataDir, UNIF_COPHY_FILE);
+        mapUnifCoPhy = readDivResult(unifCoPhyFile);
+        
+        String[] competitors;
+        
+        // 3. draw graphs
+        if (drawRatio)
+            competitors = new String[] {"1 - DIV-BIP/UNIF-DB2", "1 - DIV-BIP/UNIF-COPHY"}; 
+        else 
+            competitors = new String[] {"DIV-BIP", "UNIF-COPHY", "UNIF-DB2"};
+        int numX;
+        double ratio; 
+        long budget;
+        
+        // varying space budget
+        for (int n : listNumberReplicas) {
+            double B;
+            numX = listBudgets.size();
+            double[] xtics = new double[numX];
+            String[] xaxis = new String[numX];
+            List<Point> points = new ArrayList<Point>();
+            
+            for (int i = 0; i < numX; i++) {
+                B = listBudgets.get(i);
+                budget = convertBudgetToMB (B);
+                xtics[i] = i;
+                ratio = (double) B / Math.pow(2, 30) / 10;
+                xaxis[i] = Double.toString(ratio) + "x";
+                entry = new DivPaperEntry(dbName, wlName, n, budget);
+                if (drawRatio)
+                    addAllPointRatioDIVEquivBIP(xtics[i], entry, points);
+                else 
+                    addAllPointDIVEquivBIP(xtics[i], entry, points);
+            }
+            
+            plotName = dbName + "_" + wlName + "_full_number_replica" + Integer.toString(n);
+            if (drawRatio)
+                plotName += "_ratio";
+            else
+                plotName += "_absolute";
+            xname = "Space budget";
+            if (drawRatio)
+                yname = "TotalCost improvement (%)";
+            else 
+                yname = "TotalCost";
+            
+            drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                    competitors, figsDir, points);
+            
+            plots.add(new Plot("figs/" + plotName, 
+                    " Database = " + dbName + " workload = " + wlName +
+                    " Varying space budgets, n = " + Integer.toString(n), 0.5));
+        }
+    }
+    
+    
+    /**
+     * Add corresponding points into the list of points, which are 
+     * displayed in GnuPlot
+     * @param entry
+     * @param points
+     */
+    protected static void addAllPointRatioDIVEquivBIP(double xcoordinate, DivPaperEntry entry, List<Point> points)
+    {
+        double costDiv, costUnif, costUnifCoPhy;
+        double ratioCoPhy, ratioDiv;
+        
+        costDiv = mapDiv.get(entry);
+        costUnif = mapUnif.get(entry);
+        costUnifCoPhy = mapUnifCoPhy.get(entry);
+        
+        Rt.p(" entry: " + entry);
+        Rt.p(" cost UNIF = " + (costUnif / Math.pow(10, 6)));
+        Rt.p(" cost DIV = " + (costDiv / Math.pow(10, 6)));
+        Rt.p(" cost UNIF-COPHY = " + (costUnifCoPhy / Math.pow(10, 6)));
+        
+        ratioDiv = 1 - (double) costDiv / costUnif;
+        ratioCoPhy = 1 - (double) costDiv / costUnifCoPhy;
+        ratioDiv = ratioDiv * 100;
+        ratioCoPhy = ratioCoPhy * 100;
+        if (ratioDiv < 0.0) {
+            Rt.p(" watch out, entry = " + entry
+                    + ", ratio DIV = " + ratioDiv);
+            ratioDiv = 0.05;  
+        }
+        
+        if (ratioCoPhy < 0.0){
+            Rt.p("watch out, entry = " + entry 
+                    + ", ratioCoPhy = " + ratioCoPhy);
+            ratioCoPhy = 0.05;
+        }
+        
+        points.add(new Point(xcoordinate, ratioDiv));
+        points.add(new Point(xcoordinate, ratioCoPhy));
+    }
+    
+    /**
+     * Add corresponding points into the list of points, which are 
+     * displayed in GnuPlot
+     * @param entry
+     * @param points
+     */
+    protected static void addAllPointDIVEquivBIP(double xcoordinate, DivPaperEntry entry, List<Point> points)
+    {
+        double costDiv, costUnif, costUnifCoPhy;
+        
+        costDiv = mapDiv.get(entry);
+        costUnifCoPhy = mapUnifCoPhy.get(entry);
+        costUnif = mapUnif.get(entry);
+        
+        points.add(new Point(xcoordinate, costDiv));
+        points.add(new Point(xcoordinate, costUnifCoPhy));
+        points.add(new Point(xcoordinate, costUnif));
+    }
 }
