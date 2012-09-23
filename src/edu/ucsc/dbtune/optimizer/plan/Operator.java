@@ -295,6 +295,7 @@ public class Operator
         this.coefficient=o.coefficient;
         this.cardinalityNLJ=o.cardinalityNLJ;
         this.scanCost=o.scanCost;
+        this.joinInput= o.joinInput;
     }
 
     /**
