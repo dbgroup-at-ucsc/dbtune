@@ -7,12 +7,14 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -114,6 +116,7 @@ public class ExplainTables {
     public SQLStatementPlan getPlan(Connection connection, SQLStatement sql,
             Catalog catalog, Set<Index> indexes) throws SQLException {
         Statement stmt = connection.createStatement();
+        HashSet<Integer> usedIds = new HashSet<Integer>();
 
         if (optimizationLevel >= 0)
             stmt.execute("SET CURRENT QUERY OPTIMIZATION " + optimizationLevel);
@@ -147,6 +150,7 @@ public class ExplainTables {
 
             Operator op = new Operator(DB2Optimizer
                     .getOperatorName(name.trim()), accomulatedCost, 0);
+            usedIds.add(id);
             op.id = id;
             op.ioCost = ioCost;
             op.cpuCost = cpuCost;
@@ -214,6 +218,7 @@ public class ExplainTables {
                 + " from systools.EXPLAIN_STREAM");
         rs = st.getResultSet();
         Hashtable<Operator, Operator> srcToDest = new Hashtable<Operator, Operator>();
+        Vector<Operator[]> extraStream = new Vector<Operator[]>();
         int leafId = -1;
         while (rs.next()) {
             int source_id = rs.getInt("SOURCE_ID");
@@ -238,13 +243,15 @@ public class ExplainTables {
                 src.cardinalityNLJ = 1;
             src.rawColumnNames = columnNames;
             if (srcToDest.get(src) != null) {
+                extraStream.add(new Operator[] { src, dest });
                 // Rt.p(src);
                 // Rt.p(srcToDest.get(src));
                 // Rt.p(dest);
-                if (ExplainTables.showWarnings)
-                    Rt.error("plan is not a tree");
+                // if (ExplainTables.showWarnings)
+                // Rt.error("plan is not a tree");
+            } else {
+                srcToDest.put(src, dest);
             }
-            srcToDest.put(src, dest);
 
             if (dboSchema != null && dboName != null) {
                 dboSchema = dboSchema.trim();
@@ -305,8 +312,6 @@ public class ExplainTables {
             setChild(operator, srcToDest, plan);
         }
         checkNodes(plan, plan.getRootOperator());
-        DB2Optimizer.calculateOperatorInternalCost(plan,
-                plan.getRootOperator(), 1);
         for (Operator operator : operators) {
             if (operator.id < 0) {
                 Operator parent = srcToDest.get(operator);
@@ -328,6 +333,18 @@ public class ExplainTables {
                 }
             }
         }
+        if (extraStream.size() > 0) {
+            for (Operator[] srcDest : extraStream) {
+                Operator o2 = srcDest[0].duplicate();
+                while (usedIds.contains(o2.id))
+                    o2.id += 10000;
+                usedIds.add(o2.id);
+                plan.setChild(srcDest[1], o2);
+                copySubTree(plan, srcDest[0], o2, usedIds);
+            }
+        }
+        DB2Optimizer.calculateOperatorInternalCost(plan,
+                plan.getRootOperator(), 1);
         return plan;
     }
 
@@ -371,5 +388,19 @@ public class ExplainTables {
         if (plan.elements.get(parent) == null)
             setChild(parent, srcToDest, plan);
         plan.setChild(parent, operator);
+    }
+
+    static void copySubTree(SQLStatementPlan p1, Operator src, Operator dest,
+            HashSet<Integer> usedIds) {
+        List<Operator> childern = p1.getChildren(src);
+        for (Operator operator : childern) {
+            // Rt.p(o1.id+" "+ operator.id);
+            Operator o2 = operator.duplicate();
+            while (usedIds.contains(o2.id))
+                o2.id += 10000;
+            usedIds.add(o2.id);
+            p1.setChild(dest, o2);
+            copySubTree(p1, operator, o2, usedIds);
+        }
     }
 }
