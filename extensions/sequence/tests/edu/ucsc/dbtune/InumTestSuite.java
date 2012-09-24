@@ -5,8 +5,11 @@ import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.StringReader;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
@@ -55,7 +58,8 @@ public class InumTestSuite {
             results = new Result[w.workload.size()];
         }
 
-        public IndexSet(Workload w, Rx rx) throws SQLException {
+        public IndexSet(Workload w, Rx rx, boolean loadExistingResults)
+                throws SQLException {
             this.name = rx.getAttribute("name");
             Rx[] rxs = rx.findChilds("index");
             indexNames = new String[rxs.length];
@@ -65,16 +69,20 @@ public class InumTestSuite {
                 indexNames[i] = rxs[i].getText();
             }
             results = new Result[w.workload.size()];
-            for (Rx rx2 : rx.findChilds("result")) {
-                int id = rx2.getIntAttribute("id");
-                if (results[id] != null)
-                    throw new Error();
-                results[id] = new Result(id);
-                results[id].timeout = rx2.getBooleanAttribute("timeout");
-                results[id].db2fts = rx2.getChildDoubleContent("db2fts");
-                results[id].inumfts = rx2.getChildDoubleContent("inumfts");
-                results[id].db2Index = rx2.getChildDoubleContent("db2Index");
-                results[id].inumIndex = rx2.getChildDoubleContent("inumIndex");
+            if (loadExistingResults) {
+                for (Rx rx2 : rx.findChilds("result")) {
+                    int id = rx2.getIntAttribute("id");
+                    if (results[id] != null)
+                        throw new Error();
+                    results[id] = new Result(id);
+                    results[id].timeout = rx2.getBooleanAttribute("timeout");
+                    results[id].db2fts = rx2.getChildDoubleContent("db2fts");
+                    results[id].inumfts = rx2.getChildDoubleContent("inumfts");
+                    results[id].db2Index = rx2
+                            .getChildDoubleContent("db2Index");
+                    results[id].inumIndex = rx2
+                            .getChildDoubleContent("inumIndex");
+                }
             }
         }
 
@@ -108,15 +116,18 @@ public class InumTestSuite {
     }
 
     static class Workload {
+        String uuid;
         String dbName;
         DatabaseSystem db;
         String name;
         String file;
         edu.ucsc.dbtune.workload.Workload workload;
         IndexSet[] indexSets;
+        File resultFile;
 
-        public Workload(String dbName, String name, String file)
+        public Workload(String uuid, String dbName, String name, String file)
                 throws IOException, SQLException {
+            this.uuid = uuid;
             this.dbName = dbName;
             this.name = name;
             this.file = file;
@@ -125,7 +136,8 @@ public class InumTestSuite {
                     new StringReader(queries));
         }
 
-        public void load(Rx rx, Environment en) throws SQLException {
+        public void load(Rx rx, Environment en, boolean loadExistingResults)
+                throws SQLException {
             if (!this.name.equals(rx.getAttribute("name")))
                 throw new Error(this.name + " " + rx.getChildText("name"));
             // if (!this.file.equals(rx.getChildText("file")))
@@ -135,7 +147,7 @@ public class InumTestSuite {
             Rx[] rxs = rx.findChilds("indexSet");
             indexSets = new IndexSet[rxs.length];
             for (int i = 0; i < rxs.length; i++) {
-                indexSets[i] = new IndexSet(this, rxs[i]);
+                indexSets[i] = new IndexSet(this, rxs[i], loadExistingResults);
             }
 
         }
@@ -166,39 +178,40 @@ public class InumTestSuite {
                 }
             }
         }
+
+        public void save() throws Exception {
+            Rx rx = new Rx("workload");
+            save(rx);
+            Rt.write(resultFile, rx.getXml().getBytes());
+        }
     }
 
-    Workload[] workloads = {
-            new Workload("tpch10g", "TPC-H",
-                    "resources/workloads/db2/tpch/complete.sql"),
-            // new Workload("test", "OTAB",
-            // "resources/workloads/db2/online-benchmark-100/workload.sql"),
-            new Workload("test", "TPCDS",
-                    "resources/workloads/db2/tpcds/db2.sql"), };
+    Workload[] workloads;
 
-    File resultFile;
+    File resultDir = new File(
+            "extensions/inum/tests/edu/ucsc/dbtune/inum/perfTest");
     Environment en = Environment.getInstance();
 
-    public InumTestSuite() throws Exception {
+    public InumTestSuite(Workload[] workloads, boolean continueFromLastTest)
+            throws Exception {
+        this.workloads = workloads;
         en.setProperty("username", "db2inst1");
         en.setProperty("password", "db2inst1admin");
         en.setProperty("workloads.dir", "resources/workloads/db2");
-
-        ExplainTables.optimizationLevel = 1;
-        resultFile = new File(
-                "extensions/sequence/tests/edu/ucsc/dbtune/inumTestSuite1.xml");
-        if (!resultFile.exists())
-            save();
-
-        Rx root = Rx.findRoot(Rt.readFile(resultFile));
-        Hashtable<String, Rx> hash = new Hashtable<String, Rx>();
-        for (Rx rx : root.findChilds("workload")) {
-            hash.put(rx.getAttribute("name"), rx);
+        for (Workload workload : workloads) {
+            workload.resultFile = new File(resultDir, workload.uuid + ".xml");
+            if (!workload.resultFile.exists())
+                workload.save();
         }
-        for (int i = 0; i < workloads.length; i++) {
-            Rx rx = hash.get(workloads[i].name);
-            if (rx != null)
-                workloads[i].load(rx, en);
+        // ExplainTables.optimizationLevel = 1;
+        // resultFile = new File(
+        // "/home/wangrui/dbtune/inum/suite/inumTestSuite.xml");
+        // resultFile = new File(
+        // "/home/wangrui/dbtune/inum/suite/inumTestSuite39.xml");
+
+        for (Workload workload : workloads) {
+            Rx root = Rx.findRoot(Rt.readFile(workload.resultFile));
+            workload.load(root, en, continueFromLastTest);
         }
 
         for (Workload workload : workloads) {
@@ -252,46 +265,143 @@ public class InumTestSuite {
                 for (int i = 0; i < set.index.length; i++) {
                     set.indexNames[i] = set.index[i].toString();
                 }
-                save();
+                workload.save();
             }
         }
 
+        // for (String s : workloads[1].indexSets[0].indexNames)
+        // Rt.np(s);
+        // System.exit(0);
         for (Workload workload : workloads) {
             Rt.np("Workload:\t" + workload.name);
             Rt.np("query count:\t" + workload.workload.size());
-            for (IndexSet set : workload.indexSets) {
-                Rt.np(set.name + " index count:\t" + set.indexNames.length);
+            for (IndexSet set : workload.indexSets)
                 compareWorkload(workload, set);
-                double mean = 0;
-                double variance = 0;
-                int n = 0;
-                for (int i = 0; i < workload.workload.size(); i++) {
-                    Result r = set.results[i];
-                    if (set.results[i].timeout)
-                        Rt.np(i + " timeout");
-                    else
-                        Rt.np(i + "\t"
-                                // + r.db2fts + "\t" + r.inumfts + "\t"
-                                + r.db2Index + "\t" + r.inumIndex + "\t"
-                                + (r.inumIndex / r.db2Index));
-                    if (!set.results[i].timeout) {
-                        mean += r.inumIndex / r.db2Index;
-                        n++;
-                    }
-                }
-                mean /= n;
-                for (int i = 0; i < workload.workload.size(); i++) {
-                    Result r = set.results[i];
-                    if (!set.results[i].timeout) {
-                        double t = r.inumIndex / r.db2Index - mean;
-                        variance += t * t;
-                    }
-                }
-                variance /= n;
-                Rt.np("mean:\t" + mean);
-                Rt.np("variance:\t" + variance);
-            }
         }
+    }
+
+    void showCompactResult(Workload workload, PrintStream ps, boolean hasCost) {
+        for (IndexSet set : workload.indexSets)
+            ps.print("\t" + set.name + " " + set.indexNames.length);
+        if (hasCost)
+            ps.print("\tFTS");
+        ps.println();
+        int n1 = 0;
+        int n2 = 0;
+        int n3 = 0;
+        for (int i = 0; i < workload.workload.size(); i++) {
+            boolean problematic = false;
+            boolean problematic2 = false;
+            for (IndexSet set : workload.indexSets) {
+                Result r = set.results[i];
+                if ((r.inumIndex / r.db2Index) < 0.9
+                        || (r.inumIndex / r.db2Index) > 1.2)
+                    problematic = true;
+                if ((r.inumIndex / r.db2Index) < 0.5
+                        || (r.inumIndex / r.db2Index) > 2)
+                    problematic2 = true;
+            }
+            if (problematic)
+                ps.print("*");
+            if (problematic2)
+                ps.print("*");
+            if (problematic2)
+                n2++;
+            else if (problematic)
+                n1++;
+            else
+                n3++;
+            ps.print(i);
+            for (IndexSet set : workload.indexSets) {
+                Result r = set.results[i];
+                if (set.results[i].timeout)
+                    ps.print("\ttimeout");
+                else {
+                    if (hasCost)
+                        ps.format("\t%,.0f\t%,.0f", r.db2Index, r.inumIndex);
+                    ps.format("\t%.2f", (r.inumIndex / r.db2Index));
+                }
+            }
+            Result r = workload.indexSets[0].results[i];
+            if (hasCost)
+                ps.format("\t%,.0f\t%,.0f", r.db2fts, r.inumfts);
+            ps.println();
+
+        }
+        ps.println("unusable=" + n1 + " acceptable=" + n2 + " accurate=" + n3);
+    }
+
+    void showResultWithCosts(Workload workload, PrintStream ps) {
+        for (IndexSet set : workload.indexSets) {
+            double variance = 0;
+            int n = 0;
+            for (int i = 0; i < workload.workload.size(); i++) {
+                Result r = set.results[i];
+                if (set.results[i].timeout)
+                    ps.println(i + " timeout");
+                else
+                    ps.println(i + "\t"
+                            // + r.db2fts + "\t" + r.inumfts + "\t"
+                            + r.db2Index + "\t" + r.inumIndex + "\t"
+                            + (r.inumIndex / r.db2Index));
+                if (!set.results[i].timeout) {
+                    double t = r.inumIndex / r.db2Index - 1;
+                    variance += t * t;
+                    n++;
+                }
+            }
+            variance /= n;
+            ps.println("variance:\t" + variance);
+        }
+    }
+
+    void showHtmlResult(Workload workload, PrintStream ps) {
+        ps.println("<h3>" + workload.name + "</h3>");
+        ps.println("query count: " + workload.workload.size() + "<br>");
+        ps.println("Time: "
+                + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(
+                        workload.resultFile.lastModified())) + "<br>");
+
+        ps.println("<table><tr><td>id</td>");
+        for (IndexSet set : workload.indexSets)
+            ps.println("<td colspan=\"3\">" + set.name + " "
+                    + set.indexNames.length + "</td>");
+        ps.println("<td colspan=\"3\">FTS</td>");
+        ps.println("</tr>");
+        int n1 = 0;
+        int n2 = 0;
+        int n3 = 0;
+        for (int i = 0; i < workload.workload.size(); i++) {
+            boolean problematic = false;
+            boolean problematic2 = false;
+            for (IndexSet set : workload.indexSets) {
+                Result r = set.results[i];
+                if ((r.inumIndex / r.db2Index) < 0.9
+                        || (r.inumIndex / r.db2Index) > 1.2)
+                    problematic = true;
+                if ((r.inumIndex / r.db2Index) < 0.5
+                        || (r.inumIndex / r.db2Index) > 2)
+                    problematic2 = true;
+            }
+            ps.println("<tr><td>" + i + "</td>");
+            for (IndexSet set : workload.indexSets) {
+                Result r = set.results[i];
+                if (set.results[i].timeout)
+                    ps.print("<td></td><td></td><td></td>");
+                else
+                    ps
+                            .format(
+                                    "<td>%,.0f</td><td>%,.0f</td><td><b>%.2f</b></td>",
+                                    // + r.db2fts + "\t" + r.inumfts + "\t"
+                                    r.db2Index, r.inumIndex,
+                                    (r.inumIndex / r.db2Index));
+            }
+            Result r = workload.indexSets[0].results[i];
+            ps.format("<td>%,.0f</td><td>%,.0f</td><td>%.2f</td>", r.db2fts,
+                    r.inumfts, (r.inumfts / r.db2fts));
+            ps.println("</tr>");
+        }
+        ps.println("</table>");
     }
 
     void compareWorkload(Workload workload, IndexSet set) throws Exception {
@@ -335,19 +445,28 @@ public class InumTestSuite {
             }
             set.results[i].db2fts = db2fts;
             set.results[i].db2Index = db2index;
-            save();
+            workload.save();
         }
-    }
-
-    public void save() throws Exception {
-        Rx rx = new Rx("inumTest");
-        for (Workload workload : workloads) {
-            workload.save(rx.createChild("workload"));
-        }
-        Rt.write(resultFile, rx.getXml().getBytes());
     }
 
     public static void main(String[] args) throws Exception {
-        new InumTestSuite();
+        Workload[] workloads = {
+        // new Workload("tpch10g_22", "tpch10g", "TPC-H",
+        // "resources/workloads/db2/tpch/complete.sql"),
+        new Workload("online-benchmark-100", "test", "OTAB",
+                "resources/workloads/db2/online-benchmark-100/workload.sql"),
+        // new Workload("tpcds10g_99", "test", "TPCDS",
+        // "resources/workloads/db2/tpcds/db2.sql"),
+        // new Workload("test", "TPCDS 39",
+        // "resources/workloads/db2/tpcds/39.sql"),
+        };
+        boolean continueFromLastTest = true;
+        // continueFromLastTest=false;
+        InumTestSuite suite = new InumTestSuite(workloads, continueFromLastTest);
+        for (Workload workload : workloads) {
+            // suite.showCompactResult(workload);
+            // suite.showResultWithCosts(workload);
+            suite.showHtmlResult(workload, System.out);
+        }
     }
 }
