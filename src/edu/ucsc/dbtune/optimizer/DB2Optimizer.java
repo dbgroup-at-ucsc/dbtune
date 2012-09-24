@@ -1431,11 +1431,6 @@ public class DB2Optimizer extends AbstractOptimizer {
 
         sb.delete(sb.length() - 2, sb.length() - 1);
 
-//        if ("SELECT *  FROM NREF.PROTEIN  ORDER BY NREF_ID ASC".equals(sb.toString().trim())) {
-//            Rt.p(sb.toString());
-//            Rt.p(indexes);
-//            ExplainTables.dump=true;
-//            }
         return optimizer.explain(sb.toString(), indexes).getSelectCost();
     }
 

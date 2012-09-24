@@ -451,22 +451,45 @@ public class InumTestSuite {
 
     public static void main(String[] args) throws Exception {
         Workload[] workloads = {
-        // new Workload("tpch10g_22", "tpch10g", "TPC-H",
-        // "resources/workloads/db2/tpch/complete.sql"),
-        new Workload("online-benchmark-100", "test", "OTAB",
-                "resources/workloads/db2/online-benchmark-100/workload.sql"),
-        // new Workload("tpcds10g_99", "test", "TPCDS",
-        // "resources/workloads/db2/tpcds/db2.sql"),
+                new Workload("tpch10g_22", "tpch10g", "TPC-H",
+                        "resources/workloads/db2/tpch/complete.sql"),
+                new Workload("online-benchmark-100", "test", "OTAB",
+                        "resources/workloads/db2/online-benchmark-100/workload.sql"),
+                new Workload("tpcds10g_99", "test", "TPCDS",
+                        "resources/workloads/db2/tpcds/db2.sql"),
         // new Workload("test", "TPCDS 39",
         // "resources/workloads/db2/tpcds/39.sql"),
         };
         boolean continueFromLastTest = true;
         // continueFromLastTest=false;
+        File outputDir = new File("resources/workloads/db2/deployAware");
         InumTestSuite suite = new InumTestSuite(workloads, continueFromLastTest);
         for (Workload workload : workloads) {
-            // suite.showCompactResult(workload);
-            // suite.showResultWithCosts(workload);
-            suite.showHtmlResult(workload, System.out);
+            // suite.showCompactResult(workload,System.out,false);
+            // suite.showResultWithCosts(workload, System.out);
+            // suite.showHtmlResult(workload, System.out);
+            Rt.np(workload.name);
+            int n = 0;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < workload.workload.size(); i++) {
+                boolean usable = true;
+                for (IndexSet set : workload.indexSets) {
+                    Result r = set.results[i];
+                    if ((r.inumIndex / r.db2Index) < 0.6
+                            || (r.inumIndex / r.db2Index) > 1.5)
+                        usable = false;
+                }
+                if (usable) {
+                    sb.append(workload.workload.get(i).getSQL() + ";\r\n");
+                    n++;
+                }
+            }
+            PrintStream ps = new PrintStream(new File(outputDir, workload.name
+                    .replaceAll("-", "")
+                    + n + ".sql"));
+            ps.println(sb);
+            ps.close();
+            Rt.np(n);
         }
     }
 }
