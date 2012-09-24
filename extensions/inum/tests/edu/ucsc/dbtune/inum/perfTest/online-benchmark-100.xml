@@ -1,0 +1,2241 @@
+<?xml version="1.0" encoding="UTF-8"?><workload dbName="test" name="OTAB">
+  <file>resources/workloads/db2/online-benchmark-100/workload.sql</file>
+  <indexSet name="U-OPT">
+    <index>[+TPCH.PARTSUPP.PS_SUPPLYCOST(A)]</index>
+    <index>[+TPCE.SECURITY.S_YIELD(A)+TPCE.SECURITY.S_DIVIDEND(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_LOW(A)+TPCE.DAILY_MARKET.DM_S_SYMB(D)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_LOW(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.END_2(A)+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_DISCOUNT(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_START_DATE(A)+TPCE.SECURITY.S_EXCH_DATE(A)+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_CO_ID(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCH.CUSTOMER.C_CUSTKEY(A)+TPCH.CUSTOMER.C_ACCTBAL(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)+TPCE.DAILY_MARKET.DM_VOL(A)+TPCE.DAILY_MARKET.DM_LOW(A)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERKEY(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_VOL(A)+TPCE.DAILY_MARKET.DM_CLOSE(A)+TPCE.DAILY_MARKET.DM_HIGH(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.ORDINAL(A)+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(D)]</index>
+    <index>[+TPCE.COMPANY.CO_OPEN_DATE(A)+TPCE.COMPANY.CO_ID(D)]</index>
+    <index>[+TPCC.CUSTOMER.C_SINCE(A)+TPCC.CUSTOMER.C_DISCOUNT(D)]</index>
+    <index>[+TPCH.PARTSUPP.PS_PARTKEY(A)+TPCH.PARTSUPP.PS_SUPPKEY(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_I_ID(A)+TPCC.ORDERLINE.OL_AMOUNT(A)+TPCC.ORDERLINE.OL_SUPPLY_W_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_EXTENDEDPRICE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_START_DATE(A)+TPCE.SECURITY.S_EXCH_DATE(A)+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_ST_ID(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCH.LINEITEM.L_EXTENDEDPRICE(A)+TPCH.LINEITEM.L_COMMITDATE(D)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERDATE(A)+TPCH.ORDERS.O_TOTALPRICE(A)+TPCH.ORDERS.O_ORDERKEY(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)+TPCE.DAILY_MARKET.DM_CLOSE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_EXTENDEDPRICE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_RECEIPTDATE(A)+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.ORDINAL(A)]</index>
+    <index>[+TPCE.SECURITY.S_PE(A)+TPCE.SECURITY.S_SYMB(D)]</index>
+    <index>[+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_SUPPLYCOST(D)]</index>
+    <index>[+TPCE.COMPANY.CO_ID(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_HIGH(A)+TPCE.DAILY_MARKET.DM_CLOSE(D)]</index>
+    <index>[+NREF.PROTEIN.SEQ_LENGTH(A)+NREF.PROTEIN.LAST_UPDATED(A)+NREF.PROTEIN.NREF_ID(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_SUPPLYCOST(A)+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_QUANTITY(A)]</index>
+    <index>[+NREF.PROTEIN.LAST_UPDATED(A)+NREF.PROTEIN.SEQ_LENGTH(A)+NREF.PROTEIN.NREF_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_TAX(D)]</index>
+    <index>[+TPCH.CUSTOMER.C_CUSTKEY(A)+TPCH.CUSTOMER.C_NATIONKEY(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_HIGH(A)+TPCE.DAILY_MARKET.DM_VOL(A)+TPCE.DAILY_MARKET.DM_S_SYMB(A)]</index>
+    <index>[+TPCH.PART.P_RETAILPRICE(A)+TPCH.PART.P_PARTKEY(D)]</index>
+    <index>[+NREF.TAXONOMY.NREF_ID(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)+NREF.NEIGHBORING_SEQ.SCORE(D)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_CLOSE(A)+TPCE.DAILY_MARKET.DM_HIGH(D)]</index>
+    <index>[+NREF.PROTEIN.NREF_ID(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_I_ID(A)+TPCC.ORDERLINE.OL_SUPPLY_W_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_RECEIPTDATE(A)+TPCH.LINEITEM.L_QUANTITY(A)]</index>
+    <index>[+TPCC.ORDER.O_CARRIER_ID(A)+TPCC.ORDER.O_OL_CNT(A)+TPCC.ORDER.O_ENTRY_D(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)+TPCE.DAILY_MARKET.DM_VOL(A)+TPCE.DAILY_MARKET.DM_CLOSE(A)+TPCE.DAILY_MARKET.DM_HIGH(A)]</index>
+    <index>[+TPCH.PART.P_SIZE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.NREF_ID_1(A)]</index>
+    <index>[+TPCH.CUSTOMER.C_ACCTBAL(A)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_EXTENDEDPRICE(A)+TPCH.LINEITEM.L_DISCOUNT(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCC.STOCK.S_I_ID(A)+TPCC.STOCK.S_W_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.SCORE(A)]</index>
+    <index>[+TPCE.EXCHANGE.EX_NUM_SYMB(A)+TPCE.EXCHANGE.EX_ID(D)]</index>
+    <index>[+TPCE.SECURITY.S_START_DATE(A)+TPCE.SECURITY.S_EXCH_DATE(A)+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_EX_ID(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_HIGH_DATE(A)+TPCE.SECURITY.S_SYMB(D)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SHIPDATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCH.ORDERS.O_TOTALPRICE(A)+TPCH.ORDERS.O_ORDERKEY(D)]</index>
+    <index>[+TPCE.SECURITY.S_EXCH_DATE(A)+TPCE.SECURITY.S_CO_ID(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.START_2(A)]</index>
+    <index>[+TPCH.PART.P_SIZE(A)+TPCH.PART.P_RETAILPRICE(A)+TPCH.PART.P_PARTKEY(A)]</index>
+    <index>[+TPCE.STATUS_TYPE.ST_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_RECEIPTDATE(A)+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_CO_ID(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_AMOUNT(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_AVAILQTY(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_NUM_OUT(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.LENGTH_2(A)+NREF.NEIGHBORING_SEQ.START_2(A)+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.END_2(A)+NREF.NEIGHBORING_SEQ.LENGTH_2(D)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_VOL(A)+TPCE.DAILY_MARKET.DM_CLOSE(D)]</index>
+    <index>[+TPCE.LAST_TRADE.LT_S_SYMB(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_HIGH(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)+TPCE.DAILY_MARKET.DM_LOW(A)+TPCE.DAILY_MARKET.DM_HIGH(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_PE(A)+TPCE.SECURITY.S_EX_ID(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_VOL(A)+TPCE.DAILY_MARKET.DM_HIGH(D)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)]</index>
+    <index>[+TPCH.ORDERS.O_TOTALPRICE(A)+TPCH.ORDERS.O_ORDERDATE(A)+TPCH.ORDERS.O_CUSTKEY(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)+TPCE.DAILY_MARKET.DM_HIGH(A)+TPCE.DAILY_MARKET.DM_VOL(A)]</index>
+    <index>[+TPCH.CUSTOMER.C_CUSTKEY(A)]</index>
+    <index>[+NREF.SOURCE.NREF_ID(A)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERDATE(A)+TPCH.ORDERS.O_TOTALPRICE(D)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_CLOSE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.ORDINAL(A)+NREF.NEIGHBORING_SEQ.SCORE(D)]</index>
+    <index>[+TPCH.LINEITEM.L_ORDERKEY(A)+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+    <index>[+TPCC.WAREHOUSE.W_TAX(A)+TPCC.WAREHOUSE.W_ID(D)]</index>
+    <index>[+TPCE.SECURITY.S_CO_ID(A)+TPCE.SECURITY.S_ST_ID(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCH.ORDERS.O_TOTALPRICE(A)+TPCH.ORDERS.O_ORDERDATE(D)]</index>
+    <index>[+TPCC.STOCK.S_W_ID(A)+TPCC.STOCK.S_QUANTITY(A)+TPCC.STOCK.S_I_ID(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.END_2(A)+NREF.NEIGHBORING_SEQ.START_2(D)]</index>
+    <index>[+TPCH.LINEITEM.L_RECEIPTDATE(A)+TPCH.LINEITEM.L_TAX(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_TAX(D)]</index>
+    <index>[+TPCC.ORDERLINE.OL_DELIVERY_D(A)]</index>
+    <index>[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_SIZE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.SCORE(A)+NREF.NEIGHBORING_SEQ.NREF_ID_1(D)]</index>
+    <index>[+TPCC.ORDERLINE.OL_AMOUNT(A)+TPCC.ORDERLINE.OL_I_ID(A)+TPCC.ORDERLINE.OL_SUPPLY_W_ID(A)]</index>
+    <index>[+TPCC.ITEM.I_IM_ID(A)+TPCC.ITEM.I_PRICE(D)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERKEY(A)+TPCH.ORDERS.O_CUSTKEY(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_VOL(A)]</index>
+    <index>[+TPCH.LINEITEM.L_RECEIPTDATE(A)]</index>
+    <index>[+NREF.PROTEIN.LAST_UPDATED(A)+NREF.PROTEIN.NREF_ID(D)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_HIGH(A)+TPCE.DAILY_MARKET.DM_VOL(D)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)+TPCE.DAILY_MARKET.DM_CLOSE(A)+TPCE.DAILY_MARKET.DM_VOL(A)]</index>
+    <index>[+TPCH.PART.P_RETAILPRICE(A)+TPCH.PART.P_SIZE(A)+TPCH.PART.P_PARTKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_EX_ID(A)+TPCE.SECURITY.S_PE(A)+TPCE.SECURITY.S_52WK_LOW(A)+TPCE.SECURITY.S_YIELD(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCH.SUPPLIER.S_ACCTBAL(A)+TPCH.SUPPLIER.S_SUPPKEY(D)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)+NREF.NEIGHBORING_SEQ.SCORE(A)+NREF.NEIGHBORING_SEQ.ORDINAL(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.START_2(A)+NREF.NEIGHBORING_SEQ.END_2(A)+NREF.NEIGHBORING_SEQ.SCORE(A)]</index>
+    <index>[+TPCH.SUPPLIER.S_SUPPKEY(A)]</index>
+    <index>[+TPCE.EXCHANGE.EX_ID(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)+TPCE.DAILY_MARKET.DM_LOW(A)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERKEY(A)+TPCH.ORDERS.O_ORDERDATE(A)+TPCH.ORDERS.O_TOTALPRICE(A)]</index>
+    <result id="0" timeout="false">
+      <db2fts>6178.615234375</db2fts>
+      <inumfts>6178.615234375</inumfts>
+      <db2Index>22.734243392944336</db2Index>
+      <inumIndex>30.29326105117798</inumIndex>
+    </result>
+    <result id="1" timeout="false">
+      <db2fts>131694.171875</db2fts>
+      <inumfts>131694.171875</inumfts>
+      <db2Index>2224.24267578125</db2Index>
+      <inumIndex>22514.52256523251</inumIndex>
+    </result>
+    <result id="2" timeout="false">
+      <db2fts>20153.455078125</db2fts>
+      <inumfts>20153.455078125</inumfts>
+      <db2Index>4140.0087890625</db2Index>
+      <inumIndex>4471.356792449951</inumIndex>
+    </result>
+    <result id="3" timeout="false">
+      <db2fts>29147.400390625</db2fts>
+      <inumfts>29147.400390625</inumfts>
+      <db2Index>1607.291015625</db2Index>
+      <inumIndex>1607.291748046875</inumIndex>
+    </result>
+    <result id="4" timeout="false">
+      <db2fts>105939.2265625</db2fts>
+      <inumfts>105939.2265625</inumfts>
+      <db2Index>406.3321533203125</db2Index>
+      <inumIndex>406.3311767578125</inumIndex>
+    </result>
+    <result id="5" timeout="false">
+      <db2fts>3796.940185546875</db2fts>
+      <inumfts>3796.940185546875</inumfts>
+      <db2Index>22.52667236328125</db2Index>
+      <inumIndex>22.5267276763916</inumIndex>
+    </result>
+    <result id="6" timeout="false">
+      <db2fts>23139.876953125</db2fts>
+      <inumfts>23139.876953125</inumfts>
+      <db2Index>23.811800003051758</db2Index>
+      <inumIndex>23.811304092407227</inumIndex>
+    </result>
+    <result id="7" timeout="false">
+      <db2fts>22784.671875</db2fts>
+      <inumfts>22784.671875</inumfts>
+      <db2Index>339.2855529785156</db2Index>
+      <inumIndex>339.453125</inumIndex>
+    </result>
+    <result id="8" timeout="false">
+      <db2fts>105523.9765625</db2fts>
+      <inumfts>105523.9765625</inumfts>
+      <db2Index>360.2799377441406</db2Index>
+      <inumIndex>360.2792053222656</inumIndex>
+    </result>
+    <result id="9" timeout="false">
+      <db2fts>836796.25</db2fts>
+      <inumfts>836796.25</inumfts>
+      <db2Index>33557.078125</db2Index>
+      <inumIndex>33239.80078125</inumIndex>
+    </result>
+    <result id="10" timeout="false">
+      <db2fts>6252.7236328125</db2fts>
+      <inumfts>6252.7236328125</inumfts>
+      <db2Index>23.384109497070312</db2Index>
+      <inumIndex>23.38400936126709</inumIndex>
+    </result>
+    <result id="11" timeout="false">
+      <db2fts>106244.3984375</db2fts>
+      <inumfts>106244.3984375</inumfts>
+      <db2Index>365.70660400390625</db2Index>
+      <inumIndex>363.1561279296875</inumIndex>
+    </result>
+    <result id="12" timeout="false">
+      <db2fts>105523.0625</db2fts>
+      <inumfts>105523.0625</inumfts>
+      <db2Index>351.8809509277344</db2Index>
+      <inumIndex>351.880615234375</inumIndex>
+    </result>
+    <result id="13" timeout="false">
+      <db2fts>911809.3125</db2fts>
+      <inumfts>911809.3125</inumfts>
+      <db2Index>114876.15625</db2Index>
+      <inumIndex>128229.583984375</inumIndex>
+    </result>
+    <result id="14" timeout="false">
+      <db2fts>828036.125</db2fts>
+      <inumfts>828036.125</inumfts>
+      <db2Index>57406.203125</db2Index>
+      <inumIndex>57406.23046875</inumIndex>
+    </result>
+    <result id="15" timeout="false">
+      <db2fts>146347.90625</db2fts>
+      <inumfts>146347.90625</inumfts>
+      <db2Index>977.8040161132812</db2Index>
+      <inumIndex>977.8082580566406</inumIndex>
+    </result>
+    <result id="16" timeout="false">
+      <db2fts>6212.1787109375</db2fts>
+      <inumfts>6212.1787109375</inumfts>
+      <db2Index>2212.947998046875</db2Index>
+      <inumIndex>2758.085693359375</inumIndex>
+    </result>
+    <result id="17" timeout="false">
+      <db2fts>6299.10498046875</db2fts>
+      <inumfts>6299.10498046875</inumfts>
+      <db2Index>141.9700927734375</db2Index>
+      <inumIndex>141.96973419189453</inumIndex>
+    </result>
+    <result id="18" timeout="false">
+      <db2fts>1870.3629150390625</db2fts>
+      <inumfts>1870.3629150390625</inumfts>
+      <db2Index>23.64596939086914</db2Index>
+      <inumIndex>23.645938873291016</inumIndex>
+    </result>
+    <result id="19" timeout="false">
+      <db2fts>6381.15966796875</db2fts>
+      <inumfts>6381.15966796875</inumfts>
+      <db2Index>307.6191101074219</db2Index>
+      <inumIndex>1722.6533970832825</inumIndex>
+    </result>
+    <result id="20" timeout="false">
+      <db2fts>212774.03125</db2fts>
+      <inumfts>212774.03125</inumfts>
+      <db2Index>102933.1953125</db2Index>
+      <inumIndex>102933.19677734375</inumIndex>
+    </result>
+    <result id="21" timeout="false">
+      <db2fts>105523.9765625</db2fts>
+      <inumfts>105523.9765625</inumfts>
+      <db2Index>360.2799377441406</db2Index>
+      <inumIndex>360.2792053222656</inumIndex>
+    </result>
+    <result id="22" timeout="false">
+      <db2fts>22696.345703125</db2fts>
+      <inumfts>22696.345703125</inumfts>
+      <db2Index>337.9909973144531</db2Index>
+      <inumIndex>338.6524658203125</inumIndex>
+    </result>
+    <result id="23" timeout="false">
+      <db2fts>6170.21240234375</db2fts>
+      <inumfts>6170.21240234375</inumfts>
+      <db2Index>49.70744323730469</db2Index>
+      <inumIndex>49.73279471586711</inumIndex>
+    </result>
+    <result id="24" timeout="false">
+      <db2fts>23113.845703125</db2fts>
+      <inumfts>23113.845703125</inumfts>
+      <db2Index>22.764854431152344</db2Index>
+      <inumIndex>24.286819458007812</inumIndex>
+    </result>
+    <result id="25" timeout="false">
+      <db2fts>127861.4375</db2fts>
+      <inumfts>127861.4375</inumfts>
+      <db2Index>11047.85546875</db2Index>
+      <inumIndex>11047.983154296875</inumIndex>
+    </result>
+    <result id="26" timeout="false">
+      <db2fts>837624.375</db2fts>
+      <inumfts>837624.375</inumfts>
+      <db2Index>1459.74365234375</db2Index>
+      <inumIndex>1441.944580078125</inumIndex>
+    </result>
+    <result id="27" timeout="false">
+      <db2fts>146379.6875</db2fts>
+      <inumfts>146379.6875</inumfts>
+      <db2Index>4789.90234375</db2Index>
+      <inumIndex>16715.73906135559</inumIndex>
+    </result>
+    <result id="28" timeout="false">
+      <db2fts>3406.142578125</db2fts>
+      <inumfts>3406.142578125</inumfts>
+      <db2Index>211.95657348632812</db2Index>
+      <inumIndex>211.95669555664062</inumIndex>
+    </result>
+    <result id="29" timeout="false">
+      <db2fts>28756.70703125</db2fts>
+      <inumfts>28756.70703125</inumfts>
+      <db2Index>26.214487075805664</db2Index>
+      <inumIndex>26.215248107910156</inumIndex>
+    </result>
+    <result id="30" timeout="false">
+      <db2fts>6144.72265625</db2fts>
+      <inumfts>6144.72265625</inumfts>
+      <db2Index>81.54002380371094</db2Index>
+      <inumIndex>81.69871520996094</inumIndex>
+    </result>
+    <result id="31" timeout="false">
+      <db2fts>6150.4150390625</db2fts>
+      <inumfts>6150.4150390625</inumfts>
+      <db2Index>28.352684020996094</db2Index>
+      <inumIndex>28.352535247802734</inumIndex>
+    </result>
+    <result id="32" timeout="false">
+      <db2fts>105523.28125</db2fts>
+      <inumfts>105523.28125</inumfts>
+      <db2Index>353.9242858886719</db2Index>
+      <inumIndex>353.9223937988281</inumIndex>
+    </result>
+    <result id="33" timeout="false">
+      <db2fts>1056129.125</db2fts>
+      <inumfts>1056129.125</inumfts>
+      <db2Index>277298.9375</db2Index>
+      <inumIndex>282729.296875</inumIndex>
+    </result>
+    <result id="34" timeout="false">
+      <db2fts>873587.375</db2fts>
+      <inumfts>873587.375</inumfts>
+      <db2Index>77808.75</db2Index>
+      <inumIndex>77810.09875488281</inumIndex>
+    </result>
+    <result id="35" timeout="false">
+      <db2fts>827779.25</db2fts>
+      <inumfts>827779.25</inumfts>
+      <db2Index>120133.2890625</db2Index>
+      <inumIndex>232042.296875</inumIndex>
+    </result>
+    <result id="36" timeout="false">
+      <db2fts>944478.625</db2fts>
+      <inumfts>944478.625</inumfts>
+      <db2Index>455888.34375</db2Index>
+      <inumIndex>457499.07861328125</inumIndex>
+    </result>
+    <result id="37" timeout="false">
+      <db2fts>6093.82861328125</db2fts>
+      <inumfts>6093.82861328125</inumfts>
+      <db2Index>23.414087295532227</db2Index>
+      <inumIndex>23.413935661315918</inumIndex>
+    </result>
+    <result id="38" timeout="false">
+      <db2fts>28821.494140625</db2fts>
+      <inumfts>28821.494140625</inumfts>
+      <db2Index>22.019224166870117</db2Index>
+      <inumIndex>22.0190372467041</inumIndex>
+    </result>
+    <result id="39" timeout="false">
+      <db2fts>6076.8203125</db2fts>
+      <inumfts>6076.8203125</inumfts>
+      <db2Index>32.78868865966797</db2Index>
+      <inumIndex>32.86231994628906</inumIndex>
+    </result>
+    <result id="40" timeout="false">
+      <db2fts>6169.55859375</db2fts>
+      <inumfts>6169.55859375</inumfts>
+      <db2Index>1687.00146484375</db2Index>
+      <inumIndex>1685.7310791015625</inumIndex>
+    </result>
+    <result id="41" timeout="false">
+      <db2fts>6080.7236328125</db2fts>
+      <inumfts>6080.7236328125</inumfts>
+      <db2Index>182.54824829101562</db2Index>
+      <inumIndex>182.54825401306152</inumIndex>
+    </result>
+    <result id="42" timeout="false">
+      <db2fts>6079.009765625</db2fts>
+      <inumfts>6079.009765625</inumfts>
+      <db2Index>44.20310592651367</db2Index>
+      <inumIndex>44.203094482421875</inumIndex>
+    </result>
+    <result id="43" timeout="false">
+      <db2fts>1183.9815673828125</db2fts>
+      <inumfts>1183.9815673828125</inumfts>
+      <db2Index>318.7002868652344</db2Index>
+      <inumIndex>318.7001953125</inumIndex>
+    </result>
+    <result id="44" timeout="false">
+      <db2fts>1277423.875</db2fts>
+      <inumfts>1277423.875</inumfts>
+      <db2Index>503262.3125</db2Index>
+      <inumIndex>520583.01806640625</inumIndex>
+    </result>
+    <result id="45" timeout="false">
+      <db2fts>6165.328125</db2fts>
+      <inumfts>6165.328125</inumfts>
+      <db2Index>2815.5244140625</db2Index>
+      <inumIndex>3224.750732421875</inumIndex>
+    </result>
+    <result id="46" timeout="false">
+      <db2fts>28749.55859375</db2fts>
+      <inumfts>28749.55859375</inumfts>
+      <db2Index>92.76744079589844</db2Index>
+      <inumIndex>92.7677001953125</inumIndex>
+    </result>
+    <result id="47" timeout="false">
+      <db2fts>832390.4375</db2fts>
+      <inumfts>832390.4375</inumfts>
+      <db2Index>2685.0791015625</db2Index>
+      <inumIndex>2685.05859375</inumIndex>
+    </result>
+    <result id="48" timeout="false">
+      <db2fts>827602.4375</db2fts>
+      <inumfts>827602.4375</inumfts>
+      <db2Index>51436.078125</db2Index>
+      <inumIndex>51436.10546875</inumIndex>
+    </result>
+    <result id="49" timeout="false">
+      <db2fts>6436.41455078125</db2fts>
+      <inumfts>6436.41455078125</inumfts>
+      <db2Index>260.7701416015625</db2Index>
+      <inumIndex>2507.5631680488586</inumIndex>
+    </result>
+    <result id="50" timeout="false">
+      <db2fts>28901.873046875</db2fts>
+      <inumfts>28901.873046875</inumfts>
+      <db2Index>110.37026977539062</db2Index>
+      <inumIndex>110.3707275390625</inumIndex>
+    </result>
+    <result id="51" timeout="false">
+      <db2fts>143057.84375</db2fts>
+      <inumfts>143057.84375</inumfts>
+      <db2Index>69375.6640625</db2Index>
+      <inumIndex>71516.2741394043</inumIndex>
+    </result>
+    <result id="52" timeout="false">
+      <db2fts>128158.6328125</db2fts>
+      <inumfts>128158.6328125</inumfts>
+      <db2Index>8486.89453125</db2Index>
+      <inumIndex>8486.894897460938</inumIndex>
+    </result>
+    <result id="53" timeout="false">
+      <db2fts>146600.28125</db2fts>
+      <inumfts>146600.28125</inumfts>
+      <db2Index>4477.42626953125</db2Index>
+      <inumIndex>4477.466623306274</inumIndex>
+    </result>
+    <result id="54" timeout="false">
+      <db2fts>845043.4375</db2fts>
+      <inumfts>845043.4375</inumfts>
+      <db2Index>257902.5</db2Index>
+      <inumIndex>336788.3125</inumIndex>
+    </result>
+    <result id="55" timeout="false">
+      <db2fts>6223.19189453125</db2fts>
+      <inumfts>6223.19189453125</inumfts>
+      <db2Index>42.5731201171875</db2Index>
+      <inumIndex>42.56361770629883</inumIndex>
+    </result>
+    <result id="56" timeout="false">
+      <db2fts>828684.8125</db2fts>
+      <inumfts>828684.8125</inumfts>
+      <db2Index>161821.75</db2Index>
+      <inumIndex>161821.765625</inumIndex>
+    </result>
+    <result id="57" timeout="false">
+      <db2fts>147613.359375</db2fts>
+      <inumfts>147613.35961914062</inumfts>
+      <db2Index>2063.212646484375</db2Index>
+      <inumIndex>2070.7805578254183</inumIndex>
+    </result>
+    <result id="58" timeout="false">
+      <db2fts>835682.375</db2fts>
+      <inumfts>835682.375</inumfts>
+      <db2Index>27.50974464416504</db2Index>
+      <inumIndex>33.164878845214844</inumIndex>
+    </result>
+    <result id="59" timeout="false">
+      <db2fts>828684.8125</db2fts>
+      <inumfts>828684.8125</inumfts>
+      <db2Index>161821.75</db2Index>
+      <inumIndex>161821.765625</inumIndex>
+    </result>
+    <result id="60" timeout="false">
+      <db2fts>835636.5</db2fts>
+      <inumfts>835636.5</inumfts>
+      <db2Index>1030.007568359375</db2Index>
+      <inumIndex>1029.10986328125</inumIndex>
+    </result>
+    <result id="61" timeout="false">
+      <db2fts>829875.0</db2fts>
+      <inumfts>829875.0</inumfts>
+      <db2Index>113901.484375</db2Index>
+      <inumIndex>114361.046875</inumIndex>
+    </result>
+    <result id="62" timeout="false">
+      <db2fts>828476.5</db2fts>
+      <inumfts>828476.5</inumfts>
+      <db2Index>79048.609375</db2Index>
+      <inumIndex>79048.6015625</inumIndex>
+    </result>
+    <result id="63" timeout="false">
+      <db2fts>6356.716796875</db2fts>
+      <inumfts>6356.716796875</inumfts>
+      <db2Index>110.00000762939453</db2Index>
+      <inumIndex>109.99999237060547</inumIndex>
+    </result>
+    <result id="64" timeout="false">
+      <db2fts>22691.017578125</db2fts>
+      <inumfts>22691.017578125</inumfts>
+      <db2Index>338.29388427734375</db2Index>
+      <inumIndex>338.29339599609375</inumIndex>
+    </result>
+    <result id="65" timeout="false">
+      <db2fts>6152.38232421875</db2fts>
+      <inumfts>6152.38232421875</inumfts>
+      <db2Index>1896.069091796875</db2Index>
+      <inumIndex>2038.821533203125</inumIndex>
+    </result>
+    <result id="66" timeout="false">
+      <db2fts>1241086.375</db2fts>
+      <inumfts>1241086.375</inumfts>
+      <db2Index>488721.8125</db2Index>
+      <inumIndex>499104.26806640625</inumIndex>
+    </result>
+    <result id="67" timeout="false">
+      <db2fts>26135.998046875</db2fts>
+      <inumfts>26135.998046875</inumfts>
+      <db2Index>3538.7666015625</db2Index>
+      <inumIndex>3578.754150390625</inumIndex>
+    </result>
+    <result id="68" timeout="false">
+      <db2fts>106078.7109375</db2fts>
+      <inumfts>106078.7109375</inumfts>
+      <db2Index>358.35040283203125</db2Index>
+      <inumIndex>358.3492736816406</inumIndex>
+    </result>
+    <result id="69" timeout="false">
+      <db2fts>146666.3125</db2fts>
+      <inumfts>146666.3125</inumfts>
+      <db2Index>47900.61328125</db2Index>
+      <inumIndex>47901.16693878174</inumIndex>
+    </result>
+    <result id="70" timeout="false">
+      <db2fts>179404.828125</db2fts>
+      <inumfts>179404.828125</inumfts>
+      <db2Index>43877.8125</db2Index>
+      <inumIndex>45799.810546875</inumIndex>
+    </result>
+    <result id="71" timeout="false">
+      <db2fts>29147.400390625</db2fts>
+      <inumfts>29147.400390625</inumfts>
+      <db2Index>1607.291015625</db2Index>
+      <inumIndex>1607.291748046875</inumIndex>
+    </result>
+    <result id="72" timeout="false">
+      <db2fts>6324.2666015625</db2fts>
+      <inumfts>6324.2666015625</inumfts>
+      <db2Index>46.50983810424805</db2Index>
+      <inumIndex>46.529090790485434</inumIndex>
+    </result>
+    <result id="73" timeout="false">
+      <db2fts>825133.8125</db2fts>
+      <inumfts>825133.8125</inumfts>
+      <db2Index>53711.015625</db2Index>
+      <inumIndex>53711.015625</inumIndex>
+    </result>
+    <result id="74" timeout="false">
+      <db2fts>1241086.375</db2fts>
+      <inumfts>1241086.375</inumfts>
+      <db2Index>488721.8125</db2Index>
+      <inumIndex>499104.26806640625</inumIndex>
+    </result>
+    <result id="75" timeout="false">
+      <db2fts>6124.1455078125</db2fts>
+      <inumfts>6124.1455078125</inumfts>
+      <db2Index>1029.4793701171875</db2Index>
+      <inumIndex>1029.4793701171875</inumIndex>
+    </result>
+    <result id="76" timeout="false">
+      <db2fts>6478.619140625</db2fts>
+      <inumfts>6478.619140625</inumfts>
+      <db2Index>300.4328308105469</db2Index>
+      <inumIndex>2254.687698841095</inumIndex>
+    </result>
+    <result id="77" timeout="false">
+      <db2fts>144638.84375</db2fts>
+      <inumfts>144638.84375</inumfts>
+      <db2Index>3107.421630859375</db2Index>
+      <inumIndex>3116.955425262451</inumIndex>
+    </result>
+    <result id="78" timeout="false">
+      <db2fts>72563.90625</db2fts>
+      <inumfts>72563.90625</inumfts>
+      <db2Index>15442.0361328125</db2Index>
+      <inumIndex>15763.927124023438</inumIndex>
+    </result>
+    <result id="79" timeout="false">
+      <db2fts>105454.3203125</db2fts>
+      <inumfts>105454.3203125</inumfts>
+      <db2Index>4674.58349609375</db2Index>
+      <inumIndex>4674.58251953125</inumIndex>
+    </result>
+    <result id="80" timeout="false">
+      <db2fts>29147.400390625</db2fts>
+      <inumfts>29147.400390625</inumfts>
+      <db2Index>1607.291015625</db2Index>
+      <inumIndex>1607.291748046875</inumIndex>
+    </result>
+    <result id="81" timeout="false">
+      <db2fts>6078.6513671875</db2fts>
+      <inumfts>6078.6513671875</inumfts>
+      <db2Index>15.823835372924805</db2Index>
+      <inumIndex>15.823723316192627</inumIndex>
+    </result>
+    <result id="82" timeout="false">
+      <db2fts>6419.6806640625</db2fts>
+      <inumfts>6419.6806640625</inumfts>
+      <db2Index>300.44964599609375</db2Index>
+      <inumIndex>2290.01850938797</inumIndex>
+    </result>
+    <result id="83" timeout="false">
+      <db2fts>6139.3759765625</db2fts>
+      <inumfts>6139.3759765625</inumfts>
+      <db2Index>31.078645706176758</db2Index>
+      <inumIndex>31.078657150268555</inumIndex>
+    </result>
+    <result id="84" timeout="false">
+      <db2fts>28858.53125</db2fts>
+      <inumfts>28858.53125</inumfts>
+      <db2Index>15.311357498168945</db2Index>
+      <inumIndex>15.312080383300781</inumIndex>
+    </result>
+    <result id="85" timeout="false">
+      <db2fts>824055.75</db2fts>
+      <inumfts>824055.75</inumfts>
+      <db2Index>620.6466064453125</db2Index>
+      <inumIndex>620.6717529296875</inumIndex>
+    </result>
+    <result id="86" timeout="false">
+      <db2fts>6373.59765625</db2fts>
+      <inumfts>6373.59765625</inumfts>
+      <db2Index>1796.2420654296875</db2Index>
+      <inumIndex>2303.840316772461</inumIndex>
+    </result>
+    <result id="87" timeout="false">
+      <db2fts>6110.9775390625</db2fts>
+      <inumfts>6110.9775390625</inumfts>
+      <db2Index>831.3744506835938</db2Index>
+      <inumIndex>831.3741455078125</inumIndex>
+    </result>
+    <result id="88" timeout="false">
+      <db2fts>72375.796875</db2fts>
+      <inumfts>72375.796875</inumfts>
+      <db2Index>2594.90966796875</db2Index>
+      <inumIndex>25865.660202851785</inumIndex>
+    </result>
+    <result id="89" timeout="false">
+      <db2fts>6150.5751953125</db2fts>
+      <inumfts>6150.5751953125</inumfts>
+      <db2Index>2029.052490234375</db2Index>
+      <inumIndex>2494.840087890625</inumIndex>
+    </result>
+    <result id="90" timeout="false">
+      <db2fts>828684.8125</db2fts>
+      <inumfts>828684.8125</inumfts>
+      <db2Index>161821.75</db2Index>
+      <inumIndex>161821.765625</inumIndex>
+    </result>
+    <result id="91" timeout="false">
+      <db2fts>6215.0419921875</db2fts>
+      <inumfts>6215.0419921875</inumfts>
+      <db2Index>2404.52490234375</db2Index>
+      <inumIndex>2815.17822265625</inumIndex>
+    </result>
+    <result id="92" timeout="false">
+      <db2fts>128162.703125</db2fts>
+      <inumfts>128162.703125</inumfts>
+      <db2Index>16502.875</db2Index>
+      <inumIndex>16510.121337890625</inumIndex>
+    </result>
+    <result id="93" timeout="false">
+      <db2fts>105610.0546875</db2fts>
+      <inumfts>105610.0546875</inumfts>
+      <db2Index>25032.49609375</db2Index>
+      <inumIndex>59573.423828125</inumIndex>
+    </result>
+    <result id="94" timeout="false">
+      <db2fts>6177.06787109375</db2fts>
+      <inumfts>6177.06787109375</inumfts>
+      <db2Index>19.8078556060791</db2Index>
+      <inumIndex>19.764320373535156</inumIndex>
+    </result>
+    <result id="95" timeout="false">
+      <db2fts>143253.328125</db2fts>
+      <inumfts>143253.3359375</inumfts>
+      <db2Index>2775.2392578125</db2Index>
+      <inumIndex>58595.776039123535</inumIndex>
+    </result>
+    <result id="96" timeout="false">
+      <db2fts>6178.615234375</db2fts>
+      <inumfts>6178.615234375</inumfts>
+      <db2Index>22.734243392944336</db2Index>
+      <inumIndex>30.29326105117798</inumIndex>
+    </result>
+    <result id="97" timeout="false">
+      <db2fts>128097.703125</db2fts>
+      <inumfts>128097.703125</inumfts>
+      <db2Index>16483.4453125</db2Index>
+      <inumIndex>16487.82440185547</inumIndex>
+    </result>
+    <result id="98" timeout="false">
+      <db2fts>212583.640625</db2fts>
+      <inumfts>212583.640625</inumfts>
+      <db2Index>102435.3125</db2Index>
+      <inumIndex>102435.29736328125</inumIndex>
+    </result>
+    <result id="99" timeout="false">
+      <db2fts>837624.375</db2fts>
+      <inumfts>837624.375</inumfts>
+      <db2Index>1459.74365234375</db2Index>
+      <inumIndex>1441.944580078125</inumIndex>
+    </result>
+    <result id="100" timeout="false">
+      <db2fts>29147.400390625</db2fts>
+      <inumfts>29147.400390625</inumfts>
+      <db2Index>1607.291015625</db2Index>
+      <inumIndex>1607.291748046875</inumIndex>
+    </result>
+  </indexSet>
+  <indexSet name="powerset">
+    <index>[+TPCH.PARTSUPP.PS_PARTKEY(A)+TPCH.PARTSUPP.PS_SUPPLYCOST(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_NUM_OUT(A)]</index>
+    <index>[+TPCE.SECURITY.S_NUM_OUT(A)+TPCE.SECURITY.S_52WK_LOW_DATE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.ORDINAL(A)+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)]</index>
+    <index>[+TPCH.LINEITEM.L_RECEIPTDATE(A)+TPCH.LINEITEM.L_TAX(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_LOW(A)]</index>
+    <index>[+TPCC.STOCK.S_W_ID(A)+TPCC.STOCK.S_QUANTITY(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_SUPPLYCOST(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)+NREF.NEIGHBORING_SEQ.SCORE(A)]</index>
+    <index>[+TPCE.SECURITY.S_EXCH_DATE(A)+TPCE.SECURITY.S_CO_ID(A)]</index>
+    <index>[+TPCH.PART.P_PARTKEY(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_I_ID(A)+TPCC.ORDERLINE.OL_AMOUNT(A)]</index>
+    <index>[+TPCE.SECURITY.S_PE(A)+TPCE.SECURITY.S_EX_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_PARTKEY(A)+TPCH.LINEITEM.L_DISCOUNT(A)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERKEY(A)+TPCH.ORDERS.O_TOTALPRICE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_PARTKEY(A)+TPCH.LINEITEM.L_EXTENDEDPRICE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_ORDERKEY(A)+TPCH.LINEITEM.L_QUANTITY(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_SUPPLY_W_ID(A)+TPCC.ORDERLINE.OL_I_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_ST_ID(A)+TPCE.SECURITY.S_START_DATE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)+NREF.NEIGHBORING_SEQ.ORDINAL(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)+TPCE.DAILY_MARKET.DM_CLOSE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_EXTENDEDPRICE(A)]</index>
+    <index>[+TPCH.ORDERS.O_CUSTKEY(A)+TPCH.ORDERS.O_ORDERDATE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.ORDINAL(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.SCORE(A)+NREF.NEIGHBORING_SEQ.START_2(A)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_QUANTITY(A)]</index>
+    <index>[+TPCE.SECURITY.S_PE(A)]</index>
+    <index>[+TPCC.ORDER.O_OL_CNT(A)+TPCC.ORDER.O_CARRIER_ID(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.START_2(A)+NREF.NEIGHBORING_SEQ.END_2(A)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERKEY(A)+TPCH.ORDERS.O_ORDERDATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_PARTKEY(A)+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_DISCOUNT(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_QUANTITY(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_HIGH(A)+TPCE.DAILY_MARKET.DM_CLOSE(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_CLOSE(A)+TPCE.DAILY_MARKET.DM_HIGH(A)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_EXTENDEDPRICE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+NREF.PROTEIN.LAST_UPDATED(A)+NREF.PROTEIN.NREF_ID(A)]</index>
+    <index>[+NREF.PROTEIN.SEQ_LENGTH(A)+NREF.PROTEIN.NREF_ID(A)]</index>
+    <index>[+TPCH.PART.P_SIZE(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_ST_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_EX_ID(A)+TPCE.SECURITY.S_52WK_LOW(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.NREF_ID_1(A)]</index>
+    <index>[+TPCE.SECURITY.S_EX_ID(A)+TPCE.SECURITY.S_EXCH_DATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_EXCH_DATE(A)+TPCE.SECURITY.S_START_DATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERDATE(A)]</index>
+    <index>[+TPCC.STOCK.S_I_ID(A)+TPCC.STOCK.S_W_ID(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_HIGH(A)+TPCE.DAILY_MARKET.DM_S_SYMB(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)+TPCE.DAILY_MARKET.DM_HIGH(A)]</index>
+    <index>[+TPCH.LINEITEM.L_RECEIPTDATE(A)+TPCH.LINEITEM.L_COMMITDATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_CO_ID(A)]</index>
+    <index>[+TPCH.PART.P_RETAILPRICE(A)]</index>
+    <index>[+TPCE.SECURITY.S_DIVIDEND(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCH.LINEITEM.L_ORDERKEY(A)+TPCH.LINEITEM.L_DISCOUNT(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_VOL(A)+TPCE.DAILY_MARKET.DM_LOW(A)]</index>
+    <index>[+TPCC.ORDER.O_ENTRY_D(A)+TPCC.ORDER.O_OL_CNT(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_PE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_RECEIPTDATE(A)+TPCH.LINEITEM.L_SHIPDATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_AMOUNT(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_AVAILQTY(A)]</index>
+    <index>[+TPCE.SECURITY.S_DIVIDEND(A)]</index>
+    <index>[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_START_DATE(A)+TPCE.SECURITY.S_52WK_LOW_DATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)+TPCE.SECURITY.S_START_DATE(A)]</index>
+    <index>[+TPCC.ORDER.O_ENTRY_D(A)+TPCC.ORDER.O_CARRIER_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_CO_ID(A)+TPCE.SECURITY.S_EXCH_DATE(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_LOW(A)+TPCE.DAILY_MARKET.DM_HIGH(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_HIGH(A)]</index>
+    <index>[+TPCH.ORDERS.O_CUSTKEY(A)+TPCH.ORDERS.O_TOTALPRICE(A)]</index>
+    <index>[+TPCE.SECURITY.S_EXCH_DATE(A)+TPCE.SECURITY.S_EX_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_COMMITDATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW(A)+TPCE.SECURITY.S_YIELD(A)]</index>
+    <index>[+TPCE.SECURITY.S_ST_ID(A)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERDATE(A)+TPCH.ORDERS.O_CUSTKEY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_DISCOUNT(A)+TPCH.LINEITEM.L_EXTENDEDPRICE(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_AMOUNT(A)+TPCC.ORDERLINE.OL_SUPPLY_W_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)+TPCE.SECURITY.S_52WK_LOW_DATE(A)]</index>
+    <index>[+TPCH.PART.P_SIZE(A)+TPCH.PART.P_PARTKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_NUM_OUT(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_SUPPLYCOST(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_EXCH_DATE(A)]</index>
+    <index>[+TPCH.CUSTOMER.C_CUSTKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW(A)+TPCE.SECURITY.S_PE(A)]</index>
+    <index>[+TPCE.SECURITY.S_PE(A)+TPCE.SECURITY.S_52WK_LOW(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_SUPPKEY(A)]</index>
+    <index>[+TPCH.SUPPLIER.S_ACCTBAL(A)]</index>
+    <index>[+TPCE.SECURITY.S_PE(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCH.LINEITEM.L_DISCOUNT(A)+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.END_2(A)+NREF.NEIGHBORING_SEQ.SCORE(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW(A)+TPCE.SECURITY.S_EX_ID(A)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERDATE(A)+TPCH.ORDERS.O_TOTALPRICE(A)]</index>
+    <index>[+TPCE.SECURITY.S_PE(A)+TPCE.SECURITY.S_YIELD(A)]</index>
+    <index>[+TPCC.ITEM.I_PRICE(A)]</index>
+    <index>[+TPCC.STOCK.S_QUANTITY(A)]</index>
+    <index>[+TPCE.SECURITY.S_YIELD(A)+TPCE.SECURITY.S_52WK_LOW(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_CLOSE(A)+TPCE.DAILY_MARKET.DM_VOL(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)+TPCE.SECURITY.S_YIELD(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)+NREF.NEIGHBORING_SEQ.LENGTH_2(A)]</index>
+    <index>[+TPCE.SECURITY.S_PE(A)+TPCE.SECURITY.S_52WK_LOW_DATE(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_SUPPLYCOST(A)+TPCH.PARTSUPP.PS_SUPPKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)+TPCE.SECURITY.S_52WK_LOW(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)+TPCE.SECURITY.S_EX_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_CO_ID(A)+TPCE.SECURITY.S_52WK_LOW_DATE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.START_2(A)+NREF.NEIGHBORING_SEQ.SCORE(A)]</index>
+    <index>[+TPCE.SECURITY.S_ST_ID(A)+TPCE.SECURITY.S_CO_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_ORDERKEY(A)+TPCH.LINEITEM.L_COMMITDATE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.LENGTH_2(A)]</index>
+    <index>[+TPCC.STOCK.S_W_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)+TPCE.SECURITY.S_PE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.END_2(A)]</index>
+    <index>[+TPCH.ORDERS.O_TOTALPRICE(A)+TPCH.ORDERS.O_ORDERKEY(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)+TPCE.DAILY_MARKET.DM_LOW(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_VOL(A)+TPCE.DAILY_MARKET.DM_HIGH(A)]</index>
+    <index>[+TPCC.ORDER.O_CARRIER_ID(A)+TPCC.ORDER.O_ENTRY_D(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_SUPPLYCOST(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_RECEIPTDATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_RECEIPTDATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCH.ORDERS.O_TOTALPRICE(A)+TPCH.ORDERS.O_ORDERDATE(A)]</index>
+    <index>[+TPCH.ORDERS.O_TOTALPRICE(A)+TPCH.ORDERS.O_CUSTKEY(A)]</index>
+    <index>[+TPCH.CUSTOMER.C_NATIONKEY(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)]</index>
+    <index>[+NREF.PROTEIN.LAST_UPDATED(A)]</index>
+    <index>[+TPCH.LINEITEM.L_TAX(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_START_DATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_EX_ID(A)+TPCE.SECURITY.S_YIELD(A)]</index>
+    <index>[+NREF.PROTEIN.NREF_ID(A)+NREF.PROTEIN.SEQ_LENGTH(D)]</index>
+    <index>[+TPCH.LINEITEM.L_QUANTITY(A)+TPCH.LINEITEM.L_COMMITDATE(A)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_YIELD(A)+TPCE.SECURITY.S_EX_ID(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_VOL(A)+TPCE.DAILY_MARKET.DM_CLOSE(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_CO_ID(A)]</index>
+    <index>[+TPCC.ORDER.O_ENTRY_D(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_LOW(A)+TPCE.DAILY_MARKET.DM_S_SYMB(A)]</index>
+    <index>[+TPCE.SECURITY.S_EXCH_DATE(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCE.SECURITY.S_EX_ID(A)+TPCE.SECURITY.S_PE(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_PARTKEY(A)+TPCH.PARTSUPP.PS_SUPPKEY(A)]</index>
+    <index>[+TPCC.CUSTOMER.C_DISCOUNT(A)]</index>
+    <index>[+TPCH.LINEITEM.L_TAX(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCC.ITEM.I_IM_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_START_DATE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.LENGTH_2(A)+NREF.NEIGHBORING_SEQ.START_2(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_DISCOUNT(A)]</index>
+    <index>[+TPCH.LINEITEM.L_DISCOUNT(A)+TPCH.LINEITEM.L_COMMITDATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_ORDERKEY(A)+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+    <index>[+TPCE.COMPANY.CO_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_EX_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_EX_ID(A)+TPCE.SECURITY.S_52WK_LOW_DATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_START_DATE(A)+TPCE.SECURITY.S_ST_ID(A)]</index>
+    <index>[+NREF.PROTEIN.SEQ_LENGTH(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)+TPCE.SECURITY.S_NUM_OUT(A)]</index>
+    <index>[+TPCE.SECURITY.S_CO_ID(A)+TPCE.SECURITY.S_START_DATE(A)]</index>
+    <index>[+TPCE.COMPANY.CO_OPEN_DATE(A)]</index>
+    <index>[+TPCC.ORDER.O_CARRIER_ID(A)+TPCC.ORDER.O_OL_CNT(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_EXTENDEDPRICE(A)]</index>
+    <index>[+TPCE.SECURITY.S_START_DATE(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_PARTKEY(A)+TPCH.PARTSUPP.PS_AVAILQTY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_EXTENDEDPRICE(A)+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+    <index>[+NREF.PROTEIN.NREF_ID(A)]</index>
+    <index>[+NREF.PROTEIN.LAST_UPDATED(A)+NREF.PROTEIN.SEQ_LENGTH(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_I_ID(A)+TPCC.ORDERLINE.OL_SUPPLY_W_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_DISCOUNT(A)+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_EXCH_DATE(A)+TPCE.SECURITY.S_52WK_LOW_DATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_PARTKEY(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCC.STOCK.S_QUANTITY(A)+TPCC.STOCK.S_W_ID(A)]</index>
+    <index>[+TPCH.CUSTOMER.C_ACCTBAL(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)+TPCE.SECURITY.S_EXCH_DATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_ST_ID(A)+TPCE.SECURITY.S_EXCH_DATE(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_SUPPLYCOST(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_SUPPLYCOST(A)+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+    <index>[+TPCH.ORDERS.O_TOTALPRICE(A)]</index>
+    <index>[+TPCC.ORDER.O_OL_CNT(A)]</index>
+    <index>[+TPCH.LINEITEM.L_EXTENDEDPRICE(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.SCORE(A)]</index>
+    <index>[+TPCH.ORDERS.O_CUSTKEY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SHIPDATE(A)+TPCH.LINEITEM.L_RECEIPTDATE(A)]</index>
+    <index>[+TPCC.ORDER.O_CARRIER_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_EX_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SHIPDATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_EXCH_DATE(A)]</index>
+    <index>[+TPCC.STOCK.S_W_ID(A)+TPCC.STOCK.S_I_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_ORDERKEY(A)+TPCH.LINEITEM.L_RECEIPTDATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.START_2(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)+NREF.NEIGHBORING_SEQ.START_2(A)]</index>
+    <index>[+TPCE.SECURITY.S_EXCH_DATE(A)+TPCE.SECURITY.S_ST_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_ST_ID(A)+TPCE.SECURITY.S_52WK_LOW_DATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_CO_ID(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_SUPPKEY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)+TPCE.SECURITY.S_ST_ID(A)]</index>
+    <index>[+TPCC.STOCK.S_I_ID(A)+TPCC.STOCK.S_QUANTITY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_ORDERKEY(A)+TPCH.LINEITEM.L_SHIPDATE(A)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERDATE(A)+TPCH.ORDERS.O_ORDERKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_START_DATE(A)+TPCE.SECURITY.S_CO_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_ORDERKEY(A)+TPCH.LINEITEM.L_TAX(A)]</index>
+    <index>[+TPCC.STOCK.S_QUANTITY(A)+TPCC.STOCK.S_I_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_DISCOUNT(A)]</index>
+    <index>[+TPCC.ORDER.O_OL_CNT(A)+TPCC.ORDER.O_ENTRY_D(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.SCORE(A)+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)]</index>
+    <index>[+TPCE.SECURITY.S_YIELD(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_HIGH_DATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_YIELD(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_AMOUNT(A)+TPCC.ORDERLINE.OL_I_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_ORDERKEY(A)+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SUPPKEY(A)+TPCH.LINEITEM.L_SHIPDATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_TAX(A)+TPCH.LINEITEM.L_RECEIPTDATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_START_DATE(A)+TPCE.SECURITY.S_EXCH_DATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.SCORE(A)+NREF.NEIGHBORING_SEQ.ORDINAL(A)]</index>
+    <index>[+NREF.PROTEIN.NREF_ID(A)+NREF.PROTEIN.LAST_UPDATED(D)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW_DATE(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_CLOSE(A)+TPCE.DAILY_MARKET.DM_S_SYMB(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_CLOSE(A)]</index>
+    <index>[+TPCE.SECURITY.S_EX_ID(A)+TPCE.SECURITY.S_START_DATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_DISCOUNT(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.LENGTH_2(A)+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)]</index>
+    <index>[+TPCH.LINEITEM.L_RECEIPTDATE(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_AVAILQTY(A)+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.SCORE(A)+NREF.NEIGHBORING_SEQ.END_2(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.START_2(A)+NREF.NEIGHBORING_SEQ.OVERLAP_LENGTH(A)]</index>
+    <index>[+TPCE.SECURITY.S_DIVIDEND(A)+TPCE.SECURITY.S_YIELD(A)]</index>
+    <index>[+TPCC.STOCK.S_I_ID(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_LOW(A)+TPCE.DAILY_MARKET.DM_VOL(A)]</index>
+    <index>[+TPCH.LINEITEM.L_PARTKEY(A)+TPCH.LINEITEM.L_RECEIPTDATE(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_SUPPKEY(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_SUPPLY_W_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_YIELD(A)+TPCE.SECURITY.S_PE(A)]</index>
+    <index>[+TPCH.PART.P_PARTKEY(A)+TPCH.PART.P_SIZE(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_SUPPLY_W_ID(A)+TPCC.ORDERLINE.OL_AMOUNT(A)]</index>
+    <index>[+TPCH.LINEITEM.L_PARTKEY(A)+TPCH.LINEITEM.L_SHIPDATE(A)]</index>
+    <index>[+TPCE.SECURITY.S_NUM_OUT(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_I_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_YIELD(A)+TPCE.SECURITY.S_DIVIDEND(A)]</index>
+    <index>[+TPCH.LINEITEM.L_RECEIPTDATE(A)+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)+TPCE.SECURITY.S_DIVIDEND(A)]</index>
+    <index>[+NREF.PROTEIN.SEQ_LENGTH(A)+NREF.PROTEIN.LAST_UPDATED(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_VOL(A)]</index>
+    <index>[+TPCE.SECURITY.S_CO_ID(A)+TPCE.SECURITY.S_ST_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_RECEIPTDATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_EXTENDEDPRICE(A)+TPCH.LINEITEM.L_COMMITDATE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.END_2(A)+NREF.NEIGHBORING_SEQ.START_2(A)]</index>
+    <index>[+TPCC.CUSTOMER.C_SINCE(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.START_2(A)+NREF.NEIGHBORING_SEQ.LENGTH_2(A)]</index>
+    <index>[+TPCE.SECURITY.S_START_DATE(A)+TPCE.SECURITY.S_EX_ID(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_HIGH(A)+TPCE.DAILY_MARKET.DM_LOW(A)]</index>
+    <index>[+TPCH.LINEITEM.L_COMMITDATE(A)+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_RECEIPTDATE(A)+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_EXTENDEDPRICE(A)+TPCH.LINEITEM.L_DISCOUNT(A)]</index>
+    <index>[+TPCH.LINEITEM.L_PARTKEY(A)+TPCH.LINEITEM.L_COMMITDATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_ORDERKEY(A)+TPCH.LINEITEM.L_EXTENDEDPRICE(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_HIGH(A)+TPCE.DAILY_MARKET.DM_VOL(A)]</index>
+    <index>[+TPCH.SUPPLIER.S_SUPPKEY(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.ORDINAL(A)+NREF.NEIGHBORING_SEQ.SCORE(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)+TPCE.SECURITY.S_CO_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_52WK_LOW_DATE(A)]</index>
+    <index>[+TPCH.LINEITEM.L_EXTENDEDPRICE(A)+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_EX_ID(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCE.SECURITY.S_ST_ID(A)+TPCE.SECURITY.S_SYMB(A)]</index>
+    <result id="0" timeout="false">
+      <db2fts>6178.615234375</db2fts>
+      <inumfts>6178.615234375</inumfts>
+      <db2Index>42.04732894897461</db2Index>
+      <inumIndex>49.60719680786133</inumIndex>
+    </result>
+    <result id="1" timeout="false">
+      <db2fts>131694.171875</db2fts>
+      <inumfts>131694.171875</inumfts>
+      <db2Index>3843.826171875</db2Index>
+      <inumIndex>23037.65234375</inumIndex>
+    </result>
+    <result id="2" timeout="false">
+      <db2fts>20153.455078125</db2fts>
+      <inumfts>20153.455078125</inumfts>
+      <db2Index>4271.3486328125</db2Index>
+      <inumIndex>7156.86701965332</inumIndex>
+    </result>
+    <result id="3" timeout="false">
+      <db2fts>29147.400390625</db2fts>
+      <inumfts>29147.400390625</inumfts>
+      <db2Index>29147.400390625</db2Index>
+      <inumIndex>29147.400390625</inumIndex>
+    </result>
+    <result id="4" timeout="false">
+      <db2fts>105939.2265625</db2fts>
+      <inumfts>105939.2265625</inumfts>
+      <db2Index>406.3321533203125</db2Index>
+      <inumIndex>406.3311767578125</inumIndex>
+    </result>
+    <result id="5" timeout="false">
+      <db2fts>3796.940185546875</db2fts>
+      <inumfts>3796.940185546875</inumfts>
+      <db2Index>22.52667236328125</db2Index>
+      <inumIndex>22.5267276763916</inumIndex>
+    </result>
+    <result id="6" timeout="false">
+      <db2fts>23139.876953125</db2fts>
+      <inumfts>23139.876953125</inumfts>
+      <db2Index>2622.462646484375</db2Index>
+      <inumIndex>6617.32666015625</inumIndex>
+    </result>
+    <result id="7" timeout="false">
+      <db2fts>22784.671875</db2fts>
+      <inumfts>22784.671875</inumfts>
+      <db2Index>339.2855529785156</db2Index>
+      <inumIndex>339.453125</inumIndex>
+    </result>
+    <result id="8" timeout="false">
+      <db2fts>105523.9765625</db2fts>
+      <inumfts>105523.9765625</inumfts>
+      <db2Index>360.2799377441406</db2Index>
+      <inumIndex>360.2792053222656</inumIndex>
+    </result>
+    <result id="9" timeout="false">
+      <db2fts>836796.25</db2fts>
+      <inumfts>836796.25</inumfts>
+      <db2Index>193369.21875</db2Index>
+      <inumIndex>256295.4375</inumIndex>
+    </result>
+    <result id="10" timeout="false">
+      <db2fts>6252.7236328125</db2fts>
+      <inumfts>6252.7236328125</inumfts>
+      <db2Index>25.729225158691406</db2Index>
+      <inumIndex>25.729232788085938</inumIndex>
+    </result>
+    <result id="11" timeout="false">
+      <db2fts>106244.3984375</db2fts>
+      <inumfts>106244.3984375</inumfts>
+      <db2Index>17379.275390625</db2Index>
+      <inumIndex>21676.0859375</inumIndex>
+    </result>
+    <result id="12" timeout="false">
+      <db2fts>105523.0625</db2fts>
+      <inumfts>105523.0625</inumfts>
+      <db2Index>351.8809509277344</db2Index>
+      <inumIndex>351.880615234375</inumIndex>
+    </result>
+    <result id="13" timeout="false">
+      <db2fts>911809.3125</db2fts>
+      <inumfts>911809.3125</inumfts>
+      <db2Index>146453.328125</db2Index>
+      <inumIndex>146452.5732421875</inumIndex>
+    </result>
+    <result id="14" timeout="false">
+      <db2fts>828036.125</db2fts>
+      <inumfts>828036.125</inumfts>
+      <db2Index>57406.203125</db2Index>
+      <inumIndex>57406.23046875</inumIndex>
+    </result>
+    <result id="15" timeout="false">
+      <db2fts>146347.90625</db2fts>
+      <inumfts>146347.90625</inumfts>
+      <db2Index>1259.6090087890625</db2Index>
+      <inumIndex>1259.6519787681473</inumIndex>
+    </result>
+    <result id="16" timeout="false">
+      <db2fts>6212.1787109375</db2fts>
+      <inumfts>6212.1787109375</inumfts>
+      <db2Index>2212.947998046875</db2Index>
+      <inumIndex>2758.085693359375</inumIndex>
+    </result>
+    <result id="17" timeout="false">
+      <db2fts>6299.10498046875</db2fts>
+      <inumfts>6299.10498046875</inumfts>
+      <db2Index>331.4261779785156</db2Index>
+      <inumIndex>331.4258270263672</inumIndex>
+    </result>
+    <result id="18" timeout="false">
+      <db2fts>1870.3629150390625</db2fts>
+      <inumfts>1870.3629150390625</inumfts>
+      <db2Index>30.45627212524414</db2Index>
+      <inumIndex>30.456241607666016</inumIndex>
+    </result>
+    <result id="19" timeout="false">
+      <db2fts>6381.15966796875</db2fts>
+      <inumfts>6381.15966796875</inumfts>
+      <db2Index>411.8256530761719</db2Index>
+      <inumIndex>1826.859540939331</inumIndex>
+    </result>
+    <result id="20" timeout="false">
+      <db2fts>212774.03125</db2fts>
+      <inumfts>212774.03125</inumfts>
+      <db2Index>170368.9375</db2Index>
+      <inumIndex>170368.935546875</inumIndex>
+    </result>
+    <result id="21" timeout="false">
+      <db2fts>105523.9765625</db2fts>
+      <inumfts>105523.9765625</inumfts>
+      <db2Index>360.2799377441406</db2Index>
+      <inumIndex>360.2792053222656</inumIndex>
+    </result>
+    <result id="22" timeout="false">
+      <db2fts>22696.345703125</db2fts>
+      <inumfts>22696.345703125</inumfts>
+      <db2Index>337.9909973144531</db2Index>
+      <inumIndex>338.6524658203125</inumIndex>
+    </result>
+    <result id="23" timeout="false">
+      <db2fts>6170.21240234375</db2fts>
+      <inumfts>6170.21240234375</inumfts>
+      <db2Index>65.25084686279297</db2Index>
+      <inumIndex>65.2762050170756</inumIndex>
+    </result>
+    <result id="24" timeout="false">
+      <db2fts>23113.845703125</db2fts>
+      <inumfts>23113.845703125</inumfts>
+      <db2Index>2547.3564453125</db2Index>
+      <inumIndex>6617.13671875</inumIndex>
+    </result>
+    <result id="25" timeout="false">
+      <db2fts>127861.4375</db2fts>
+      <inumfts>127861.4375</inumfts>
+      <db2Index>12115.2109375</db2Index>
+      <inumIndex>15394.224609375</inumIndex>
+    </result>
+    <result id="26" timeout="false">
+      <db2fts>837624.375</db2fts>
+      <inumfts>837624.375</inumfts>
+      <db2Index>11110.265625</db2Index>
+      <inumIndex>159870.96875</inumIndex>
+    </result>
+    <result id="27" timeout="false">
+      <db2fts>146379.6875</db2fts>
+      <inumfts>146379.6875</inumfts>
+      <db2Index>5137.357421875</db2Index>
+      <inumIndex>5533.821953487606</inumIndex>
+    </result>
+    <result id="28" timeout="false">
+      <db2fts>3406.142578125</db2fts>
+      <inumfts>3406.142578125</inumfts>
+      <db2Index>211.95657348632812</db2Index>
+      <inumIndex>211.95669555664062</inumIndex>
+    </result>
+    <result id="29" timeout="false">
+      <db2fts>28756.70703125</db2fts>
+      <inumfts>28756.70703125</inumfts>
+      <db2Index>26.214487075805664</db2Index>
+      <inumIndex>26.215248107910156</inumIndex>
+    </result>
+    <result id="30" timeout="false">
+      <db2fts>6144.72265625</db2fts>
+      <inumfts>6144.72265625</inumfts>
+      <db2Index>81.54002380371094</db2Index>
+      <inumIndex>81.69871520996094</inumIndex>
+    </result>
+    <result id="31" timeout="false">
+      <db2fts>6150.4150390625</db2fts>
+      <inumfts>6150.4150390625</inumfts>
+      <db2Index>28.352684020996094</db2Index>
+      <inumIndex>28.352535247802734</inumIndex>
+    </result>
+    <result id="32" timeout="false">
+      <db2fts>105523.28125</db2fts>
+      <inumfts>105523.28125</inumfts>
+      <db2Index>353.9242858886719</db2Index>
+      <inumIndex>353.9223937988281</inumIndex>
+    </result>
+    <result id="33" timeout="false">
+      <db2fts>1056129.125</db2fts>
+      <inumfts>1056129.125</inumfts>
+      <db2Index>807703.0625</db2Index>
+      <inumIndex>806031.1875</inumIndex>
+    </result>
+    <result id="34" timeout="false">
+      <db2fts>873587.375</db2fts>
+      <inumfts>873587.375</inumfts>
+      <db2Index>90074.1328125</db2Index>
+      <inumIndex>90073.298828125</inumIndex>
+    </result>
+    <result id="35" timeout="false">
+      <db2fts>827779.25</db2fts>
+      <inumfts>827779.25</inumfts>
+      <db2Index>142300.046875</db2Index>
+      <inumIndex>233244.703125</inumIndex>
+    </result>
+    <result id="36" timeout="false">
+      <db2fts>944478.625</db2fts>
+      <inumfts>944478.625</inumfts>
+      <db2Index>455888.34375</db2Index>
+      <inumIndex>457499.07861328125</inumIndex>
+    </result>
+    <result id="37" timeout="false">
+      <db2fts>6093.82861328125</db2fts>
+      <inumfts>6093.82861328125</inumfts>
+      <db2Index>46.153472900390625</db2Index>
+      <inumIndex>52.411240577697754</inumIndex>
+    </result>
+    <result id="38" timeout="false">
+      <db2fts>28821.494140625</db2fts>
+      <inumfts>28821.494140625</inumfts>
+      <db2Index>22.019224166870117</db2Index>
+      <inumIndex>22.0190372467041</inumIndex>
+    </result>
+    <result id="39" timeout="false">
+      <db2fts>6076.8203125</db2fts>
+      <inumfts>6076.8203125</inumfts>
+      <db2Index>32.78868865966797</db2Index>
+      <inumIndex>32.86231994628906</inumIndex>
+    </result>
+    <result id="40" timeout="false">
+      <db2fts>6169.55859375</db2fts>
+      <inumfts>6169.55859375</inumfts>
+      <db2Index>1687.00146484375</db2Index>
+      <inumIndex>1685.7310791015625</inumIndex>
+    </result>
+    <result id="41" timeout="false">
+      <db2fts>6080.7236328125</db2fts>
+      <inumfts>6080.7236328125</inumfts>
+      <db2Index>206.3273162841797</db2Index>
+      <inumIndex>206.32732009887695</inumIndex>
+    </result>
+    <result id="42" timeout="false">
+      <db2fts>6079.009765625</db2fts>
+      <inumfts>6079.009765625</inumfts>
+      <db2Index>44.20310592651367</db2Index>
+      <inumIndex>44.203094482421875</inumIndex>
+    </result>
+    <result id="43" timeout="false">
+      <db2fts>1183.9815673828125</db2fts>
+      <inumfts>1183.9815673828125</inumfts>
+      <db2Index>368.0679016113281</db2Index>
+      <inumIndex>518.8458862304688</inumIndex>
+    </result>
+    <result id="44" timeout="false">
+      <db2fts>1277423.875</db2fts>
+      <inumfts>1277423.875</inumfts>
+      <db2Index>526647.1875</db2Index>
+      <inumIndex>526647.2348632812</inumIndex>
+    </result>
+    <result id="45" timeout="false">
+      <db2fts>6165.328125</db2fts>
+      <inumfts>6165.328125</inumfts>
+      <db2Index>2815.5244140625</db2Index>
+      <inumIndex>3224.750732421875</inumIndex>
+    </result>
+    <result id="46" timeout="false">
+      <db2fts>28749.55859375</db2fts>
+      <inumfts>28749.55859375</inumfts>
+      <db2Index>92.76744079589844</db2Index>
+      <inumIndex>92.7677001953125</inumIndex>
+    </result>
+    <result id="47" timeout="false">
+      <db2fts>832390.4375</db2fts>
+      <inumfts>832390.4375</inumfts>
+      <db2Index>158367.53125</db2Index>
+      <inumIndex>162487.65625</inumIndex>
+    </result>
+    <result id="48" timeout="false">
+      <db2fts>827602.4375</db2fts>
+      <inumfts>827602.4375</inumfts>
+      <db2Index>51436.078125</db2Index>
+      <inumIndex>51436.10546875</inumIndex>
+    </result>
+    <result id="49" timeout="false">
+      <db2fts>6436.41455078125</db2fts>
+      <inumfts>6436.41455078125</inumfts>
+      <db2Index>2144.751708984375</db2Index>
+      <inumIndex>2530.5684928894043</inumIndex>
+    </result>
+    <result id="50" timeout="false">
+      <db2fts>28901.873046875</db2fts>
+      <inumfts>28901.873046875</inumfts>
+      <db2Index>110.37026977539062</db2Index>
+      <inumIndex>110.3707275390625</inumIndex>
+    </result>
+    <result id="51" timeout="false">
+      <db2fts>143057.84375</db2fts>
+      <inumfts>143057.84375</inumfts>
+      <db2Index>121596.6484375</db2Index>
+      <inumIndex>121595.65283203125</inumIndex>
+    </result>
+    <result id="52" timeout="false">
+      <db2fts>128158.6328125</db2fts>
+      <inumfts>128158.6328125</inumfts>
+      <db2Index>29353.818359375</db2Index>
+      <inumIndex>29353.8154296875</inumIndex>
+    </result>
+    <result id="53" timeout="false">
+      <db2fts>146600.28125</db2fts>
+      <inumfts>146600.28125</inumfts>
+      <db2Index>8761.044921875</db2Index>
+      <inumIndex>9120.20679789811</inumIndex>
+    </result>
+    <result id="54" timeout="false">
+      <db2fts>845043.4375</db2fts>
+      <inumfts>845043.4375</inumfts>
+      <db2Index>257902.5</db2Index>
+      <inumIndex>336788.3125</inumIndex>
+    </result>
+    <result id="55" timeout="false">
+      <db2fts>6223.19189453125</db2fts>
+      <inumfts>6223.19189453125</inumfts>
+      <db2Index>91.34251403808594</db2Index>
+      <inumIndex>861.2965087890625</inumIndex>
+    </result>
+    <result id="56" timeout="false">
+      <db2fts>828684.8125</db2fts>
+      <inumfts>828684.8125</inumfts>
+      <db2Index>161821.75</db2Index>
+      <inumIndex>161821.765625</inumIndex>
+    </result>
+    <result id="57" timeout="false">
+      <db2fts>147613.359375</db2fts>
+      <inumfts>147613.35961914062</inumfts>
+      <db2Index>3228.2001953125</db2Index>
+      <inumIndex>6459.03793544993</inumIndex>
+    </result>
+    <result id="58" timeout="false">
+      <db2fts>835682.375</db2fts>
+      <inumfts>835682.375</inumfts>
+      <db2Index>75.63704681396484</db2Index>
+      <inumIndex>2092.556884765625</inumIndex>
+    </result>
+    <result id="59" timeout="false">
+      <db2fts>828684.8125</db2fts>
+      <inumfts>828684.8125</inumfts>
+      <db2Index>161821.75</db2Index>
+      <inumIndex>161821.765625</inumIndex>
+    </result>
+    <result id="60" timeout="false">
+      <db2fts>835636.5</db2fts>
+      <inumfts>835636.5</inumfts>
+      <db2Index>1030.007568359375</db2Index>
+      <inumIndex>1029.10986328125</inumIndex>
+    </result>
+    <result id="61" timeout="false">
+      <db2fts>829875.0</db2fts>
+      <inumfts>829875.0</inumfts>
+      <db2Index>113901.484375</db2Index>
+      <inumIndex>114361.046875</inumIndex>
+    </result>
+    <result id="62" timeout="false">
+      <db2fts>828476.5</db2fts>
+      <inumfts>828476.5</inumfts>
+      <db2Index>79048.609375</db2Index>
+      <inumIndex>79048.6015625</inumIndex>
+    </result>
+    <result id="63" timeout="false">
+      <db2fts>6356.716796875</db2fts>
+      <inumfts>6356.716796875</inumfts>
+      <db2Index>110.00000762939453</db2Index>
+      <inumIndex>109.99999237060547</inumIndex>
+    </result>
+    <result id="64" timeout="false">
+      <db2fts>22691.017578125</db2fts>
+      <inumfts>22691.017578125</inumfts>
+      <db2Index>338.29388427734375</db2Index>
+      <inumIndex>338.29339599609375</inumIndex>
+    </result>
+    <result id="65" timeout="false">
+      <db2fts>6152.38232421875</db2fts>
+      <inumfts>6152.38232421875</inumfts>
+      <db2Index>1896.069091796875</db2Index>
+      <inumIndex>2038.821533203125</inumIndex>
+    </result>
+    <result id="66" timeout="false">
+      <db2fts>1241086.375</db2fts>
+      <inumfts>1241086.375</inumfts>
+      <db2Index>505168.46875</db2Index>
+      <inumIndex>505168.48486328125</inumIndex>
+    </result>
+    <result id="67" timeout="false">
+      <db2fts>26135.998046875</db2fts>
+      <inumfts>26135.998046875</inumfts>
+      <db2Index>6954.0810546875</db2Index>
+      <inumIndex>6952.781494140625</inumIndex>
+    </result>
+    <result id="68" timeout="false">
+      <db2fts>106078.7109375</db2fts>
+      <inumfts>106078.7109375</inumfts>
+      <db2Index>18740.92578125</db2Index>
+      <inumIndex>21655.150390625</inumIndex>
+    </result>
+    <result id="69" timeout="false">
+      <db2fts>146666.3125</db2fts>
+      <inumfts>146666.3125</inumfts>
+      <db2Index>65496.921875</db2Index>
+      <inumIndex>65786.06928253174</inumIndex>
+    </result>
+    <result id="70" timeout="false">
+      <db2fts>179404.828125</db2fts>
+      <inumfts>179404.828125</inumfts>
+      <db2Index>58197.82421875</db2Index>
+      <inumIndex>58197.82421875</inumIndex>
+    </result>
+    <result id="71" timeout="false">
+      <db2fts>29147.400390625</db2fts>
+      <inumfts>29147.400390625</inumfts>
+      <db2Index>29147.400390625</db2Index>
+      <inumIndex>29147.400390625</inumIndex>
+    </result>
+    <result id="72" timeout="false">
+      <db2fts>6324.2666015625</db2fts>
+      <inumfts>6324.2666015625</inumfts>
+      <db2Index>159.19683837890625</db2Index>
+      <inumIndex>370.21441438187634</inumIndex>
+    </result>
+    <result id="73" timeout="false">
+      <db2fts>825133.8125</db2fts>
+      <inumfts>825133.8125</inumfts>
+      <db2Index>53711.015625</db2Index>
+      <inumIndex>53711.015625</inumIndex>
+    </result>
+    <result id="74" timeout="false">
+      <db2fts>1241086.375</db2fts>
+      <inumfts>1241086.375</inumfts>
+      <db2Index>505168.46875</db2Index>
+      <inumIndex>505168.48486328125</inumIndex>
+    </result>
+    <result id="75" timeout="false">
+      <db2fts>6124.1455078125</db2fts>
+      <inumfts>6124.1455078125</inumfts>
+      <db2Index>1029.4793701171875</db2Index>
+      <inumIndex>1029.4793701171875</inumIndex>
+    </result>
+    <result id="76" timeout="false">
+      <db2fts>6478.619140625</db2fts>
+      <inumfts>6478.619140625</inumfts>
+      <db2Index>1954.8260498046875</db2Index>
+      <inumIndex>2276.4943675994873</inumIndex>
+    </result>
+    <result id="77" timeout="false">
+      <db2fts>144638.84375</db2fts>
+      <inumfts>144638.84375</inumfts>
+      <db2Index>7561.44775390625</db2Index>
+      <inumIndex>21038.075176471015</inumIndex>
+    </result>
+    <result id="78" timeout="false">
+      <db2fts>72563.90625</db2fts>
+      <inumfts>72563.90625</inumfts>
+      <db2Index>20784.873046875</db2Index>
+      <inumIndex>21105.4072265625</inumIndex>
+    </result>
+    <result id="79" timeout="false">
+      <db2fts>105454.3203125</db2fts>
+      <inumfts>105454.3203125</inumfts>
+      <db2Index>4674.58349609375</db2Index>
+      <inumIndex>4674.58251953125</inumIndex>
+    </result>
+    <result id="80" timeout="false">
+      <db2fts>29147.400390625</db2fts>
+      <inumfts>29147.400390625</inumfts>
+      <db2Index>29147.400390625</db2Index>
+      <inumIndex>29147.400390625</inumIndex>
+    </result>
+    <result id="81" timeout="false">
+      <db2fts>6078.6513671875</db2fts>
+      <inumfts>6078.6513671875</inumfts>
+      <db2Index>17.854793548583984</db2Index>
+      <inumIndex>17.854681968688965</inumIndex>
+    </result>
+    <result id="82" timeout="false">
+      <db2fts>6419.6806640625</db2fts>
+      <inumfts>6419.6806640625</inumfts>
+      <db2Index>734.0284423828125</db2Index>
+      <inumIndex>2311.8251781463623</inumIndex>
+    </result>
+    <result id="83" timeout="false">
+      <db2fts>6139.3759765625</db2fts>
+      <inumfts>6139.3759765625</inumfts>
+      <db2Index>78.93675994873047</db2Index>
+      <inumIndex>78.93675518035889</inumIndex>
+    </result>
+    <result id="84" timeout="false">
+      <db2fts>28858.53125</db2fts>
+      <inumfts>28858.53125</inumfts>
+      <db2Index>15.311357498168945</db2Index>
+      <inumIndex>15.312080383300781</inumIndex>
+    </result>
+    <result id="85" timeout="false">
+      <db2fts>824055.75</db2fts>
+      <inumfts>824055.75</inumfts>
+      <db2Index>620.6466064453125</db2Index>
+      <inumIndex>620.6717529296875</inumIndex>
+    </result>
+    <result id="86" timeout="false">
+      <db2fts>6373.59765625</db2fts>
+      <inumfts>6373.59765625</inumfts>
+      <db2Index>1811.366943359375</db2Index>
+      <inumIndex>2318.965316772461</inumIndex>
+    </result>
+    <result id="87" timeout="false">
+      <db2fts>6110.9775390625</db2fts>
+      <inumfts>6110.9775390625</inumfts>
+      <db2Index>831.3744506835938</db2Index>
+      <inumIndex>831.3741455078125</inumIndex>
+    </result>
+    <result id="88" timeout="false">
+      <db2fts>72375.796875</db2fts>
+      <inumfts>72375.796875</inumfts>
+      <db2Index>7575.8544921875</db2Index>
+      <inumIndex>15851.715796722143</inumIndex>
+    </result>
+    <result id="89" timeout="false">
+      <db2fts>6150.5751953125</db2fts>
+      <inumfts>6150.5751953125</inumfts>
+      <db2Index>2029.052490234375</db2Index>
+      <inumIndex>2494.840087890625</inumIndex>
+    </result>
+    <result id="90" timeout="false">
+      <db2fts>828684.8125</db2fts>
+      <inumfts>828684.8125</inumfts>
+      <db2Index>161821.75</db2Index>
+      <inumIndex>161821.765625</inumIndex>
+    </result>
+    <result id="91" timeout="false">
+      <db2fts>6215.0419921875</db2fts>
+      <inumfts>6215.0419921875</inumfts>
+      <db2Index>2404.52490234375</db2Index>
+      <inumIndex>2815.17822265625</inumIndex>
+    </result>
+    <result id="92" timeout="false">
+      <db2fts>128162.703125</db2fts>
+      <inumfts>128162.703125</inumfts>
+      <db2Index>37405.3515625</db2Index>
+      <inumIndex>37412.59765625</inumIndex>
+    </result>
+    <result id="93" timeout="false">
+      <db2fts>105610.0546875</db2fts>
+      <inumfts>105610.0546875</inumfts>
+      <db2Index>30546.48046875</db2Index>
+      <inumIndex>60754.4375</inumIndex>
+    </result>
+    <result id="94" timeout="false">
+      <db2fts>6177.06787109375</db2fts>
+      <inumfts>6177.06787109375</inumfts>
+      <db2Index>19.8078556060791</db2Index>
+      <inumIndex>19.764320373535156</inumIndex>
+    </result>
+    <result id="95" timeout="false">
+      <db2fts>143253.328125</db2fts>
+      <inumfts>143253.3359375</inumfts>
+      <db2Index>3730.241455078125</db2Index>
+      <inumIndex>3738.9848832397984</inumIndex>
+    </result>
+    <result id="96" timeout="false">
+      <db2fts>6178.615234375</db2fts>
+      <inumfts>6178.615234375</inumfts>
+      <db2Index>42.04732894897461</db2Index>
+      <inumIndex>49.60719680786133</inumIndex>
+    </result>
+    <result id="97" timeout="false">
+      <db2fts>128097.703125</db2fts>
+      <inumfts>128097.703125</inumfts>
+      <db2Index>37367.4765625</db2Index>
+      <inumIndex>37371.85546875</inumIndex>
+    </result>
+    <result id="98" timeout="false">
+      <db2fts>212583.640625</db2fts>
+      <inumfts>212583.640625</inumfts>
+      <db2Index>169573.75</db2Index>
+      <inumIndex>169573.7353515625</inumIndex>
+    </result>
+    <result id="99" timeout="false">
+      <db2fts>837624.375</db2fts>
+      <inumfts>837624.375</inumfts>
+      <db2Index>11110.265625</db2Index>
+      <inumIndex>159870.96875</inumIndex>
+    </result>
+    <result id="100" timeout="false">
+      <db2fts>29147.400390625</db2fts>
+      <inumfts>29147.400390625</inumfts>
+      <db2Index>29147.400390625</db2Index>
+      <inumIndex>29147.400390625</inumIndex>
+    </result>
+  </indexSet>
+  <indexSet name="one-column-index">
+    <index>[+TPCH.SUPPLIER.S_SUPPKEY(A)]</index>
+    <index>[+TPCC.STOCK.S_I_ID(A)]</index>
+    <index>[+TPCE.SECURITY.S_ST_ID(A)]</index>
+    <index>[+TPCE.COMPANY.CO_ID(A)]</index>
+    <index>[+TPCH.ORDERS.O_ORDERKEY(A)]</index>
+    <index>[+TPCH.LINEITEM.L_ORDERKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_SYMB(A)]</index>
+    <index>[+TPCH.CUSTOMER.C_CUSTKEY(A)]</index>
+    <index>[+TPCH.NATION.N_NATIONKEY(A)]</index>
+    <index>[+TPCH.CUSTOMER.C_NATIONKEY(A)]</index>
+    <index>[+TPCH.ORDERS.O_CUSTKEY(A)]</index>
+    <index>[+NREF.NEIGHBORING_SEQ.NREF_ID_1(A)]</index>
+    <index>[+TPCH.LINEITEM.L_SUPPKEY(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_I_ID(A)]</index>
+    <index>[+TPCH.LINEITEM.L_PARTKEY(A)]</index>
+    <index>[+TPCE.SECURITY.S_EX_ID(A)]</index>
+    <index>[+TPCC.STOCK.S_W_ID(A)]</index>
+    <index>[+TPCC.WAREHOUSE.W_ID(A)]</index>
+    <index>[+TPCE.STATUS_TYPE.ST_ID(A)]</index>
+    <index>[+TPCH.PART.P_PARTKEY(A)]</index>
+    <index>[+TPCE.DAILY_MARKET.DM_S_SYMB(A)]</index>
+    <index>[+TPCC.ORDERLINE.OL_SUPPLY_W_ID(A)]</index>
+    <index>[+TPCE.LAST_TRADE.LT_S_SYMB(A)]</index>
+    <index>[+TPCE.SECURITY.S_CO_ID(A)]</index>
+    <index>[+TPCE.EXCHANGE.EX_ID(A)]</index>
+    <index>[+TPCC.ITEM.I_ID(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_SUPPKEY(A)]</index>
+    <index>[+TPCH.PARTSUPP.PS_PARTKEY(A)]</index>
+    <index>[+NREF.PROTEIN.NREF_ID(A)]</index>
+    <result id="0" timeout="false">
+      <db2fts>6178.615234375</db2fts>
+      <inumfts>6178.615234375</inumfts>
+      <db2Index>1259.11865234375</db2Index>
+      <inumIndex>1259.11865234375</inumIndex>
+    </result>
+    <result id="1" timeout="false">
+      <db2fts>131694.171875</db2fts>
+      <inumfts>131694.171875</inumfts>
+      <db2Index>107397.9453125</db2Index>
+      <inumIndex>107397.9453125</inumIndex>
+    </result>
+    <result id="2" timeout="false">
+      <db2fts>20153.455078125</db2fts>
+      <inumfts>20153.455078125</inumfts>
+      <db2Index>20153.455078125</db2Index>
+      <inumIndex>20153.455078125</inumIndex>
+    </result>
+    <result id="3" timeout="false">
+      <db2fts>29147.400390625</db2fts>
+      <inumfts>29147.400390625</inumfts>
+      <db2Index>29147.400390625</db2Index>
+      <inumIndex>29147.400390625</inumIndex>
+    </result>
+    <result id="4" timeout="false">
+      <db2fts>105939.2265625</db2fts>
+      <inumfts>105939.2265625</inumfts>
+      <db2Index>105939.2265625</db2Index>
+      <inumIndex>105939.2265625</inumIndex>
+    </result>
+    <result id="5" timeout="false">
+      <db2fts>3796.940185546875</db2fts>
+      <inumfts>3796.940185546875</inumfts>
+      <db2Index>3796.940185546875</db2Index>
+      <inumIndex>3796.940185546875</inumIndex>
+    </result>
+    <result id="6" timeout="false">
+      <db2fts>23139.876953125</db2fts>
+      <inumfts>23139.876953125</inumfts>
+      <db2Index>23139.876953125</db2Index>
+      <inumIndex>23139.876953125</inumIndex>
+    </result>
+    <result id="7" timeout="false">
+      <db2fts>22784.671875</db2fts>
+      <inumfts>22784.671875</inumfts>
+      <db2Index>22784.671875</db2Index>
+      <inumIndex>22784.671875</inumIndex>
+    </result>
+    <result id="8" timeout="false">
+      <db2fts>105523.9765625</db2fts>
+      <inumfts>105523.9765625</inumfts>
+      <db2Index>105523.9765625</db2Index>
+      <inumIndex>105523.9765625</inumIndex>
+    </result>
+    <result id="9" timeout="false">
+      <db2fts>836796.25</db2fts>
+      <inumfts>836796.25</inumfts>
+      <db2Index>836796.25</db2Index>
+      <inumIndex>836796.25</inumIndex>
+    </result>
+    <result id="10" timeout="false">
+      <db2fts>6252.7236328125</db2fts>
+      <inumfts>6252.7236328125</inumfts>
+      <db2Index>129.65101623535156</db2Index>
+      <inumIndex>129.65101623535156</inumIndex>
+    </result>
+    <result id="11" timeout="false">
+      <db2fts>106244.3984375</db2fts>
+      <inumfts>106244.3984375</inumfts>
+      <db2Index>106244.3984375</db2Index>
+      <inumIndex>106244.3984375</inumIndex>
+    </result>
+    <result id="12" timeout="false">
+      <db2fts>105523.0625</db2fts>
+      <inumfts>105523.0625</inumfts>
+      <db2Index>105523.0625</db2Index>
+      <inumIndex>105523.0625</inumIndex>
+    </result>
+    <result id="13" timeout="false">
+      <db2fts>911809.3125</db2fts>
+      <inumfts>911809.3125</inumfts>
+      <db2Index>190582.5625</db2Index>
+      <inumIndex>190582.5625</inumIndex>
+    </result>
+    <result id="14" timeout="false">
+      <db2fts>828036.125</db2fts>
+      <inumfts>828036.125</inumfts>
+      <db2Index>828036.125</db2Index>
+      <inumIndex>828036.125</inumIndex>
+    </result>
+    <result id="15" timeout="false">
+      <db2fts>146347.90625</db2fts>
+      <inumfts>146347.90625</inumfts>
+      <db2Index>23671.986328125</db2Index>
+      <inumIndex>23671.986328125</inumIndex>
+    </result>
+    <result id="16" timeout="false">
+      <db2fts>6212.1787109375</db2fts>
+      <inumfts>6212.1787109375</inumfts>
+      <db2Index>6212.1787109375</db2Index>
+      <inumIndex>6212.1787109375</inumIndex>
+    </result>
+    <result id="17" timeout="false">
+      <db2fts>6299.10498046875</db2fts>
+      <inumfts>6299.10498046875</inumfts>
+      <db2Index>6215.91796875</db2Index>
+      <inumIndex>6215.917953491211</inumIndex>
+    </result>
+    <result id="18" timeout="false">
+      <db2fts>1870.3629150390625</db2fts>
+      <inumfts>1870.3629150390625</inumfts>
+      <db2Index>1870.3629150390625</db2Index>
+      <inumIndex>1870.3629150390625</inumIndex>
+    </result>
+    <result id="19" timeout="false">
+      <db2fts>6381.15966796875</db2fts>
+      <inumfts>6381.15966796875</inumfts>
+      <db2Index>6373.65380859375</db2Index>
+      <inumIndex>6373.65380859375</inumIndex>
+    </result>
+    <result id="20" timeout="false">
+      <db2fts>212774.03125</db2fts>
+      <inumfts>212774.03125</inumfts>
+      <db2Index>212774.03125</db2Index>
+      <inumIndex>212774.03125</inumIndex>
+    </result>
+    <result id="21" timeout="false">
+      <db2fts>105523.9765625</db2fts>
+      <inumfts>105523.9765625</inumfts>
+      <db2Index>105523.9765625</db2Index>
+      <inumIndex>105523.9765625</inumIndex>
+    </result>
+    <result id="22" timeout="false">
+      <db2fts>22696.345703125</db2fts>
+      <inumfts>22696.345703125</inumfts>
+      <db2Index>22696.345703125</db2Index>
+      <inumIndex>22696.345703125</inumIndex>
+    </result>
+    <result id="23" timeout="false">
+      <db2fts>6170.21240234375</db2fts>
+      <inumfts>6170.21240234375</inumfts>
+      <db2Index>3281.439208984375</db2Index>
+      <inumIndex>3281.439208984375</inumIndex>
+    </result>
+    <result id="24" timeout="false">
+      <db2fts>23113.845703125</db2fts>
+      <inumfts>23113.845703125</inumfts>
+      <db2Index>23113.845703125</db2Index>
+      <inumIndex>23113.845703125</inumIndex>
+    </result>
+    <result id="25" timeout="false">
+      <db2fts>127861.4375</db2fts>
+      <inumfts>127861.4375</inumfts>
+      <db2Index>115259.34375</db2Index>
+      <inumIndex>115259.34375</inumIndex>
+    </result>
+    <result id="26" timeout="false">
+      <db2fts>837624.375</db2fts>
+      <inumfts>837624.375</inumfts>
+      <db2Index>837624.375</db2Index>
+      <inumIndex>837624.375</inumIndex>
+    </result>
+    <result id="27" timeout="false">
+      <db2fts>146379.6875</db2fts>
+      <inumfts>146379.6875</inumfts>
+      <db2Index>12505.8212890625</db2Index>
+      <inumIndex>12513.382091522217</inumIndex>
+    </result>
+    <result id="28" timeout="false">
+      <db2fts>3406.142578125</db2fts>
+      <inumfts>3406.142578125</inumfts>
+      <db2Index>3406.142578125</db2Index>
+      <inumIndex>3406.142578125</inumIndex>
+    </result>
+    <result id="29" timeout="false">
+      <db2fts>28756.70703125</db2fts>
+      <inumfts>28756.70703125</inumfts>
+      <db2Index>28756.70703125</db2Index>
+      <inumIndex>28756.70703125</inumIndex>
+    </result>
+    <result id="30" timeout="false">
+      <db2fts>6144.72265625</db2fts>
+      <inumfts>6144.72265625</inumfts>
+      <db2Index>6144.72265625</db2Index>
+      <inumIndex>6144.72265625</inumIndex>
+    </result>
+    <result id="31" timeout="false">
+      <db2fts>6150.4150390625</db2fts>
+      <inumfts>6150.4150390625</inumfts>
+      <db2Index>6150.4150390625</db2Index>
+      <inumIndex>6150.4150390625</inumIndex>
+    </result>
+    <result id="32" timeout="false">
+      <db2fts>105523.28125</db2fts>
+      <inumfts>105523.28125</inumfts>
+      <db2Index>105523.28125</db2Index>
+      <inumIndex>105523.28125</inumIndex>
+    </result>
+    <result id="33" timeout="false">
+      <db2fts>1056129.125</db2fts>
+      <inumfts>1056129.125</inumfts>
+      <db2Index>1056129.125</db2Index>
+      <inumIndex>1056129.125</inumIndex>
+    </result>
+    <result id="34" timeout="false">
+      <db2fts>873587.375</db2fts>
+      <inumfts>873587.375</inumfts>
+      <db2Index>133895.671875</db2Index>
+      <inumIndex>133895.671875</inumIndex>
+    </result>
+    <result id="35" timeout="false">
+      <db2fts>827779.25</db2fts>
+      <inumfts>827779.25</inumfts>
+      <db2Index>827779.25</db2Index>
+      <inumIndex>827779.25</inumIndex>
+    </result>
+    <result id="36" timeout="false">
+      <db2fts>944478.625</db2fts>
+      <inumfts>944478.625</inumfts>
+      <db2Index>512871.03125</db2Index>
+      <inumIndex>512871.03125</inumIndex>
+    </result>
+    <result id="37" timeout="false">
+      <db2fts>6093.82861328125</db2fts>
+      <inumfts>6093.82861328125</inumfts>
+      <db2Index>63.11370086669922</db2Index>
+      <inumIndex>63.113701820373535</inumIndex>
+    </result>
+    <result id="38" timeout="false">
+      <db2fts>28821.494140625</db2fts>
+      <inumfts>28821.494140625</inumfts>
+      <db2Index>28821.494140625</db2Index>
+      <inumIndex>28821.494140625</inumIndex>
+    </result>
+    <result id="39" timeout="false">
+      <db2fts>6076.8203125</db2fts>
+      <inumfts>6076.8203125</inumfts>
+      <db2Index>6076.8203125</db2Index>
+      <inumIndex>6076.8203125</inumIndex>
+    </result>
+    <result id="40" timeout="false">
+      <db2fts>6169.55859375</db2fts>
+      <inumfts>6169.55859375</inumfts>
+      <db2Index>6169.55859375</db2Index>
+      <inumIndex>6169.55859375</inumIndex>
+    </result>
+    <result id="41" timeout="false">
+      <db2fts>6080.7236328125</db2fts>
+      <inumfts>6080.7236328125</inumfts>
+      <db2Index>288.81011962890625</db2Index>
+      <inumIndex>288.81011962890625</inumIndex>
+    </result>
+    <result id="42" timeout="false">
+      <db2fts>6079.009765625</db2fts>
+      <inumfts>6079.009765625</inumfts>
+      <db2Index>150.4552459716797</db2Index>
+      <inumIndex>150.4552459716797</inumIndex>
+    </result>
+    <result id="43" timeout="false">
+      <db2fts>1183.9815673828125</db2fts>
+      <inumfts>1183.9815673828125</inumfts>
+      <db2Index>1183.9815673828125</db2Index>
+      <inumIndex>1183.9815673828125</inumIndex>
+    </result>
+    <result id="44" timeout="false">
+      <db2fts>1277423.875</db2fts>
+      <inumfts>1277423.875</inumfts>
+      <db2Index>582019.1875</db2Index>
+      <inumIndex>582019.1875</inumIndex>
+    </result>
+    <result id="45" timeout="false">
+      <db2fts>6165.328125</db2fts>
+      <inumfts>6165.328125</inumfts>
+      <db2Index>6165.328125</db2Index>
+      <inumIndex>6165.328125</inumIndex>
+    </result>
+    <result id="46" timeout="false">
+      <db2fts>28749.55859375</db2fts>
+      <inumfts>28749.55859375</inumfts>
+      <db2Index>28749.55859375</db2Index>
+      <inumIndex>28749.55859375</inumIndex>
+    </result>
+    <result id="47" timeout="false">
+      <db2fts>832390.4375</db2fts>
+      <inumfts>832390.4375</inumfts>
+      <db2Index>832390.4375</db2Index>
+      <inumIndex>832390.4375</inumIndex>
+    </result>
+    <result id="48" timeout="false">
+      <db2fts>827602.4375</db2fts>
+      <inumfts>827602.4375</inumfts>
+      <db2Index>827602.4375</db2Index>
+      <inumIndex>827602.4375</inumIndex>
+    </result>
+    <result id="49" timeout="false">
+      <db2fts>6436.41455078125</db2fts>
+      <inumfts>6436.41455078125</inumfts>
+      <db2Index>6285.16552734375</db2Index>
+      <inumIndex>6285.165451049805</inumIndex>
+    </result>
+    <result id="50" timeout="false">
+      <db2fts>28901.873046875</db2fts>
+      <inumfts>28901.873046875</inumfts>
+      <db2Index>28901.873046875</db2Index>
+      <inumIndex>28901.873046875</inumIndex>
+    </result>
+    <result id="51" timeout="false">
+      <db2fts>143057.84375</db2fts>
+      <inumfts>143057.84375</inumfts>
+      <db2Index>143057.84375</db2Index>
+      <inumIndex>143057.84375</inumIndex>
+    </result>
+    <result id="52" timeout="false">
+      <db2fts>128158.6328125</db2fts>
+      <inumfts>128158.6328125</inumfts>
+      <db2Index>128158.6328125</db2Index>
+      <inumIndex>128158.6328125</inumIndex>
+    </result>
+    <result id="53" timeout="false">
+      <db2fts>146600.28125</db2fts>
+      <inumfts>146600.28125</inumfts>
+      <db2Index>32427.8203125</db2Index>
+      <inumIndex>32427.8203125</inumIndex>
+    </result>
+    <result id="54" timeout="false">
+      <db2fts>845043.4375</db2fts>
+      <inumfts>845043.4375</inumfts>
+      <db2Index>845043.4375</db2Index>
+      <inumIndex>845043.4375</inumIndex>
+    </result>
+    <result id="55" timeout="false">
+      <db2fts>6223.19189453125</db2fts>
+      <inumfts>6223.19189453125</inumfts>
+      <db2Index>6223.19189453125</db2Index>
+      <inumIndex>6223.19189453125</inumIndex>
+    </result>
+    <result id="56" timeout="false">
+      <db2fts>828684.8125</db2fts>
+      <inumfts>828684.8125</inumfts>
+      <db2Index>828684.8125</db2Index>
+      <inumIndex>828684.8125</inumIndex>
+    </result>
+    <result id="57" timeout="false">
+      <db2fts>147613.359375</db2fts>
+      <inumfts>147613.35961914062</inumfts>
+      <db2Index>98745.9921875</db2Index>
+      <inumIndex>98753.55591964722</inumIndex>
+    </result>
+    <result id="58" timeout="false">
+      <db2fts>835682.375</db2fts>
+      <inumfts>835682.375</inumfts>
+      <db2Index>835682.375</db2Index>
+      <inumIndex>835682.375</inumIndex>
+    </result>
+    <result id="59" timeout="false">
+      <db2fts>828684.8125</db2fts>
+      <inumfts>828684.8125</inumfts>
+      <db2Index>828684.8125</db2Index>
+      <inumIndex>828684.8125</inumIndex>
+    </result>
+    <result id="60" timeout="false">
+      <db2fts>835636.5</db2fts>
+      <inumfts>835636.5</inumfts>
+      <db2Index>835636.5</db2Index>
+      <inumIndex>835636.5</inumIndex>
+    </result>
+    <result id="61" timeout="false">
+      <db2fts>829875.0</db2fts>
+      <inumfts>829875.0</inumfts>
+      <db2Index>829875.0</db2Index>
+      <inumIndex>829875.0</inumIndex>
+    </result>
+    <result id="62" timeout="false">
+      <db2fts>828476.5</db2fts>
+      <inumfts>828476.5</inumfts>
+      <db2Index>828476.5</db2Index>
+      <inumIndex>828476.5</inumIndex>
+    </result>
+    <result id="63" timeout="false">
+      <db2fts>6356.716796875</db2fts>
+      <inumfts>6356.716796875</inumfts>
+      <db2Index>6205.4677734375</db2Index>
+      <inumIndex>6205.467697143555</inumIndex>
+    </result>
+    <result id="64" timeout="false">
+      <db2fts>22691.017578125</db2fts>
+      <inumfts>22691.017578125</inumfts>
+      <db2Index>22691.017578125</db2Index>
+      <inumIndex>22691.017578125</inumIndex>
+    </result>
+    <result id="65" timeout="false">
+      <db2fts>6152.38232421875</db2fts>
+      <inumfts>6152.38232421875</inumfts>
+      <db2Index>6152.38232421875</db2Index>
+      <inumIndex>6152.38232421875</inumIndex>
+    </result>
+    <result id="66" timeout="false">
+      <db2fts>1241086.375</db2fts>
+      <inumfts>1241086.375</inumfts>
+      <db2Index>560540.4375</db2Index>
+      <inumIndex>560540.4375</inumIndex>
+    </result>
+    <result id="67" timeout="false">
+      <db2fts>26135.998046875</db2fts>
+      <inumfts>26135.998046875</inumfts>
+      <db2Index>26135.998046875</db2Index>
+      <inumIndex>26135.998046875</inumIndex>
+    </result>
+    <result id="68" timeout="false">
+      <db2fts>106078.7109375</db2fts>
+      <inumfts>106078.7109375</inumfts>
+      <db2Index>106078.7109375</db2Index>
+      <inumIndex>106078.7109375</inumIndex>
+    </result>
+    <result id="69" timeout="false">
+      <db2fts>146666.3125</db2fts>
+      <inumfts>146666.3125</inumfts>
+      <db2Index>91413.484375</db2Index>
+      <inumIndex>91413.484375</inumIndex>
+    </result>
+    <result id="70" timeout="false">
+      <db2fts>179404.828125</db2fts>
+      <inumfts>179404.828125</inumfts>
+      <db2Index>161900.625</db2Index>
+      <inumIndex>161900.625</inumIndex>
+    </result>
+    <result id="71" timeout="false">
+      <db2fts>29147.400390625</db2fts>
+      <inumfts>29147.400390625</inumfts>
+      <db2Index>29147.400390625</db2Index>
+      <inumIndex>29147.400390625</inumIndex>
+    </result>
+    <result id="72" timeout="false">
+      <db2fts>6324.2666015625</db2fts>
+      <inumfts>6324.2666015625</inumfts>
+      <db2Index>2475.56298828125</db2Index>
+      <inumIndex>2475.56298828125</inumIndex>
+    </result>
+    <result id="73" timeout="false">
+      <db2fts>825133.8125</db2fts>
+      <inumfts>825133.8125</inumfts>
+      <db2Index>825133.8125</db2Index>
+      <inumIndex>825133.8125</inumIndex>
+    </result>
+    <result id="74" timeout="false">
+      <db2fts>1241086.375</db2fts>
+      <inumfts>1241086.375</inumfts>
+      <db2Index>560540.4375</db2Index>
+      <inumIndex>560540.4375</inumIndex>
+    </result>
+    <result id="75" timeout="false">
+      <db2fts>6124.1455078125</db2fts>
+      <inumfts>6124.1455078125</inumfts>
+      <db2Index>6124.1455078125</db2Index>
+      <inumIndex>6124.1455078125</inumIndex>
+    </result>
+    <result id="76" timeout="false">
+      <db2fts>6478.619140625</db2fts>
+      <inumfts>6478.619140625</inumfts>
+      <db2Index>6478.619140625</db2Index>
+      <inumIndex>6478.619140625</inumIndex>
+    </result>
+    <result id="77" timeout="false">
+      <db2fts>144638.84375</db2fts>
+      <inumfts>144638.84375</inumfts>
+      <db2Index>48927.38671875</db2Index>
+      <inumIndex>48934.94654464722</inumIndex>
+    </result>
+    <result id="78" timeout="false">
+      <db2fts>72563.90625</db2fts>
+      <inumfts>72563.90625</inumfts>
+      <db2Index>72563.90625</db2Index>
+      <inumIndex>72563.90625</inumIndex>
+    </result>
+    <result id="79" timeout="false">
+      <db2fts>105454.3203125</db2fts>
+      <inumfts>105454.3203125</inumfts>
+      <db2Index>105454.3203125</db2Index>
+      <inumIndex>105454.3203125</inumIndex>
+    </result>
+    <result id="80" timeout="false">
+      <db2fts>29147.400390625</db2fts>
+      <inumfts>29147.400390625</inumfts>
+      <db2Index>29147.400390625</db2Index>
+      <inumIndex>29147.400390625</inumIndex>
+    </result>
+    <result id="81" timeout="false">
+      <db2fts>6078.6513671875</db2fts>
+      <inumfts>6078.6513671875</inumfts>
+      <db2Index>122.12808990478516</db2Index>
+      <inumIndex>122.1280927658081</inumIndex>
+    </result>
+    <result id="82" timeout="false">
+      <db2fts>6419.6806640625</db2fts>
+      <inumfts>6419.6806640625</inumfts>
+      <db2Index>6419.6806640625</db2Index>
+      <inumIndex>6419.6806640625</inumIndex>
+    </result>
+    <result id="83" timeout="false">
+      <db2fts>6139.3759765625</db2fts>
+      <inumfts>6139.3759765625</inumfts>
+      <db2Index>133.56805419921875</db2Index>
+      <inumIndex>133.56805419921875</inumIndex>
+    </result>
+    <result id="84" timeout="false">
+      <db2fts>28858.53125</db2fts>
+      <inumfts>28858.53125</inumfts>
+      <db2Index>28858.53125</db2Index>
+      <inumIndex>28858.53125</inumIndex>
+    </result>
+    <result id="85" timeout="false">
+      <db2fts>824055.75</db2fts>
+      <inumfts>824055.75</inumfts>
+      <db2Index>824055.75</db2Index>
+      <inumIndex>824055.75</inumIndex>
+    </result>
+    <result id="86" timeout="false">
+      <db2fts>6373.59765625</db2fts>
+      <inumfts>6373.59765625</inumfts>
+      <db2Index>6275.28564453125</db2Index>
+      <inumIndex>6275.285629272461</inumIndex>
+    </result>
+    <result id="87" timeout="false">
+      <db2fts>6110.9775390625</db2fts>
+      <inumfts>6110.9775390625</inumfts>
+      <db2Index>6110.9775390625</db2Index>
+      <inumIndex>6110.9775390625</inumIndex>
+    </result>
+    <result id="88" timeout="false">
+      <db2fts>72375.796875</db2fts>
+      <inumfts>72375.796875</inumfts>
+      <db2Index>61935.23828125</db2Index>
+      <inumIndex>61935.23828125</inumIndex>
+    </result>
+    <result id="89" timeout="false">
+      <db2fts>6150.5751953125</db2fts>
+      <inumfts>6150.5751953125</inumfts>
+      <db2Index>6150.5751953125</db2Index>
+      <inumIndex>6150.5751953125</inumIndex>
+    </result>
+    <result id="90" timeout="false">
+      <db2fts>828684.8125</db2fts>
+      <inumfts>828684.8125</inumfts>
+      <db2Index>828684.8125</db2Index>
+      <inumIndex>828684.8125</inumIndex>
+    </result>
+    <result id="91" timeout="false">
+      <db2fts>6215.0419921875</db2fts>
+      <inumfts>6215.0419921875</inumfts>
+      <db2Index>6215.0419921875</db2Index>
+      <inumIndex>6215.0419921875</inumIndex>
+    </result>
+    <result id="92" timeout="false">
+      <db2fts>128162.703125</db2fts>
+      <inumfts>128162.703125</inumfts>
+      <db2Index>121664.796875</db2Index>
+      <inumIndex>121664.796875</inumIndex>
+    </result>
+    <result id="93" timeout="false">
+      <db2fts>105610.0546875</db2fts>
+      <inumfts>105610.0546875</inumfts>
+      <db2Index>105610.0546875</db2Index>
+      <inumIndex>105610.0546875</inumIndex>
+    </result>
+    <result id="94" timeout="false">
+      <db2fts>6177.06787109375</db2fts>
+      <inumfts>6177.06787109375</inumfts>
+      <db2Index>6177.06787109375</db2Index>
+      <inumIndex>6177.06787109375</inumIndex>
+    </result>
+    <result id="95" timeout="false">
+      <db2fts>143253.328125</db2fts>
+      <inumfts>143253.3359375</inumfts>
+      <db2Index>21693.369140625</db2Index>
+      <inumIndex>21700.93033027649</inumIndex>
+    </result>
+    <result id="96" timeout="false">
+      <db2fts>6178.615234375</db2fts>
+      <inumfts>6178.615234375</inumfts>
+      <db2Index>1259.11865234375</db2Index>
+      <inumIndex>1259.11865234375</inumIndex>
+    </result>
+    <result id="97" timeout="false">
+      <db2fts>128097.703125</db2fts>
+      <inumfts>128097.703125</inumfts>
+      <db2Index>121562.96875</db2Index>
+      <inumIndex>121562.96875</inumIndex>
+    </result>
+    <result id="98" timeout="false">
+      <db2fts>212583.640625</db2fts>
+      <inumfts>212583.640625</inumfts>
+      <db2Index>212583.640625</db2Index>
+      <inumIndex>212583.640625</inumIndex>
+    </result>
+    <result id="99" timeout="false">
+      <db2fts>837624.375</db2fts>
+      <inumfts>837624.375</inumfts>
+      <db2Index>837624.375</db2Index>
+      <inumIndex>837624.375</inumIndex>
+    </result>
+    <result id="100" timeout="false">
+      <db2fts>29147.400390625</db2fts>
+      <inumfts>29147.400390625</inumfts>
+      <db2Index>29147.400390625</db2Index>
+      <inumIndex>29147.400390625</inumIndex>
+    </result>
+  </indexSet>
+</workload>

@@ -95,6 +95,8 @@ public class ExplainTables {
                 connection,
                 "systools.EXPLAIN_STREAM",
                 "SOURCE_ID,TARGET_ID,STREAM_COUNT,COLUMN_COUNT,COLUMN_NAMES,object_schema,object_name");
+        dumpTable(connection, "systools.advise_index",
+                "TBNAME,COLNAMES,COLCOUNT");
 
         // dumpTable(connection, "systools.EXPLAIN_DIAGNOSTIC");
         // dumpTable(connection, "systools.EXPLAIN_DIAGNOSTIC_DATA");
@@ -257,9 +259,13 @@ public class ExplainTables {
                 dboSchema = dboSchema.trim();
                 dboName = dboName.trim();
 
-                if (dboSchema.equalsIgnoreCase("SYSIBM")
-                        && dboName.equalsIgnoreCase("GENROW")) {
-                    src.name = TEMPORARY_TABLE_SCAN;
+                if (dboSchema.equalsIgnoreCase("SYSIBM")) {
+                    if (dboName.equalsIgnoreCase("GENROW"))
+                        src.name = TEMPORARY_TABLE_SCAN;
+                    else {
+                        // An index which used to enforce the primary key constraint on a table
+                        src.name = TEMPORARY_TABLE_SCAN;
+                    }
                     if (columnNames != null && columnNames.length() > 0) {
                         Pattern tableReferencePattern = Pattern
                                 .compile("Q\\d+\\.");

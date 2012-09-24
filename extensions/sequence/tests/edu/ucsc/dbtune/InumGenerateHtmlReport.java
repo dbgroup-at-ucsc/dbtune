@@ -14,6 +14,8 @@ public class InumGenerateHtmlReport {
                 // "resources/workloads/db2/online-benchmark-100/workload.sql"),
                 new Workload("tpcds10g_99", "test", "TPCDS",
                         "resources/workloads/db2/tpcds/db2.sql"),
+                        new Workload("online-benchmark-100", "test", "OTAB",
+                        "resources/workloads/db2/online-benchmark-100/workload.sql"),
         // new Workload("test", "TPCDS 39",
         // "resources/workloads/db2/tpcds/39.sql"),
         };
