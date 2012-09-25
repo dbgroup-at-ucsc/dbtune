@@ -13,15 +13,22 @@ import edu.ucsc.dbtune.util.Rx;
 public class BatchTest {
     public static void main(String[] args) throws Exception {
         String generateIndexMethod = "recommend";
-        generateIndexMethod = "powerset 2";
+//        generateIndexMethod = "powerset 2";
 
         long gigbytes = 1024L * 1024L * 1024L;
         File outputFile = new File("/home/wangrui/dbtune/batch.txt");
         PrintStream ps = new PrintStream(outputFile);
         TestSet[] sets = {
+                new TestSet("14 TPC-H queries", "tpch10g", "deployAware",
+                        "TPCH14.sql", 10 * gigbytes, "TPCH14"),
+                new TestSet("55 TPCDS queries", "test", "deployAware",
+                        "TPCDS55.sql", 10 * gigbytes, "TPCDS55"),
+                new TestSet("81 OTAB queries", "test", "deployAware",
+                        "OTAB81.sql", 10 * gigbytes, "OTAB81"),
+
         // new TestSet("170 OST queries", "test", "OST", 10 * gigbytes),
-        new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum", "workload.sql",
-                10 * gigbytes, "tpch"),
+//        new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum", "workload.sql",
+//                10 * gigbytes, "tpch"),
         // new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
         // "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
         // new TestSet("100 OTAB [5] queries", "test",

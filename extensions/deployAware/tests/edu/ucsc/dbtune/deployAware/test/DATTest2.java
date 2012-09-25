@@ -261,6 +261,8 @@ public class DATTest2 {
     }
 
     public static StringBuilder sb = new StringBuilder();
+    
+    public static double windowSizeParameter=20;
 
     static void batch(String[] args) throws Exception {
         int pos = 0;
@@ -320,7 +322,7 @@ public class DATTest2 {
                     total += params.costModel.indices.get(i).createCost;
                 }
             }
-            windowSize = total / m/2;
+            windowSize = total / m * windowSizeParameter;
             Arrays.fill(params.windowConstraints, windowSize);
             Rt.p("total=%,.0f m=%d", total, m);
             Rt
@@ -394,10 +396,12 @@ public class DATTest2 {
         // ps.close();
         long time1 = timer.get();
 
+        double greedyCost = 0;
         if (runGreedy) {
             DATOutput greedyRatio = (DATOutput) DATBaselines.baseline2(params,
                     "greedyRatio", debug);
             root.createChild("greedyRatio", greedyRatio.totalCost);
+            greedyCost = greedyRatio.totalCost;
             Rx windows = root.createChild("greedyWindows");
             for (int i = 0; i < windowConstraints.length; i++) {
                 Rx window = windows.createChild("window");
@@ -428,8 +432,9 @@ public class DATTest2 {
         Rt.p("TIME " + time1 + " " + time2 + " " + (double) time2 / time1);
 
         Rt.p(datCost);
-        Rt.p(bipCost);
+        Rt.p(greedyCost);
         double result = datCost / bipCost * 100;
+        result = datCost / greedyCost * 100;
         Rt.p(result + "%");
 
         Rt.write(outputFile, root.getXml());

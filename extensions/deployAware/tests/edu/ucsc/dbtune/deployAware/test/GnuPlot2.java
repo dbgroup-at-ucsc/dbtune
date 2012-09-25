@@ -66,6 +66,8 @@ public class GnuPlot2 {
         if (current.size() > 0)
             throw new Error();
         if (vs.size() > 0) {
+            if (!orgDataFile.getParentFile().exists())
+                orgDataFile.getParentFile().mkdirs();
             PrintStream ps = new PrintStream(orgDataFile);
             for (int i = 0; i < vs.size(); i++) {
                 Vector<Double> current = vs.get(i);

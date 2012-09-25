@@ -152,12 +152,18 @@ public class DATPaper {
         // ps.println("\\begin{multicols}{2}\n");
         long gigbytes = 1024L * 1024L * 1024L;
         TestSet[] sets = {
-                // new TestSet("TPCDS", "test", "tpcds-inum",
-                // gigbytes),
-                new TestSet("22 TPC-H queries", "tpch10g", "tpch",
-                        "complete.sql", 10 * gigbytes, "TPC-H"),
-                new TestSet("45 TPCDS queries", "test", "tpcds", "inum.sql",
-                        10 * gigbytes, "TPCDS45"),
+//                new TestSet("14 TPC-H queries", "tpch10g", "deployAware",
+//                        "TPCH14.sql", 10 * gigbytes, "TPCH"),
+                new TestSet("55 TPCDS queries", "test", "deployAware",
+                        "TPCDS55.sql", 10 * gigbytes, "TPCDS55"),
+//                new TestSet("81 OTAB queries", "test", "deployAware",
+//                        "OTAB81.sql", 10 * gigbytes, "OTAB81"),
+        // new TestSet("TPCDS", "test", "tpcds-inum",
+        // gigbytes),
+        // new TestSet("22 TPC-H queries", "tpch10g", "tpch",
+        // "complete.sql", 10 * gigbytes, "TPC-H"),
+        // new TestSet("45 TPCDS queries", "test", "tpcds", "inum.sql",
+        // 10 * gigbytes, "TPCDS45"),
         // new
         // TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
         // "tpch10g", "tpch-benchmark-mix", 10 * gigbytes,
@@ -173,29 +179,14 @@ public class DATPaper {
         };
         if (false) {
             for (TestSet set : sets) {
-                Rt.p(set.dbName + " " + set.workloadName);
-                PrintStream ps = new PrintStream("/home/wangrui/dbtune/index/"
-                        + set.dbName + "_" + set.workloadName + ".txt");
+                Rt.p(set.dbName + " " + set.workloadName + " " + set.fileName);
+                PrintStream ps = System.out;
                 WorkloadLoader loader = new WorkloadLoader(set.dbName,
                         set.workloadName, set.fileName, generateIndexMethod);
                 SeqInumCost cost = loader.loadCost();
                 DATParameter param = new DATParameter();
                 param.spaceConstraint = Double.MAX_VALUE;
                 param.costModel = cost;
-                while (cost.queries.size() > 6)
-                    cost.queries.remove(cost.queries.size() - 1);
-                // DAT.showFormulas=true;
-                DATBaselines
-                        .cophy(param, Double.MAX_VALUE, Double.MAX_VALUE, 5);
-                System.exit(0);
-                Vector<SeqInumIndex> indices = new Vector<SeqInumIndex>();
-                indices.addAll(cost.indices);
-                Collections.sort(indices, new Comparator<SeqInumIndex>() {
-                    @Override
-                    public int compare(SeqInumIndex o1, SeqInumIndex o2) {
-                        return -(int) (o1.indexBenefit - o2.indexBenefit);
-                    }
-                });
                 ps.format("fts_cost: %,.2f\n", cost.costWithoutIndex);
                 boolean[] bs = new boolean[cost.indexCount()];
                 Arrays.fill(bs, true);
@@ -258,7 +249,7 @@ public class DATPaper {
                 // .getColumnNames());
                 // Rt.np(cost.indices.get(i));
                 // }
-                ps.close();
+                // ps.close();
             }
             System.exit(0);
         }
@@ -278,14 +269,14 @@ public class DATPaper {
         // spaceFactor_def=10;
         int l_def = 6;
         l_def = 4;
-        // l_def=20;
+         l_def=20;
         // l_def = 1000;
         double _1mada_def = 2;
         _1mada_def = 1;
-        int[] m_set = { 2, 3, 4, 5, 10 };
+        int[] m_set = { 2, 3, 4, 5 };
         double[] spaceFactor_set = { 0.25, 0.5, 1, 2, 4, 1000000 };
         String[] spaceFactor_names = { "0.25x", "0.5x", "1x", "2x", "4x", "INF" };
-        int[] l_set = { 4, 6, 8, 20, 40 };
+        int[] l_set = { 4, 6, 8 };
         int[] _1mada_set = { 1, 2, 4, 16 };
         double[] tau_set = { 0.5, 0.6, 0.8, 0.9, 0.95, 1, 1.05, 1.1, 1.2, 1.4 };
         String scale = "0.7";
@@ -300,7 +291,7 @@ public class DATPaper {
             // totalCost += index.createCost;
             // }
             // int windowSize = 3600 * 3000;// 13 * (int) (totalCost /
-            Rt.p(set.dbName + " " + set.workloadName);
+            Rt.p(set.dbName + " " + set.workloadName + " " + set.fileName);
             WorkloadLoader loader = new WorkloadLoader(set.dbName,
                     set.workloadName, set.fileName, generateIndexMethod);
             set.plotNames.clear();
@@ -310,76 +301,9 @@ public class DATPaper {
             GnuPlot2.uniform = true;
             GnuPlot2 plot = null;
 
-            if (true) {
-                plot = new GnuPlot2(figsDir, set.dbName + "X"
-                        + set.workloadName + "Xm", "m", "cost");
-                plot.setXtics(m_set);
-                plot.setPlotNames(plotNames);
-                set.plotNames.add(plot.name);
-                set.figureNames.add("differnt window size");
-                if (exp) {
-                    for (int m : m_set) {
-                        File debugFile = new File(debugDir, plot.name + "_" + m
-                                + ".xml");
-                        new DATPaper(loader, plot, m, m, spaceBudge, l_def,
-                                getAlpha(_1mada_def), windowSize, debugFile);
-                    }
-                }
-                plot.finish();
-                plot = new GnuPlot2(figsDir, set.dbName + "X"
-                        + set.workloadName + "Xspace", "space", "cost");
-                plot.setPlotNames(plotNames);
-                set.plotNames.add(plot.name);
-                set.figureNames.add("different space budget");
-                plot.setXtics(spaceFactor_names, spaceFactor_set);
-                if (exp) {
-                    int i = 0;
-                    for (double spaceFactor : spaceFactor_set) {
-                        long space = (long) (set.size * spaceFactor);
-                        File debugFile = new File(debugDir, plot.name + "_"
-                                + spaceFactor_names[i] + ".xml");
-                        new DATPaper(loader, plot, spaceFactor, m_def, space,
-                                l_def, getAlpha(_1mada_def), windowSize,
-                                debugFile);
-                        i++;
-                    }
-                }
-                plot.finish();
-                plot = new GnuPlot2(figsDir, set.dbName + "X"
-                        + set.workloadName + "Xl", "l", "cost");
-                plot.setXtics(l_set);
-                plot.setPlotNames(plotNames);
-                set.plotNames.add(plot.name);
-                set.figureNames.add("maximum indexes per window");
-                if (exp) {
-                    for (int l : l_set) {
-                        File debugFile = new File(debugDir, plot.name + "_" + l
-                                + ".xml");
-                        new DATPaper(loader, plot, l, m_def, spaceBudge, l,
-                                getAlpha(_1mada_def), windowSize, debugFile);
-                    }
-                }
-                plot.finish();
-                plot = new GnuPlot2(figsDir, set.dbName + "X"
-                        + set.workloadName + "X1mada", "(1-a)/a", "cost");
-                plot.setXtics(_1mada_set);
-                plot.setPlotNames(plotNames);
-                set.plotNames.add(plot.name);
-                set.figureNames.add("alpha");
-                if (exp) {
-                    for (int _1mada : _1mada_set) {
-                        double alpha = getAlpha(_1mada);
-                        File debugFile = new File(debugDir, plot.name + "_"
-                                + _1mada + ".xml");
-                        new DATPaper(loader, plot, _1mada, m_def, spaceBudge,
-                                l_def, alpha, windowSize, debugFile);
-                    }
-                }
-                plot.finish();
-            }
             int win = m_def;
-            plot = new GnuPlot2(figsDir, set.dbName + "X" + set.workloadName
-                    + "Xwindow", "window", "cost");
+            plot = new GnuPlot2(figsDir, set.shortName + "Xwindow", "window",
+                    "cost");
             int[] set2 = new int[win];
             for (int i = 0; i < set2.length; i++)
                 set2[i] = i;
@@ -387,7 +311,7 @@ public class DATPaper {
             plot.setPlotNames(plotNames);
             set.plotNames.add(plot.name);
             set.figureNames.add("cost of each window");
-            if (exp) {
+            if (exp || !plot.pltFile.exists()) {
                 File debugFile = new File(debugDir, plot.name + "_"
                         + "window.xml");
                 DATPaper run = new DATPaper(loader, plot, win, win, spaceBudge,
@@ -402,6 +326,73 @@ public class DATPaper {
                 }
             }
             plot.finish();
+            
+            if (true) {
+                plot = new GnuPlot2(figsDir, set.shortName + "Xm", "m", "cost");
+                plot.setXtics(m_set);
+                plot.setPlotNames(plotNames);
+                set.plotNames.add(plot.name);
+                set.figureNames.add("differnt window size");
+                if (exp || !plot.pltFile.exists()) {
+                    for (int m : m_set) {
+                        File debugFile = new File(debugDir, plot.name + "_" + m
+                                + ".xml");
+                        new DATPaper(loader, plot, m, m, spaceBudge, l_def,
+                                getAlpha(_1mada_def), windowSize, debugFile);
+                    }
+                }
+                plot.finish();
+                plot = new GnuPlot2(figsDir, set.shortName + "Xspace", "space",
+                        "cost");
+                plot.setPlotNames(plotNames);
+                set.plotNames.add(plot.name);
+                set.figureNames.add("different space budget");
+                plot.setXtics(spaceFactor_names, spaceFactor_set);
+                if (exp || !plot.pltFile.exists()) {
+                    int i = 0;
+                    for (double spaceFactor : spaceFactor_set) {
+                        long space = (long) (set.size * spaceFactor);
+                        File debugFile = new File(debugDir, plot.name + "_"
+                                + spaceFactor_names[i] + ".xml");
+                        new DATPaper(loader, plot, spaceFactor, m_def, space,
+                                l_def, getAlpha(_1mada_def), windowSize,
+                                debugFile);
+                        i++;
+                    }
+                }
+                plot.finish();
+                plot = new GnuPlot2(figsDir, set.shortName + "Xl", "l", "cost");
+                plot.setXtics(l_set);
+                plot.setPlotNames(plotNames);
+                set.plotNames.add(plot.name);
+                set.figureNames.add("maximum indexes per window");
+                if (exp || !plot.pltFile.exists()) {
+                    for (int l : l_set) {
+                        File debugFile = new File(debugDir, plot.name + "_" + l
+                                + ".xml");
+                        new DATPaper(loader, plot, l, m_def, spaceBudge, l,
+                                getAlpha(_1mada_def), windowSize, debugFile);
+                    }
+                }
+                plot.finish();
+                plot = new GnuPlot2(figsDir, set.shortName + "X1mada",
+                        "(1-a)/a", "cost");
+                plot.setXtics(_1mada_set);
+                plot.setPlotNames(plotNames);
+                set.plotNames.add(plot.name);
+                set.figureNames.add("alpha");
+                if (exp || !plot.pltFile.exists()) {
+                    for (int _1mada : _1mada_set) {
+                        double alpha = getAlpha(_1mada);
+                        File debugFile = new File(debugDir, plot.name + "_"
+                                + _1mada + ".xml");
+                        new DATPaper(loader, plot, _1mada, m_def, spaceBudge,
+                                l_def, alpha, windowSize, debugFile);
+                    }
+                }
+                plot.finish();
+            }
+            
         }
 
         String latex = "/usr/local/texlive/2011/bin/i386-linux/xelatex";
@@ -415,7 +406,8 @@ public class DATPaper {
                     + "\\usepackage{subfigure}\n" + "\n"
                     + "\\begin{document}\n" + "" + "");
             ps.println("\\textbf{default values:}\\\\");
-            ps.println("windowSize=" + windowSize + "\\\\");
+            ps.println("windowSize=cophyRecommendIndexes/m*"
+                    + DATTest2.windowSizeParameter + "\\\\");
             ps.println("spaceFactor=" + spaceFactor_def + "\\\\");
             ps.println("l=" + l_def + "\\\\");
             ps.println("m=" + m_def + "\\\\");
@@ -473,8 +465,8 @@ public class DATPaper {
                 Rt.p(set.dbName + " " + set.workloadName);
                 long spaceBudge = (long) (set.size * spaceFactor_def);
                 GnuPlot2.uniform = true;
-                GnuPlot2 plot = new GnuPlot2(outputDir, set.dbName + "X"
-                        + set.workloadName + "Xskyline", "r", "cost");
+                GnuPlot2 plot = new GnuPlot2(outputDir, set.shortName
+                        + "Xskyline", "r", "cost");
                 plot.setXtics(null, tau_set);
                 plot.setPlotNames(new String[] { "DAT" });
                 ps.println("\\begin{figure}\n" + "\\centering\n"
@@ -549,8 +541,7 @@ public class DATPaper {
                 dsp.run();
                 ps2.format(cost.queries.size() * i + "\t%.3f\t%d\t%s\t%s\n",
                         timer.getSecondElapse(), dsp.memoryUsed,
-                        perfTest.dbName + "_" + perfTest.workloadName,
-                        new Date().toString());
+                        perfTest.shortName, new Date().toString());
                 ps2.flush();
             }
             ps2.close();

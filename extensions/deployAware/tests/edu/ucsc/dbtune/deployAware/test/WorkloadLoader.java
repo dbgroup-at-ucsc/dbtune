@@ -16,8 +16,10 @@ import java.util.Vector;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.DB2AdvisorCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGenerator;
+import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 import edu.ucsc.dbtune.deployAware.DATBaselines;
 import edu.ucsc.dbtune.deployAware.DATWindow;
 import edu.ucsc.dbtune.metadata.Column;
@@ -92,10 +94,10 @@ public class WorkloadLoader {
         // HashSet<Index> set=new HashSet<Index>();
         // for (int i = 0; i <= 9; i++) {
         // Rt.runAndShowCommand("db2 set current query optimization = "+i);
-        File dir = new File("/home/wangrui/workspace/cache/index/" + dbName
+        File dir = new File("/home/wangrui/dbtune/paper/cache/index/" + dbName
                 + "/" + workloadName);
         dir.mkdirs();
-        File cacheFile = new File(dir, generateIndexMethod + ".xml");
+        File cacheFile = new File(dir,  this.fileName+"_"+generateIndexMethod + ".xml");
         Set<Index> indexes = new HashSet<Index>();
         if (cacheFile.exists()) {
             Rx root = Rx.findRoot(Rt.readFile(cacheFile));
@@ -119,8 +121,11 @@ public class WorkloadLoader {
             Rt.np("Load index from cache: " + indexes.size());
         } else {
             if ("recommend".equals(generateIndexMethod)) {
-                CandidateGenerator candGen = new OptimizerCandidateGenerator(
-                        getBaseOptimizer(db.getOptimizer()));
+                DB2Advisor db2Advis = new DB2Advisor(db);
+                DB2AdvisorCandidateGenerator candGen = new 
+                    DB2AdvisorCandidateGenerator(db2Advis);
+//                CandidateGenerator candGen = new OptimizerCandidateGenerator(
+//                        getBaseOptimizer(db.getOptimizer()));
                 indexes = candGen.generate(workload);
             } else if (generateIndexMethod.startsWith("powerset")) {
                 int size = Integer.parseInt(generateIndexMethod.substring(
@@ -181,7 +186,7 @@ public class WorkloadLoader {
     }
 
     public SeqInumCost loadCost() throws Exception {
-        File dir = new File("/home/wangrui/workspace/cache/"
+        File dir = new File("/home/wangrui/dbtune/paper/cache/"
                 + generateIndexMethod + "/" + dbName + "/" + workloadName);
         dir.mkdirs();
         File file = new File(dir, fileName+"_"+querySize + "_" + indexSize + ".xml");
