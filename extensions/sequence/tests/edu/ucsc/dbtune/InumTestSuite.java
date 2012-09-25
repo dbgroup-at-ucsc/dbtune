@@ -285,6 +285,7 @@ public class InumTestSuite {
             ps.print("\t" + set.name + " " + set.indexNames.length);
         if (hasCost)
             ps.print("\tFTS");
+        ps.print("\tmaxGain");
         ps.println();
         int n1 = 0;
         int n2 = 0;
@@ -325,6 +326,7 @@ public class InumTestSuite {
             Result r = workload.indexSets[0].results[i];
             if (hasCost)
                 ps.format("\t%,.0f\t%,.0f", r.db2fts, r.inumfts);
+            ps.format("\t%.2f%%", (1 - r.db2Index / r.db2fts) * 100);
             ps.println();
 
         }
@@ -449,6 +451,71 @@ public class InumTestSuite {
         }
     }
 
+    static void exportAccurateQueris(Workload[] workloads, File outputDir)
+            throws Exception {
+        InumTestSuite suite = new InumTestSuite(workloads, true);
+        for (Workload workload : workloads) {
+            // suite.showCompactResult(workload,System.out,false);
+            // suite.showResultWithCosts(workload, System.out);
+            // suite.showHtmlResult(workload, System.out);
+            Rt.np(workload.name);
+            int n = 0;
+            StringBuilder sb = new StringBuilder();
+            double db2fts = 0;
+            double db2Index = 0;
+            double db2fts1 = 0;
+            double db2Index1 = 0;
+            double inumfts = 0;
+            double inumIndex = 0;
+            for (int i = 0; i < workload.workload.size(); i++) {
+                boolean usable = true;
+                for (IndexSet set : workload.indexSets) {
+                    Result r = set.results[i];
+                    if (r.timeout)
+                        usable = false;
+                    else if ((r.inumIndex / r.db2Index) < 0.6
+                            || (r.inumIndex / r.db2Index) > 1.5)
+                        usable = false;
+                }
+                if (workload.indexSets[0].results[i].db2Index > 1000000000) {
+                    Rt.error("remove query with cost %,.0f %,.0f",
+                            workload.indexSets[0].results[i].db2Index,
+                            workload.indexSets[0].results[i].db2fts);
+                    usable = false;
+                }
+                Result r = workload.indexSets[0].results[i];
+                if (r.inumfts < 1)
+                    usable = false;
+                if (usable) {
+                    sb.append(workload.workload.get(i).getSQL() + ";\r\n");
+                    n++;
+                    db2fts += r.db2fts;
+                    db2Index += r.db2Index;
+                    inumfts += r.inumfts;
+                    inumIndex += r.inumIndex;
+                }
+                db2fts1 += r.db2fts;
+                db2Index1 += r.db2Index;
+            }
+            PrintStream ps = new PrintStream(new File(outputDir, workload.name
+                    .replaceAll("-", "")
+                    + n + ".sql"));
+            ps.println(sb);
+            ps.close();
+            Rt.np("DB2 fts=%,.0f", db2fts);
+            Rt.np("DB2 index=%,.0f", db2Index);
+            Rt.np("INUM fts=%,.0f", inumfts);
+            Rt.np("INUM index=%,.0f", inumIndex);
+            Rt.np(n + " queries, DB gain=%.2f%%, INUM gain=%.2f%%",
+                    (1 - db2Index / db2fts) * 100,
+                    (1 - inumIndex / inumfts) * 100);
+            Rt.np("All DB2 fts=%,.0f", db2fts1);
+            Rt.np("All DB2 index=%,.0f", db2Index1);
+            Rt.np("All DB gain=%.2f%%", (1 - db2Index1 / db2fts1) * 100);
+        }
+        System.exit(0);
+    }
+
     public static void main(String[] args) throws Exception {
         Workload[] workloads = {
                 new Workload("tpch10g_22", "tpch10g", "TPC-H",
@@ -463,33 +530,14 @@ public class InumTestSuite {
         boolean continueFromLastTest = true;
         // continueFromLastTest=false;
         File outputDir = new File("resources/workloads/db2/deployAware");
+        exportAccurateQueris(workloads, outputDir);
+
         InumTestSuite suite = new InumTestSuite(workloads, continueFromLastTest);
+
         for (Workload workload : workloads) {
             // suite.showCompactResult(workload,System.out,false);
             // suite.showResultWithCosts(workload, System.out);
             // suite.showHtmlResult(workload, System.out);
-            Rt.np(workload.name);
-            int n = 0;
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < workload.workload.size(); i++) {
-                boolean usable = true;
-                for (IndexSet set : workload.indexSets) {
-                    Result r = set.results[i];
-                    if ((r.inumIndex / r.db2Index) < 0.6
-                            || (r.inumIndex / r.db2Index) > 1.5)
-                        usable = false;
-                }
-                if (usable) {
-                    sb.append(workload.workload.get(i).getSQL() + ";\r\n");
-                    n++;
-                }
-            }
-            PrintStream ps = new PrintStream(new File(outputDir, workload.name
-                    .replaceAll("-", "")
-                    + n + ".sql"));
-            ps.println(sb);
-            ps.close();
-            Rt.np(n);
         }
     }
 }
