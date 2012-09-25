@@ -34,6 +34,7 @@ public class ExplainTables {
     public static boolean dump = false;
     public static int dumpPlanId = -1;
     public static int optimizationLevel = -1;
+    public static int whatIfCallCount=0;
 
     public static void dumpResult(ResultSet rs) throws SQLException {
         ResultSetMetaData m = rs.getMetaData();
@@ -131,6 +132,8 @@ public class ExplainTables {
         }
         stmt.execute("SET CURRENT EXPLAIN MODE = NO");
         stmt.close();
+        
+        whatIfCallCount++;
 
         if (dump || nextPlanId == dumpPlanId)
             dumpExplainTables(connection);

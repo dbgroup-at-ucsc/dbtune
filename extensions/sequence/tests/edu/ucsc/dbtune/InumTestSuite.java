@@ -312,16 +312,19 @@ public class InumTestSuite {
                 n1++;
             else
                 n3++;
-            ps.print(i);
             for (IndexSet set : workload.indexSets) {
                 Result r = set.results[i];
-                if (set.results[i].timeout)
-                    ps.print("\ttimeout");
-                else {
+                if (set.results[i].timeout) {
+                    ps.print(i + " timeout\t");
+                    if (hasCost)
+                        ps.print("\t\t");
+                } else {
+                    ps.print(i);
                     if (hasCost)
                         ps.format("\t%,.0f\t%,.0f", r.db2Index, r.inumIndex);
                     ps.format("\t%.2f", (r.inumIndex / r.db2Index));
                 }
+                ps.print("\t\t");
             }
             Result r = workload.indexSets[0].results[i];
             if (hasCost)
