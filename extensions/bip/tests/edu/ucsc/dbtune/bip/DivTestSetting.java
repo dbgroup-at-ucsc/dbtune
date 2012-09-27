@@ -27,11 +27,6 @@ import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 
-import static edu.ucsc.dbtune.util.EnvironmentProperties.QUERY_IMBALANCE;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.NODE_IMBALANCE;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.FAILURE_IMBALANCE;
-
-
 /**
  * The common setting parameters for DIVBIP test
  * 
@@ -161,14 +156,6 @@ public class DivTestSetting
         nReplicas = listNumberReplicas.get(0);
         loadfactor = (int) Math.ceil( (double) nReplicas / 2);
         
-        // imbalance factors
-        for (String typeConstraint : en.getListImbalanceConstraints())                
-            if (typeConstraint.equals(NODE_IMBALANCE))
-                nodeImbalances = en.getListImbalanceFactors();
-            else if (typeConstraint.equals(QUERY_IMBALANCE))
-                queryImbalances = en.getListImbalanceFactors();
-            else if (typeConstraint.equals(FAILURE_IMBALANCE))
-                failureImbalances = en.getListImbalanceFactors();
     }
     
     /**

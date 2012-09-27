@@ -1,13 +1,12 @@
 package edu.ucsc.dbtune.bip;
 
-import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.junit.Test;
 
-import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
+
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.div.ConstraintDivBIP;
 import edu.ucsc.dbtune.bip.div.DivConstraint;
@@ -15,6 +14,8 @@ import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.util.Rt;
 
+import static edu.ucsc.dbtune.util.EnvironmentProperties.NODE_IMBALANCE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.FAILURE_IMBALANCE;
 
 public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
 {
@@ -29,14 +30,70 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
         
         if (!(io instanceof InumOptimizer))
             return;
-       
+        
+        greedyConstraintDiv();
+    }
+    
+    /**
+     * Use greedy approach
+     * 
+     * @throws Exception
+     */
+    protected static void greedyConstraintDiv() throws Exception
+    {
         List<DivConstraint> constraints;
-        double upperTotalCost;
+        
+        // get optimal total cost value
+        double optimalTotalCost = DivBIPFunctionalTest.testDiv(nReplicas, B, false);
+        Rt.p(" optimal total cost = " + optimalTotalCost);
+        List<Double> nodeFactors = new ArrayList<Double>();
+        List<Double> failureFactors = new ArrayList<Double>();
+        
+        // get the imbalance factors from inputs
+        try {   
+            nodeFactors = en.getNodeImbalanceFactors();
+        }
+        catch (NoSuchElementException e){
+            ;
+        }
+        
+        try {   
+            failureFactors = en.getFailureImbalanceFactors();
+        }
+        catch (NoSuchElementException e){
+            ;
+        }
+        
+        DivConstraint iReplica;
+        
+        for (int i = 0; i < nodeFactors.size(); i++){
+            constraints = new ArrayList<DivConstraint>();
+            iReplica = new DivConstraint(NODE_IMBALANCE, nodeFactors.get(i));
+            constraints.add(iReplica);
+            if (failureFactors.size() > 0){
+                iReplica = new DivConstraint(FAILURE_IMBALANCE, failureFactors.get(i));
+                constraints.add(iReplica);
+            }
+            
+            Rt.p(" Number of constraints: " + constraints.size());
+            constraintDiv = new ConstraintDivBIP(constraints, true, true);
+            constraintDiv.setOptimalTotalCost(optimalTotalCost);
+            div.clear();
+            runConstraintBIP(constraintDiv);
+        }
+    }
+    
+    protected static void exactConstraintDiv() throws Exception
+    {
+        List<DivConstraint> constraints;
+        
         /*
+         double upperTotalCost;
         // get the total cost of the normal setting
         upperTotalCost = DivBIPFunctionalTest.testDiv(nReplicas, B, false);
         upperTotalCost *= 1.2;
         */
+        
         
         // 2. Set constraints
         /*
@@ -73,7 +130,7 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
                 DivConstraint iReplica = new DivConstraint(typeConstraint, factor);
                 constraints = new ArrayList<DivConstraint>();
                 constraints.add(iReplica);                
-                constraintDiv = new ConstraintDivBIP(constraints, true);
+                constraintDiv = new ConstraintDivBIP(constraints, true, false);
                 /*
                 Rt.p("Check feasible solution only");
                 constraintDiv.checkFeasibleSolutionOnly();
@@ -84,7 +141,6 @@ public class ConstraintDivBIPFunctionalTest  extends DivTestSetting
             }
         }
     }
-    
     
     /**
      * Run the BIP 

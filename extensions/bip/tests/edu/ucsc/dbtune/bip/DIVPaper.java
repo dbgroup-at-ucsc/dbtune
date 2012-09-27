@@ -161,9 +161,9 @@ public class DIVPaper extends DivTestSetting
         
         // 3. draw graphs
         if (drawRatio)
-            competitors = new String[] {"1 - DIV-BIP/UNIF", " 1 - DIVGDESIGN/UNIF"};
+            competitors = new String[] {"1 - DIVBIP/UNIF", " 1 - DIVGDESIGN/DIVBIP"};
         else 
-            competitors = new String[] {"DIV-BIP", "DIVGDESIGN", "UNIF"};
+            competitors = new String[] {"UNIF", "DIVGDESIGN", "DIVBIP"};
         int numX;
         double ratio; 
         long budget;
@@ -222,7 +222,10 @@ public class DIVPaper extends DivTestSetting
                 budget = convertBudgetToMB (B);
                 xtics[i] = i;
                 ratio = (double) B / Math.pow(2, 30) / 10;
-                xaxis[i] = Double.toString(ratio) + "x";
+                if (ratio > 1.0)
+                    xaxis[i] = "INF";
+                else
+                    xaxis[i] = Double.toString(ratio) + "x";
                 entry = new DivPaperEntry(dbName, wlName, n, budget);
                 if (drawRatio)
                     addPointRatioDIVEquivBIP(xtics[i], entry, points);
@@ -274,7 +277,7 @@ public class DIVPaper extends DivTestSetting
         Rt.p(" cost DESIGN = " + (costDesign / Math.pow(10, 6)));
         
         ratioDiv = 1 - (double) costDiv / costUnif;
-        ratioDesign = 1 - (double) costDesign / costUnif;
+        ratioDesign = 1 - (double) costDiv / costDesign;
         ratioDiv = ratioDiv * 100;
         ratioDesign = ratioDesign * 100;
         if (ratioDiv < 0.0) {
@@ -298,7 +301,7 @@ public class DIVPaper extends DivTestSetting
      * displayed in GnuPlot
      * @param entry
      * @param points
-     */
+     */ 
     protected static void addPointDIVEquivBIP(double xcoordinate, DivPaperEntry entry, List<Point> points)
     {
         double costDiv, costUnif, costDesign;
@@ -307,10 +310,9 @@ public class DIVPaper extends DivTestSetting
         costUnif = mapUnif.get(entry);
         costDesign = mapDesign.get(entry);
         
-        
-        points.add(new Point(xcoordinate, costDiv));
-        points.add(new Point(xcoordinate, costDesign));
         points.add(new Point(xcoordinate, costUnif));
+        points.add(new Point(xcoordinate, costDesign));
+        points.add(new Point(xcoordinate, costDiv));
     }
     
     

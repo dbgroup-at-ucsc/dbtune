@@ -120,8 +120,8 @@ public class DivBIPFunctionalTest extends DivTestSetting
             
             Rt.p(" TOTAL COST(INUM): " + totalCostBIP);
             Rt.p(" NODE IMBALANCE: " + div.getNodeImbalance());
-            Rt.p(" PREDICTABILITY IMBALANCE: " + div.getQueryImbalance());   
-            Rt.p(" FAILURE IMBALANCE: " + div.getFailureImbalance());
+            //Rt.p(" PREDICTABILITY IMBALANCE: " + div.getQueryImbalance());   
+            //Rt.p(" FAILURE IMBALANCE: " + div.getFailureImbalance());
             // check for node balance constraint
             /*
             div.setUpperReplicaCost(totalCostBIP * 1.1 / nReplicas);
