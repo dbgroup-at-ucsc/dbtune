@@ -52,8 +52,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     protected boolean isUpperTotalCost = false;
     protected double upperTotalCost;
     
-    protected boolean isUpperReplicaCost = false;
-    protected double upperReplicaCost;
     
     @Override
     public void setLoadBalanceFactor(int m) 
@@ -89,15 +87,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     {
         isUpperTotalCost = true;
         upperTotalCost = upper;
-    }
-    
-    /**
-     * Allow to set an upper bound on total cost
-     */
-    public void setUpperReplicaCost(double upper)
-    {
-        isUpperReplicaCost = true;
-        upperReplicaCost = upper;
     }
     
     /**
@@ -155,8 +144,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                         conf.addIndexReplica(var.getReplica(), index);
                 }
             }
-        }     
-        
+        }  
         
         return conf;
     }
@@ -187,14 +175,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             topMBestCostConstraints();
             
             // 6. Space constraints
-            spaceConstraints();
-            
-            // 7. upper replica constraint if any
-            if (this.isUpperReplicaCost){
-                for (int r = 0; r< nReplicas; r++)
-                    this.upperReplicaConstraint(r);
-            }
-                
+            spaceConstraints();    
         }     
         catch (IloException e) {
             e.printStackTrace();
@@ -554,7 +535,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     }
 
     /**
-     * Top-m best cost constraints.
+     * Load-balance factor constraint
      * 
      * @throws IloException
      *      If there is error in formulating the expression in CPLEX. 
@@ -629,18 +610,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         }
             
         cplex.addLe(expr, B, "space_" + numConstraints);
-        numConstraints++;
-    }
-    
-    /**
-     * Set replica constraints
-     * @param r
-     * @throws IloException
-     */
-    protected void upperReplicaConstraint(int r) throws IloException
-    {   
-        IloLinearNumExpr expr = replicaCost(r);
-        cplex.addLe(expr, upperReplicaCost, "replica_" + numConstraints);
         numConstraints++;
     }
     
@@ -802,20 +771,32 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      *      The imbalance factor
      * @throws Exception
      */
+    public double getTotalCost() throws Exception
+    {
+        double total = 0.0;
+        
+        for (int r = 0; r < nReplicas; r++) 
+            total += computeVal(replicaCost(r));
+        
+        return total;
+    }
+    
+    /**
+     * Retrieve the max imbalance replica cost
+     * 
+     * @return
+     *      The imbalance factor
+     * @throws Exception
+     */
     public double getNodeImbalance() throws Exception
     {
         List<Double> replicas = new ArrayList<Double>();
-        
-        double updateBaseTableCost = getTotalBaseTableUpdateCost() / nReplicas;
         double cost;
         
         for (int r = 0; r < nReplicas; r++) {
-            
-            cost = computeVal(replicaCost(r)) + updateBaseTableCost;
-            
+            cost = computeVal(replicaCost(r));
             if (cost > 0.0)
                 replicas.add(cost);
-            
         }
         
         return maxRatioInList(replicas);

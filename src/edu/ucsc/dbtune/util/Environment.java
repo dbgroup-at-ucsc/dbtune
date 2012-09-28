@@ -43,6 +43,8 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.NUMBER_OF_REPLICA;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.IMBALANCE_CONSTRAINT;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.IMBALANCE_FACTOR;
 
+import static edu.ucsc.dbtune.util.EnvironmentProperties.NODE_IMBALANCE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.FAILURE_IMBALANCE;
 /**
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
@@ -546,6 +548,38 @@ public class Environment
         
         for (String factor : Arrays.asList(
                 getOrThrowIfNullOrEmpty(configuration, IMBALANCE_FACTOR).split(",")))
+            factors.add(Double.valueOf(factor.trim()));
+            
+        return factors;
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#NODE_IMBALANCE}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public List<Double> getNodeImbalanceFactors()
+    {
+        List<Double> factors = new ArrayList<Double>();
+        
+        for (String factor : Arrays.asList(
+                getOrThrowIfNullOrEmpty(configuration, NODE_IMBALANCE).split(",")))
+            factors.add(Double.valueOf(factor.trim()));
+            
+        return factors;
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#NODE_IMBALANCE}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public List<Double> getFailureImbalanceFactors()
+    {
+        List<Double> factors = new ArrayList<Double>();
+        
+        for (String factor : Arrays.asList(
+                getOrThrowIfNullOrEmpty(configuration, FAILURE_IMBALANCE).split(",")))
             factors.add(Double.valueOf(factor.trim()));
             
         return factors;

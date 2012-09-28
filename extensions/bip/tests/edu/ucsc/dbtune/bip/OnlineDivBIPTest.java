@@ -203,10 +203,23 @@ public class OnlineDivBIPTest extends DIVPaper
        
        // 2. Get the total deployment cost
        double reConfigurationCost = 0.0;
-       DivBIPFunctionalTest.testDiv(nReplicas, B, descs);
+       double totalCostBIP  = DivBIPFunctionalTest.testDiv(nReplicas, B, descs);
        reConfigurationCost = divConf.transitionCost(initialConf, true);
        Rt.p("Reconfiguration costs: " + reConfigurationCost);
-       // Add a feasibility check
+       
+       // TODO: Remove imbalance approximation scheme
+       Rt.p(" TEMPORARILY CHECK APPROXIMATION SCHEME");
+       //div.setUpperReplicaCost(totalCostBIP * 1.1 / nReplicas);
+       LogListener logger1 = LogListener.getInstance();
+       div.setLogListenter(logger1);
+       div.solve();
+       Rt.p(logger1.toString());
+       
+       Rt.p(" COST OF NODE-BALANCE CONSTRAINT " + div.getObjValue()
+               + " NODE IMBALANCE: " + div.getNodeImbalance()
+               + " NEW RATIO: " + (div.getObjValue() / totalCostBIP)
+               + " EXIT HERE");
+       System.exit(1);
        
        List<Double> costs = new ArrayList<Double>();
        int startExpo = -4;

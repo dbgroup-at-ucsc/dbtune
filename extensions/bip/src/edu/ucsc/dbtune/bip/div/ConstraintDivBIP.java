@@ -44,16 +44,22 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.FAILURE_IMBALANCE;
 public class ConstraintDivBIP extends DivBIP
 {   
     protected boolean isApproximation;
+    protected boolean isGreedy;
     protected List<DivConstraint> constraints;
     protected QueryCostOptimalBuilderGeneral queryOptimalBuilder;
     
+    protected double upperReplicaCost;
+    protected double upperNewLoad;
+    protected double optimalTotalCost;
     
-    public ConstraintDivBIP(final List<DivConstraint> constraints, final boolean isApproximation)
+    
+    public ConstraintDivBIP(final List<DivConstraint> constraints, final boolean isApproximation,
+                            final boolean isGreedy)
     {  
         this.isApproximation  = isApproximation;
+        this.isGreedy = isGreedy;
         this.constraints = constraints;
     }
-    
     
     @Override
     protected void buildBIP() 
@@ -82,6 +88,26 @@ public class ConstraintDivBIP extends DivBIP
             // 6. Space constraints
             super.spaceConstraints();
             
+            // TOTAL cost constraint
+            if (super.isUpperTotalCost)
+                super.totalCostConstraint(super.upperTotalCost);
+            
+            // Greedy solution
+            if (isGreedy){
+                double defaultNodeFactor = 2.0;
+                
+                for (DivConstraint c : constraints) {
+                    if (c.getType().equals(NODE_IMBALANCE)) {
+                        imbalanceReplicaGreedy(c.getFactor());
+                        defaultNodeFactor = c.getFactor();
+                    }
+                    else if (c.getType().equals(FAILURE_IMBALANCE))
+                        failureGreedy(defaultNodeFactor, c.getFactor());
+                }
+                return;
+            }
+            
+            
             // 6. if we have additional constraints
             // need to impose top-m best cost constraints
             if (constraints.size() > 0) {
@@ -89,12 +115,8 @@ public class ConstraintDivBIP extends DivBIP
                 queryOptimalBuilder = new QueryCostOptimalBuilderGeneral(cplex, cplexVar, 
                                                                   poolVariables, isApproximation);
                 UtilConstraintBuilder.cplexVar = cplexVar;
-                topMBestCostExplicit();                
+                //topMBestCostExplicit();                
             }
-            
-            // TOTAL cost constraint
-            if (super.isUpperTotalCost)
-                super.totalCostConstraint(super.upperTotalCost);
             
             // this variable is turned on when 
             // the constraints contain IMBALANCE_QUERY or NODE_FAILURE
@@ -109,11 +131,7 @@ public class ConstraintDivBIP extends DivBIP
             
             if (isSumYConstraint)
                 sumYConstraint();
-            //
-            // 
-            Rt.p(" is sum y: " + isSumYConstraint
-                      + " number of constriants; " + constraints.size()
-                       + constraints);
+            
             // 7. additional constraints
             for (DivConstraint c : constraints) {
                 if (c.getType().equals(NODE_IMBALANCE)) {
@@ -133,7 +151,116 @@ public class ConstraintDivBIP extends DivBIP
         catch (IloException e) {
             e.printStackTrace();
         }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+    
+    
+    
+    /**********************************************************
+     * 
+     * Greedy solutions methods
+     * 
+     * 
+     **********************************************************/
+    
+    /**
+     * Set the upper bound optimal cost: the cost that
+     * any divergent design cannot exceed
+     */
+    public void setOptimalTotalCost(double cost)
+    {
+        this.optimalTotalCost = cost;
+    }
+   
+    /**
+     * Derive the upper value for load replica
+     * @param factor
+     */
+    protected void deriveUpperLoadReplica(double factor)
+    {
+        double alpha;
+        alpha = (factor - 1) / (1 + (nReplicas - 1) * factor);
+        
+        upperReplicaCost = (1 + alpha) * optimalTotalCost / nReplicas;
+        Rt.p("L185: alpha value = " + alpha
+                + " upper cost = " + upperReplicaCost);
+    }
+    
+    /**
+     * todo
+     * @param factor
+     * @throws Exception
+     */
+    protected void imbalanceReplicaGreedy(double factor) throws Exception
+    {
+        deriveUpperLoadReplica(factor);
+        
+        for (int r = 0; r < nReplicas; r++)
+            upperReplicaConstraint(r);
+        
+    } 
+    
+    /**
+     * Set replica constraints
+     * @param r
+     * @throws IloException
+     */
+    protected void upperReplicaConstraint(int r) throws IloException
+    {   
+        IloLinearNumExpr expr = replicaCost(r);
+        cplex.addLe(expr, upperReplicaCost, "replica_" + numConstraints);
+        numConstraints++;
+    }
+    
+    protected void failureGreedy(double nodeFactor, double failureFactor)
+            throws Exception
+    {
+        UtilConstraintBuilder.cplexVar = cplexVar;
+        Rt.p(" FAILURE greedy constraint , factor = " + failureFactor);
+        deriveUpperLoadReplica (nodeFactor);
+        double lowerReplica =  optimalTotalCost - (nReplicas - 1) * upperReplicaCost;
+        upperNewLoad = lowerReplica * failureFactor;
+        Rt.p(" upper new load = " + upperNewLoad
+                + " upper old load = "
+                + upperReplicaCost
+                + " RATIO = " 
+                + (upperNewLoad / upperReplicaCost)
+                + " lower replica = " + lowerReplica
+                + " load balance = " + (this.upperReplicaCost / lowerReplica));
+        // Need to use SUM Y variables
+        sumYConstraint();
+        
+        // Derive new load
+        for (int failR = 0; failR < nReplicas; failR++) {
+            failureGreedy(failR);
+            break;
+        }
+    }
+    
+    /**
+     * Assuming the given replica fails 
+     * @param failR
+     */
+    protected void failureGreedy(int failR) throws Exception
+    {
+        for (IloLinearNumExpr expr : newLoads(failR)) {
+            cplex.addLe(expr, upperNewLoad, 
+                                "new_load_" + numConstraints);
+            numConstraints++;
+        }
+    }
+    
+    
+    
+    /**********************************************************
+     *
+     * Exact solutions
+     * 
+     * 
+     **********************************************************/
+    
     
     /**
      * Sum Y constraint in general
@@ -630,7 +757,7 @@ public class ConstraintDivBIP extends DivBIP
      *      
      * @throws IloException
      */
-    protected void nodeFailures(double beta) throws IloException
+    protected void nodeFailures(double beta) throws Exception
     {   
         for (int failR = 0; failR < nReplicas; failR++)
             nodeFailureConstraint(failR, beta);
@@ -647,15 +774,33 @@ public class ConstraintDivBIP extends DivBIP
      *      
      * @throws IloException
      */    
-    protected void nodeFailureConstraint(int failR, double beta) throws IloException
+    protected void nodeFailureConstraint(int failR, double beta) 
+                throws Exception
+    {
+        List<IloLinearNumExpr> listNewLoads = newLoads(failR);
+        
+        // similar to node imbalance constraints
+        // for each pair of replicas, impose the imbalance factor constraint 
+        for (int r1 = 0; r1 < listNewLoads.size() - 1; r1++)
+            for (int r2 = r1 + 1; r2 < listNewLoads.size(); r2++) 
+                imbalanceConstraint(listNewLoads.get(r1), listNewLoads.get(r2), beta);
+    }
+    
+    /**
+     * Derive lists of expressions of alive node assuming
+     * the given replica fails.
+     * 
+     * @param failR
+     *      the failure
+     * @return
+     */
+    protected List<IloLinearNumExpr> newLoads(int failR) throws Exception
     {
         IloLinearNumExpr exprNewLoad;
-        
         List<IloLinearNumExpr> listNewLoads = new ArrayList<IloLinearNumExpr>();
         
         for (int r = 0; r < nReplicas; r++)
             if (r != failR) {
-                
                 exprNewLoad = cplex.linearNumExpr();
                 
                 // only consider query statements to the increased load
@@ -669,11 +814,7 @@ public class ConstraintDivBIP extends DivBIP
                 listNewLoads.add(exprNewLoad);
             }
         
-        // similar to node imbalance constraints
-        // for each pair of replicas, impose the imbalance factor constraint 
-        for (int r1 = 0; r1 < listNewLoads.size() - 1; r1++)
-            for (int r2 = r1 + 1; r2 < listNewLoads.size(); r2++) 
-                imbalanceConstraint(listNewLoads.get(r1), listNewLoads.get(r2), beta);
+        return listNewLoads;
     }
     
     
@@ -727,28 +868,24 @@ public class ConstraintDivBIP extends DivBIP
         idSumY = poolVariables.get(VAR_SUM_Y, failR, q, 0, 0, 0).getId();
         
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
-            
             idCombine = poolVariables.get(VAR_COMBINE_Y, combineReplicaID(r, failR), q, k, 0, 0).getId();
             idY       = poolVariables.get(VAR_Y, r, q, k, 0, 0).getId();
             UtilConstraintBuilder.constraintCombineVariable(idCombine, idSumY, idY);
-        
         }
         
         // Index access cost                            
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
             for (int i = 0; i < desc.getNumberOfSlots(k); i++)
                 for (Index index : desc.getIndexesAtSlot(k, i)) {
-                    
                     idCombine = poolVariables.get(VAR_COMBINE_X, combineReplicaID(r, failR), 
                                            q, k, i, index.getId()).getId();
                     idX       = poolVariables.get(VAR_X, r, q, k, i, index.getId()).getId();
                     UtilConstraintBuilder.constraintCombineVariable(idCombine, idSumY, idX);
-                    
                 }
         
         double factor = (double) 1 / (loadfactor * (loadfactor - 1));
         
-        // the increase cost
+        // the increased cost
         IloLinearNumExpr expr = cplex.linearNumExpr();
         for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {                    
             idCombine = poolVariables.get(VAR_COMBINE_Y, combineReplicaID(r, failR), q, k, 0, 0).getId();
