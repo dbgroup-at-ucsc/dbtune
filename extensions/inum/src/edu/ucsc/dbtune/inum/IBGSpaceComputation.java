@@ -91,7 +91,15 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
         if ( tested.contains(bitset))
             return;
         tested.add(bitset);
-        ExplainedSQLStatement estmt = delegate.explain(statement, indexes);
+        ExplainedSQLStatement estmt;
+        try {
+            estmt = delegate.explain(statement, indexes);
+        } catch (SQLException e) {
+            if ("Invalid plan, too many invalid nodes".equals(e.getMessage()))
+                return;
+            else
+                throw e;
+        }
         whatIfCount++;
 
         //Can't remember why I disabled the following code

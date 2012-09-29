@@ -77,12 +77,12 @@ public class ExplainTables {
 
     public static void dumpExplainTables(Connection connection)
             throws SQLException {
-        // dumpTable(connection, "systools.EXPLAIN_INSTANCE", "*");
-        // dumpTable(connection, "systools.EXPLAIN_STATEMENT", "*");
-        // dumpTable(connection, "systools.EXPLAIN_ARGUMENT", "*");
-        // dumpTable(connection, "systools.EXPLAIN_OBJECT", "*");
-        // dumpTable(connection, "systools.EXPLAIN_OPERATOR", "*");
-        // dumpTable(connection, "systools.EXPLAIN_STREAM", "*");
+//         dumpTable(connection, "systools.EXPLAIN_INSTANCE", "*");
+//         dumpTable(connection, "systools.EXPLAIN_STATEMENT", "*");
+//         dumpTable(connection, "systools.EXPLAIN_ARGUMENT", "*");
+//         dumpTable(connection, "systools.EXPLAIN_OBJECT", "*");
+//         dumpTable(connection, "systools.EXPLAIN_OPERATOR", "*");
+//         dumpTable(connection, "systools.EXPLAIN_STREAM", "*");
         // System.exit(0);
         dumpTable(connection, "systools.EXPLAIN_ARGUMENT",
                 "OPERATOR_ID,ARGUMENT_TYPE,ARGUMENT_VALUE");
@@ -125,6 +125,7 @@ public class ExplainTables {
             stmt.execute("SET CURRENT QUERY OPTIMIZATION " + optimizationLevel);
         stmt.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
         try {
+//            Rt.p(sql.getSQL());
             stmt.execute(sql.getSQL());
         } catch (SQLException e) {
             Rt.p(sql.getSQL());
@@ -370,8 +371,10 @@ public class ExplainTables {
             else
                 sum += operator.accumulatedCost;
         }
-        if (problemNodes > 1)
+        if (problemNodes > 1) {
+            Rt.error(plan);
             throw new SQLException("Invalid plan, too many invalid nodes");
+        }
         if (problemNodes == 1) {
             for (Operator operator : children) {
                 if (operator.accumulatedCost > node.accumulatedCost) {

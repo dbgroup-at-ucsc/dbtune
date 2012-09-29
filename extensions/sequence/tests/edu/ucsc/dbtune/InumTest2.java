@@ -511,17 +511,14 @@ public class InumTest2 {
 
         String tpch = Rt.readFile(new File(
                 "resources/workloads/db2/tpch/complete.sql"));
-        String tpcds25 = Rt.readFile(new File(
-                "resources/workloads/db2/tpcds-inum/workload.sql"));
         String tpcds = Rt.readFile(new File(
                 "resources/workloads/db2/tpcds/db2.sql"));
-        String tpcdsinum = Rt.readFile(new File(
-                "resources/workloads/db2/tpcds/inum.sql"));
-        String update = Rt.readFile(new File(
-                "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
-        // query = Rt.readFile(new File(
-        // "resources/workloads/db2/tpch-inum/workload.sql"));
-         sqlTest(test, tpcds, 0);
+        // String update = Rt.readFile(new File(
+        // "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
+        String otab = Rt.readFile(new File(
+                "resources/workloads/db2/online-benchmark-100/workload.sql"));
+//        sqlTest(tpch10g, tpch, 10);
+        sqlTest(test, otab, 95);
         // sqlTest(
         // test,
         // "SELECT 3, COUNT(*)  FROM tpch.lineitem WHERE  tpch.lineitem.l_tax BETWEEN 0.01596699754645524 AND 0.029823160830179565 AND tpch.lineitem.l_extendedprice BETWEEN 19178.598547906164 AND 19756.721297981876 AND tpch.lineitem.l_receiptdate BETWEEN 'Thu Mar 24 14:48:29 PST 1994' AND 'Mon Jan 30 14:48:29 PST 1995';",
@@ -549,16 +546,16 @@ public class InumTest2 {
             indexes.add(createIndex(db, name));
         }
         // ExplainTables.showWarnings = true;
-        
+
         Workload workload = new Workload("", new StringReader(query));
 
-//        indexes = new HashSet<Index>();
-//        Set<InumInterestingOrder> orders = AbstractSpaceComputation
-//                .extractInterestingOrderFromDB(workload.get(queryId), db2optimizer);
-//        for (InumInterestingOrder order : orders) {
-//            indexes.add(order);
-//        }
-        
+        // indexes = new HashSet<Index>();
+        // Set<InumInterestingOrder> orders = AbstractSpaceComputation
+        // .extractInterestingOrderFromDB(workload.get(queryId), db2optimizer);
+        // for (InumInterestingOrder order : orders) {
+        // indexes.add(order);
+        // }
+
         String sql = workload.get(queryId).getSQL();
         Rt.np("SQL:");
         Rt.p(sql);
@@ -579,27 +576,32 @@ public class InumTest2 {
         // }
         // System.exit(0);
 
-        // CandidateGenerator candGen = new OptimizerCandidateGenerator(
-        // getBaseOptimizer(db.getOptimizer()));
-        // indexes = candGen.generate(workload);
-        // Rt.np("Generated Indexes:");
-        // for (Index index : indexes) {
-        // Rt.np(index);
-        // }
+//         CandidateGenerator candGen = new OptimizerCandidateGenerator(
+//         getBaseOptimizer(db.getOptimizer()));
+//         indexes = candGen.generate(workload);
+//         Rt.np("Generated Indexes:");
+//         for (Index index : indexes) {
+//         Rt.np(index);
+//         }
 
-//         ExplainTables.dump=true;
+        // ExplainTables.dumpPlanId=211;
         ExplainedSQLStatement db2plan = db2optimizer.explain(sql, indexes);
         Rt.np("DB2 plan:");
-        Rt.p(db2plan);
-//         System.exit(0);
+        Rt.p(db2plan.getPlan());
+        // System.exit(0);
         Rt.np("Index used by DB2 plan:");
         for (Index index2 : db2plan.getUsedConfiguration())
             Rt.np(index2);
+        
         InumPreparedSQLStatement space;
         // space = (InumPreparedSQLStatement) optimizer
         // .prepareExplain(new SQLStatement(sql));
         space = (InumPreparedSQLStatement) optimizer.prepareExplain(workload
                 .get(queryId));
+        Rt.p("Plans: " + space.getTemplatePlans().size());
+        for (InumPlan plan : space.getTemplatePlans()) {
+            // Rt.p(plan);
+        }
         ExplainedSQLStatement inumPlan = space.explain(indexes);
         SQLStatementPlan plan = inumPlan.getPlan();
         Rt.np("INUM plan:");

@@ -37,6 +37,7 @@ public class InumTestSuite {
     static class Result {
         int id;
         boolean timeout = false;
+        String error = null;
         double db2fts;
         double inumfts;
         double db2Index;
@@ -76,6 +77,7 @@ public class InumTestSuite {
                         throw new Error();
                     results[id] = new Result(id);
                     results[id].timeout = rx2.getBooleanAttribute("timeout");
+                    results[id].error = rx2.getChildText("error");
                     results[id].db2fts = rx2.getChildDoubleContent("db2fts");
                     results[id].inumfts = rx2.getChildDoubleContent("inumfts");
                     results[id].db2Index = rx2
@@ -105,6 +107,8 @@ public class InumTestSuite {
                         Rx rx2 = rx.createChild("result");
                         rx2.setAttribute("id", results[i].id);
                         rx2.setAttribute("timeout", results[i].timeout);
+                        if (results[i].error != null)
+                            rx2.createChild("error", results[i].error);
                         rx2.createChild("db2fts", results[i].db2fts);
                         rx2.createChild("inumfts", results[i].inumfts);
                         rx2.createChild("db2Index", results[i].db2Index);
@@ -272,6 +276,10 @@ public class InumTestSuite {
         // for (String s : workloads[1].indexSets[0].indexNames)
         // Rt.np(s);
         // System.exit(0);
+
+    }
+
+    void compare() throws Exception {
         for (Workload workload : workloads) {
             Rt.np("Workload:\t" + workload.name);
             Rt.np("query count:\t" + workload.workload.size());
@@ -318,6 +326,10 @@ public class InumTestSuite {
                     ps.print(i + " timeout\t");
                     if (hasCost)
                         ps.print("\t\t");
+                } else if (set.results[i].error != null) {
+                    ps.print(i + " " + set.results[i].error + "\t");
+                    if (hasCost)
+                        ps.print("\t\t");
                 } else {
                     ps.print(i);
                     if (hasCost)
@@ -344,12 +356,14 @@ public class InumTestSuite {
                 Result r = set.results[i];
                 if (set.results[i].timeout)
                     ps.println(i + " timeout");
-                else
+                else if (set.results[i].error != null) {
+                    ps.print(i + " " + set.results[i].error);
+                } else
                     ps.println(i + "\t"
                             // + r.db2fts + "\t" + r.inumfts + "\t"
                             + r.db2Index + "\t" + r.inumIndex + "\t"
                             + (r.inumIndex / r.db2Index));
-                if (!set.results[i].timeout) {
+                if (!set.results[i].timeout && set.results[i].error == null) {
                     double t = r.inumIndex / r.db2Index - 1;
                     variance += t * t;
                     n++;
@@ -392,6 +406,8 @@ public class InumTestSuite {
             for (IndexSet set : workload.indexSets) {
                 Result r = set.results[i];
                 if (set.results[i].timeout)
+                    ps.print("<td></td><td></td><td></td>");
+                else if (set.results[i].error != null)
                     ps.print("<td></td><td></td><td></td>");
                 else
                     ps
@@ -444,12 +460,23 @@ public class InumTestSuite {
                 set.results[i].inumfts = inumFts;
                 set.results[i].inumIndex = inumIndex;
                 set.results[i].timeout = false;
+                set.results[i].error = null;
+            } catch (SQLException e) {
+                if ("IBG timeout".equals(e.getMessage())) {
+                    Rt.error(e.getClass().getName() + ": " + e.getMessage());
+                    set.results[i].timeout = true;
+                } else
+                    throw e;
             } catch (Exception e) {
-                Rt.error(e.getMessage());
-                set.results[i].timeout = true;
+                e.printStackTrace();
+                Rt.error(e.getClass().getName() + ": " + e.getMessage());
+                set.results[i].error = e.getClass().getName() + ": "
+                        + e.getMessage();
             }
             set.results[i].db2fts = db2fts;
             set.results[i].db2Index = db2index;
+            Rt.p("%,.0f %,.0f %.2f", set.results[i].inumIndex, db2index,
+                    set.results[i].inumIndex / db2index);
             workload.save();
         }
     }
@@ -474,10 +501,10 @@ public class InumTestSuite {
                 boolean usable = true;
                 for (IndexSet set : workload.indexSets) {
                     Result r = set.results[i];
-                    if (r.timeout)
+                    if (r.timeout || r.error != null)
                         usable = false;
                     else if ((r.inumIndex / r.db2Index) < 0.6
-                            || (r.inumIndex / r.db2Index) > 1.5)
+                            || (r.inumIndex / r.db2Index) > 2)
                         usable = false;
                 }
                 if (workload.indexSets[0].results[i].db2Index > 1000000000) {
@@ -520,24 +547,26 @@ public class InumTestSuite {
     }
 
     public static void main(String[] args) throws Exception {
-        Workload[] workloads = {
+        Workload[] workloads = {//
                 new Workload("tpch10g_22", "tpch10g", "TPC-H",
                         "resources/workloads/db2/tpch/complete.sql"),
-                new Workload("online-benchmark-100", "test", "OTAB",
-                        "resources/workloads/db2/online-benchmark-100/workload.sql"),
                 new Workload("tpcds10g_99", "test", "TPCDS",
                         "resources/workloads/db2/tpcds/db2.sql"),
+                new Workload("online-benchmark-100", "test", "OTAB",
+                        "resources/workloads/db2/online-benchmark-100/workload.sql"),
         // new Workload("test", "TPCDS 39",
         // "resources/workloads/db2/tpcds/39.sql"),
         };
-        boolean continueFromLastTest = true;
-        // continueFromLastTest=false;
         File outputDir = new File("resources/workloads/db2/deployAware");
         exportAccurateQueris(workloads, outputDir);
 
-        InumTestSuite suite = new InumTestSuite(workloads, continueFromLastTest);
+        InumTestSuite suite = new InumTestSuite(workloads, true);
+        // suite.compare();
 
         for (Workload workload : workloads) {
+            for (String index : workload.indexSets[0].indexNames) {
+                Rt.np(index);
+            }
             // suite.showCompactResult(workload,System.out,false);
             // suite.showResultWithCosts(workload, System.out);
             // suite.showHtmlResult(workload, System.out);

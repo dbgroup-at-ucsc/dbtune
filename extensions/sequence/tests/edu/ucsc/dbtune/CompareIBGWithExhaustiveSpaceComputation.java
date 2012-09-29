@@ -1,19 +1,32 @@
 package edu.ucsc.dbtune;
 
+import static com.google.common.collect.Sets.cartesianProduct;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
+import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
+import static edu.ucsc.dbtune.util.MetadataUtils.getIndexesPerTable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import edu.ucsc.dbtune.inum.AbstractSpaceComputation;
 import edu.ucsc.dbtune.inum.ExhaustiveSpaceComputation;
 import edu.ucsc.dbtune.inum.IBGSpaceComputation;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.ExplainTables;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
+import edu.ucsc.dbtune.optimizer.plan.InumPlanWithCache;
+import edu.ucsc.dbtune.optimizer.plan.Operator;
+import edu.ucsc.dbtune.seq.utils.RRange;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.util.Environment;
@@ -36,24 +49,79 @@ public class CompareIBGWithExhaustiveSpaceComputation {
         Rt.np(name);
 
         for (int i = 0; i < workload.size(); i++) {
+            space1.clear();
+            space2.clear();
+            RRange range = new RRange();
+            RRange range2 = new RRange();
+            RTimerN timer = new RTimerN();
+
+            Set<? extends Index> indexes = AbstractSpaceComputation
+                    .extractInterestingOrderFromDB(workload.get(i),
+                            db2optimizer);
+            List<Set<Index>> indexesPerTable = new ArrayList<Set<Index>>();
+
+            for (Map.Entry<Table, Set<Index>> e : getIndexesPerTable(indexes)
+                    .entrySet()) {
+                e.getValue().add(getFullTableScanIndexInstance(e.getKey()));
+                indexesPerTable.add(e.getValue());
+            }
+
+            int expectedWhatIfCalls = cartesianProduct(indexesPerTable).size();
+            boolean runExhaustive = expectedWhatIfCalls < 100;
+            int count = ExplainTables.whatIfCallCount;
+            boolean timeout = false;
+            boolean error = false;
             try {
-                RTimerN timer = new RTimerN();
-                int count = ExplainTables.whatIfCallCount;
                 ibg.compute(space1, workload.get(i), db2optimizer, db
                         .getCatalog());
-                double time1 = timer.getSecondElapse();
-                int count1 = ExplainTables.whatIfCallCount - count;
-                timer.reset();
-                count = ExplainTables.whatIfCallCount;
+                for (InumPlan plan : space1) {
+                    plan = new InumPlanWithCache(plan,
+                            new HashMap<String, Operator>());
+                    range.add(plan.getSlots().size());
+                    range2.add(plan.getTables().size());
+                }
+            } catch (Exception e) {
+                if ("IBG timeout".equals(e.getMessage()))
+                    timeout = true;
+                else
+                    error = true;
+            }
+            double time1 = timer.getSecondElapse();
+            int count1 = ExplainTables.whatIfCallCount - count;
+            timer.reset();
+            count = ExplainTables.whatIfCallCount;
+            if (runExhaustive)
                 exhaustive.compute(space2, workload.get(i), db2optimizer, db
                         .getCatalog());
-                double time2 = timer.getSecondElapse();
-                int count2 = ExplainTables.whatIfCallCount - count;
-                Rt.np("%d\t%.3f\t%.3f\t%d\t%d\t%d\t%d", i, time1, time2,
-                        count1, count2, space1.size(), space2.size());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            double time2 = timer.getSecondElapse();
+            int count2 = ExplainTables.whatIfCallCount - count;
+            System.out.print(i + "\t");
+            if (timeout)
+                System.out.print("timeout\t");
+            else if (error)
+                System.out.print("error\t");
+            else
+                System.out.format("%.3f\t", time1);
+            if (runExhaustive)
+                System.out.format("%.3f\t", time2);
+            else
+                System.out.format("\t");
+            System.out.format("%d\t", count1);
+            if (runExhaustive)
+                System.out.format("%d\t", count2);
+            else
+                System.out.format("\t");
+            System.out.format("%d\t", space1.size());
+            if (runExhaustive)
+                System.out.format("%d\t", space2.size());
+            else
+                System.out.format("\t");
+            System.out.format("%d\t%d\t", indexes.size(), expectedWhatIfCalls);
+            if (!timeout && !error)
+                System.out.format("%.0f/%.0f\t%.0f/%.0f", range.min, range.max,
+                        range2.min, range2.max);
+            System.out.println();
+
         }
     }
 

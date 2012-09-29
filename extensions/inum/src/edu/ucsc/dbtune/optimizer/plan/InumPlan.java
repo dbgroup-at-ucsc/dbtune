@@ -101,7 +101,7 @@ public class InumPlan extends SQLStatementPlan
      * (for debugging purpose only)
      */
     public Vector<Index> fromIndexes;
-
+    
     /**
      * Creates a new instance of an INUM plan.
      *
@@ -142,6 +142,7 @@ public class InumPlan extends SQLStatementPlan
 //        calculateCoefficient(this, this.getRootElement(), 1);
         this.internalPlanCost =calculateInternalCost(this.getRootElement());
         qidToOperator=new Hashtable<String, Operator>();
+        slotsById=new Hashtable<Integer, TableAccessSlot>();
         for (Operator o :   nodes()) {
             if (o.aliasInExplainTables!=null)
                 qidToOperator.put(o.aliasInExplainTables, o);
@@ -149,6 +150,8 @@ public class InumPlan extends SQLStatementPlan
                 qidToOperator.put(o.aliasInExplainTables2, o);
             if (o.fetchAliasInExplainTables!=null)
                 qidToOperator.put(o.fetchAliasInExplainTables, o);
+            if (o instanceof TableAccessSlot)
+                slotsById.put(((TableAccessSlot) o).id, (TableAccessSlot) o);
         }
     }
     public SQLStatementPlan orgPlan;
@@ -528,6 +531,13 @@ public class InumPlan extends SQLStatementPlan
                 }
             }
             
+            if (bestIndexForSlot==null) {
+                if (slot.getIndex() instanceof FullTableScanIndex) {
+                    continue;
+                } else {
+                    return null;
+                }
+            }
             Operator o = instantiate2(slot, bestIndexForSlot);
             if (o== INCOMPATIBLE)
                 return null;
@@ -669,16 +679,19 @@ public class InumPlan extends SQLStatementPlan
         }
         
         double cost;
+        double cardinality;
         
-        if ( indexScan!=null)
+        if ( indexScan!=null) {
             cost=indexScan.getAccumulatedCost();
-        else {
+            cardinality= indexScan.cardinality;
+        } else {
             Rt.p(this);
             Rt.p(plan);
             Rt.p(slot.rawColumnNames);
             Rt.p("need " + neededColumns.size());
             Rt.p(neededColumns);
             cost=plan.getRootOperator().getAccumulatedCost();
+            cardinality=plan.getRootOperator().cardinality;
 //            throw new Error();
         }
         
@@ -694,6 +707,8 @@ RETURN(cost=1470.4276123046875 rows=0 id=1 object=NONE alias= rawColumns=null ra
         op.setName(INDEX_SCAN);
         op.setAccumulatedCost(cost);
         op.scanCost=cost;
+        op.joinInput=slot.joinInput;
+        op.cardinality=cardinality;
         op.removeDatabaseObject();
         op.add(index);
         
@@ -761,6 +776,7 @@ RETURN(cost=1470.4276123046875 rows=0 id=1 object=NONE alias= rawColumns=null ra
         op.rawPredicateList=slot.rawPredicateList;
         op.cardinalityNLJ=slot.cardinalityNLJ;
         op.coefficient=slot.coefficient;
+        op.joinInput=slot.joinInput;
 
         return op;
     }
@@ -844,11 +860,13 @@ RETURN(cost=1470.4276123046875 rows=0 id=1 object=NONE alias= rawColumns=null ra
             HashSet<String> tableNames = new HashSet<String>();
             tableNames.add(slot.getTable().getFullyQualifiedName());
             StringBuilder where = new StringBuilder();
+            HashSet<String> hash = new HashSet<String>();
             if (slot.rawPredicateList != null
                     && slot.rawPredicateList.size() > 0) {
-                HashSet<Operator> processed = new HashSet<Operator>();
-                HashSet<String> hash = new HashSet<String>();
                 hash.addAll(slot.rawPredicateList);
+            }
+            if (hash.size()>0) {
+                HashSet<Operator> processed = new HashSet<Operator>();
                 Pattern tableReferencePattern = Pattern.compile("Q\\d+\\.");
                 LinkedList<String> queue = new LinkedList<String>();
                 queue.addAll(hash);
@@ -856,6 +874,8 @@ RETURN(cost=1470.4276123046875 rows=0 id=1 object=NONE alias= rawColumns=null ra
                 nextPredicate: while (queue.size() > 0) {
                     String predicate = queue.remove().trim();
                     if (predicate.length() == 0)
+                        continue;
+                    if (predicate.indexOf("$C")>=0)
                         continue;
                     // remove table alias
                     predicate= predicate.replaceAll(" AS Q\\d+ ", " ");
