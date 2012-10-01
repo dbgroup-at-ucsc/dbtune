@@ -15,6 +15,8 @@ import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
 import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
 import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
 
+import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.computeVal;
+import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.maxRatioInList;
 import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.modifyCoef;
 import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.imbalanceConstraint;
 import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.constantRHSImbalanceConstraint;
@@ -83,7 +85,7 @@ public class ConstraintDivBIP extends DivBIP
             super.usedIndexConstraints();
             
             // 5. Top-m best cost 
-            super.topMBestCostConstraints();
+            super.loadBalanceFactorConstraints();
             
             // 6. Space constraints
             super.spaceConstraints();
@@ -902,6 +904,175 @@ public class ConstraintDivBIP extends DivBIP
                 }    
         
         return expr;
+    }
+    
+    /******************************************
+     *
+     *   Backup methods from DivBIP
+     *
+     *
+     ******************************************/
+    
+    
+    /**
+     * Compute the node failure factor when one node fails
+     * 
+     * @return
+     *      The max ratio
+     *      
+     * @throws Exception
+     */
+    public double getFailureImbalance() throws Exception
+    {
+        List<Double> queryReplica;
+        List<List<Double>> queries;
+        
+        queries = new ArrayList<List<Double>>();
+        
+        // get the query execution costs
+        for (QueryPlanDesc desc : super.queryPlanDescs) {
+            
+            // consider select-statement only
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                continue;
+        
+            queryReplica = new ArrayList<Double>();
+            
+            for (int r = 0; r < nReplicas; r++) 
+                queryReplica.add(computeVal(queryExpr(r, desc.getStatementID(), desc)));
+            
+            queries.add(queryReplica);
+        }
+        
+        
+        // query 1: replica 0, replica 1
+        // query 2: replica 0, replica 1
+        // query 3: replica 0, replica 1
+        // .....................
+        double maxRatio = -1;
+        double ratio;
+        
+        for (int rFail = 0; rFail < nReplicas; rFail++) {
+            ratio = getFailureImbalance(rFail, queries);
+            maxRatio = (maxRatio > ratio) ? maxRatio : ratio;                   
+        }
+        
+        return maxRatio;
+    }
+    
+    /**
+     * Compute the increase load of other replica when replica {@code rFail} fails.
+     *  
+     * @param rFail
+     *  todo
+     * @param queries
+     * @param increasLoads
+     * @throws Exception  
+     */
+    private double getFailureImbalance(int rFail, List<List<Double>> queries) throws Exception
+    {
+        List<Double> increaseLoad = new ArrayList<Double>();
+        List<Double> replicaCost = new ArrayList<Double>();
+        
+        for (int r = 0; r < nReplicas; r++) {
+            increaseLoad.add(0.0);
+            
+            if (r == rFail)
+                replicaCost.add(0.0);
+            else
+                // remember to take into account the base table update cost
+                replicaCost.add(computeVal(replicaCost(r)) + 
+                                getTotalBaseTableUpdateCost() / nReplicas);
+        }
+        
+        double cost;
+        int q = 0;
+        
+        for (QueryPlanDesc desc : queryPlanDescs) {
+            
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                continue;
+            
+            if (queries.get(q).get(rFail) > 0) {
+                // distribute this to other replica that has value greater than 0
+                for (int r = 0; r < nReplicas; r++) {
+                    
+                    if (r == rFail)
+                        continue;
+                    
+                    // avoid small value
+                    if (queries.get(q).get(r) > 0.0) {
+                        cost = increaseLoad.get(r) + queries.get(q).get(r) 
+                                                        / (loadfactor * (loadfactor - 1));
+                        increaseLoad.set(r, cost);
+                    }    
+                }
+            }
+            
+            q++;
+        }
+        
+        
+        // compute the ratio
+        double newLoad;
+        List<Double> costs = new ArrayList<Double>();
+        for (int r = 0; r < nReplicas; r++) {
+            
+            if (r == rFail)
+                continue;
+            
+            newLoad = replicaCost.get(r) + increaseLoad.get(r);
+            if (newLoad > 0.0)
+                costs.add(newLoad);
+        }
+        
+        return maxRatioInList(costs);
+    }
+    
+    /**
+     * Retrieve the max imbalance replica cost. We only consider SELECT statement only
+     * 
+     * @return
+     *      The imbalance factor
+     * @throws Exception
+     */
+    public double getQueryImbalance() throws Exception
+    {
+        List<Double> queries;
+        double maxRatio = -1;
+        double ratio;
+        double val;
+        
+        for (QueryPlanDesc desc : super.queryPlanDescs) {
+            
+            // the query constraint is on SELECT-statement only
+            // to facilitate the query routing scheme
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                continue;
+        
+            queries = new ArrayList<Double>();
+            
+            for (int r = 0; r < nReplicas; r++) {
+                val = computeVal(queryExpr(r, desc.getStatementID(), desc));
+                
+                if (val > 0.0)
+                    queries.add(val);
+            }
+           
+            ratio = maxRatioInList(queries);
+            if (ratio > 10000) {
+                Rt.p("WATCH-OUT list: " + queries + " ratio: " + ratio);
+            }
+            
+            if (queries.size() != loadfactor) {
+                Rt.p("Query's values: " + queries);
+                //throw new RuntimeException("We expect to obtain exactly"
+                  //        + loadfactor + " value of cost(q,r) that are greater than 0");
+            }
+            maxRatio = (maxRatio > ratio) ? maxRatio : ratio;
+        }
+        
+        return maxRatio;
     }
 }
         
