@@ -22,21 +22,26 @@ public class DB2DivgDesignTest extends DIVPaper
         // wl names
         initialize();
         
-        // 2. special data structures for this class
-        entries = new HashMap<DivPaperEntry, Double>();
-        designFile = new File(rawDataDir, DESIGN_DB2_FILE);
         
         long start = System.currentTimeMillis();
         
-        // 3. for each (dbname, wlname) derive 
-        // the UNIF cost
-        for (int i = 0; i < dbNames.length; i++) 
-            testDivgDesignDB2(dbNames[i], wlNames[i]);
+        // 3. 
+        entries = new HashMap<DivPaperEntry, Double>();
+        testDivgDesignDB2();
         
         long end = System.currentTimeMillis();
         long totalTimes= (end - start) / 1000; // in secs
         Rt.p(" Total running time" + totalTimes
                 + " avg: " + totalTimes / (listBudgets.size() * listNumberReplicas.size()));
+        // 2. special data structures for this class
+        
+        designFile = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
+        designFile.delete();
+        designFile = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
+        designFile.createNewFile();
+        
+        
+        
         // store in the serialize file
         serializeDivResult(entries, designFile);
         
@@ -55,15 +60,13 @@ public class DB2DivgDesignTest extends DIVPaper
      *      Workload
      * @throws Exception
      */
-    public static void testDivgDesignDB2(String dbName, String wlName)
-                throws Exception
+    public static void testDivgDesignDB2() throws Exception
     {   
         // 1. Read common parameter
-        getEnvironmentParameters(dbName, wlName);
-        
-        // 2. set parameter for DivBIP()
+        getEnvironmentParameters();
         setParameters();
         
+        // 2. Run algorithms
         Optimizer io = db.getOptimizer();
         DB2Optimizer db2Opt = (DB2Optimizer) io.getDelegate();
         design = new DB2DivgDesign(db2Advis, db2Opt);
@@ -104,6 +107,8 @@ public class DB2DivgDesignTest extends DIVPaper
             totalCost +=  design.getTotalCost();
         }
         
+        Rt.p("DESIGN cost: n = " + n + " B = " + B
+                + " average cost = " + (totalCost / numIters));
         return totalCost / numIters;
     }
 }
