@@ -17,7 +17,7 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Rt;
 
-import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
+
 import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.computeDeploymentCost;
 
 public class ElasticDivBIPFunctionalTest extends DivTestSetting 

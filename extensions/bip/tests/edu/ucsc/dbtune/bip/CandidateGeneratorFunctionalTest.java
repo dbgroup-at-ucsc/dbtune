@@ -61,12 +61,11 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
      *      A set of candidate indexes
      * @throws Exception
      */
-    public static Set<Index> readCandidateIndexes(DB2Advisor db2Advis) 
+    public static Set<Index> readCandidateIndexes(String folder, DB2Advisor db2Advis) 
             throws Exception
     {        
         // test candidate generation
-        String fileName = "";
-        fileName = folder  + "/candidates.bin";
+        String fileName = folder  + "/candidates.bin";
         Rt.p(" file name containing indexes: " + fileName);
         File file = new File(fileName);        
         if (!file.exists()) {

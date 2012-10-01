@@ -112,8 +112,6 @@ public class RobustDivBIPTest extends DivTestSetting
             
             // show imbalance query & replica
             Rt.p(" NODE IMBALANCE: " + robustDiv.getNodeImbalance());
-            Rt.p(" QUERY IMBALANCE: " + robustDiv.getQueryImbalance());
-            Rt.p(" FAILURE IMBALANCE: " + robustDiv.getFailureImbalance());
             
             
         } else 

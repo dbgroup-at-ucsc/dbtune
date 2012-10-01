@@ -45,18 +45,13 @@ public class OnlineDivBIPTest extends DIVPaper
     */
    @Test
    public void main() throws Exception
-   {
-       dbNames = new String[] {"test"}; 
-       wlNames = new String[] {"tpcds-online"};
-       
+   {   
        // 1. initialize file locations & necessary 
        // data structures
        initialize();
        
        // get database instances, candidate indexes
-       getEnvironmentParameters(dbNames[0], wlNames[0]);
-       
-       // get parameters
+       getEnvironmentParameters();
        setParameters();
        
        // set control knobs
@@ -76,7 +71,7 @@ public class OnlineDivBIPTest extends DIVPaper
            runOnline();
        
        if (isElasticity) {
-           runElasticity(dbNames[0], wlNames[0]);
+           runElasticity();
            // move this functionality to DivPaper later
            LatexGenerator.generateLatex(latexFile, outputDir, plots);
        }
@@ -180,7 +175,7 @@ public class OnlineDivBIPTest extends DIVPaper
     * Set up elasticity experiments
     * @throws Excpetion
     */
-   protected static void runElasticity(String dbName, String wlName) throws Exception
+   protected static void runElasticity() throws Exception
    {
        // these can come from the list of sticks
        // from the online expt.

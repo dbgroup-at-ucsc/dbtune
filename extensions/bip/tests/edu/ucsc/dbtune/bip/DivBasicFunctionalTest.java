@@ -83,7 +83,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
     private static void testDiv() throws Exception
     {
         List<Double> inumOpt= computeQueryCostsInum(workload, candidates);
-        List<Double> db2Opt= computeQueryCostsDB2(workload, candidates);
+        List<Double> db2Opt= computeCostsDB2(workload, candidates);
         double inumTotal = 0.0, db2Total = 0.0;
         
         Rt.p("---TPCH10GB, 22 queries, OPTIMAL indexes");
@@ -99,7 +99,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
                 + " INUM / DB2 = " + (inumTotal / db2Total));
         
         List<Double> inumFTS= computeQueryCostsInum(workload, new HashSet<Index>());
-        List<Double> db2FTS= computeQueryCostsDB2(workload, new HashSet<Index>());
+        List<Double> db2FTS= computeCostsDB2(workload, new HashSet<Index>());
         double inumFTSTotal = 0.0, db2FTSTotal = 0.0;
         
         Rt.p("TPCH10GB, 22 queries, FULL TABLE SCAN indexes");
@@ -163,7 +163,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
                 Rt.p("-----------");
                 
                 costInum = computeQueryCostsInum(workload, conf);
-                costDB2 = computeQueryCostsDB2(workload, conf);
+                costDB2 = computeCostsDB2(workload, conf);
                 costCplex = div.getQueryCostReplicaByCplex(r);
                 
                 for (int q = 0; q < costCplex.size(); q++) {

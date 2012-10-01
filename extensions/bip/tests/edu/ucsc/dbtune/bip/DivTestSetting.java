@@ -6,7 +6,11 @@ import static edu.ucsc.dbtune.util.TestUtils.workload;
 import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
 import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -55,12 +59,14 @@ public class DivTestSetting
     protected static DivConfiguration divConf;
     
     protected static Set<Index> candidates;
-    protected static double fQuery;    
-    protected static double fUpdate;
-    protected static double sf;
+    protected static int fQuery;    
+    protected static int fUpdate;
+    protected static int fInsert;
     protected static String folder;
     
     protected static DB2Advisor db2Advis;
+    protected static String dbName;
+    protected static String wlName;
     
     // for Debugging purpose only
     protected static double totalIndexSize;
@@ -71,6 +77,8 @@ public class DivTestSetting
     protected static boolean isGetAverage = false;
     protected static boolean isPostprocess = false; 
     protected static boolean isAllImbalanceConstraint = false;
+    protected static boolean isCoPhyDesign = false;
+    
     
     /**
      * Retrieve the environment parameters set in {@code dbtune.cfg} file
@@ -91,17 +99,51 @@ public class DivTestSetting
         
         folder = en.getWorkloadsFoldername();
         
+        dbName = db.getCatalog().getName();
+        String[] tmp = en.getWorkloadsFoldername().split("/");
+        wlName = tmp[tmp.length - 1];
+        Rt.p(" db name = " + dbName + " wl name = " + wlName);
+        
         // get workload and candidates
         workload = workload(folder);
         db2Advis = new DB2Advisor(db);
-        candidates = readCandidateIndexes(db2Advis);
+        candidates = new HashSet<Index>();
         
-        Rt.p(" DivTestSetting: # statements in the workload: " + workload.size()
-                + " # candidates in the workload: " + candidates.size()
-                + " workload folder: " + folder);
+        if (!isCoPhyDesign){
+            candidates = readCandidateIndexes(folder, db2Advis);
+        
+            long totalSize = 0;
+            for (Index i : candidates)
+                totalSize += i.getBytes();
+            
+            Rt.p(" Total size = " + (totalSize / Math.pow(2, 20)));
+        } 
+        
+        fUpdate = 1;
+        fQuery = 1;
+        fInsert = 15000;
+        
+        for (SQLStatement sql : workload)
+            if (sql.getSQLCategory().isSame(INSERT)
+                    || sql.getSQLCategory().isSame(DELETE)) {
+                // for TPCH workload
+                if (sql.getSQL().contains("orders")) 
+                    sql.setStatementWeight(fInsert);
+                else if (sql.getSQL().contains("lineitem"))
+                    sql.setStatementWeight((int) (fInsert * 4));
+            }           
+            else if (sql.getSQLCategory().isSame(SELECT))
+                sql.setStatementWeight(fQuery);
+            else if (sql.getSQLCategory().isSame(UPDATE))
+                sql.setStatementWeight(fUpdate);
+        
+        div = new DivBIP();
+        
+        Rt.p("DIVpaper: # statements in the workload =  " + workload.size()
+                + " # candidates in the workload = " + candidates.size()
+                + " workload folder = " + folder);
         
         isLoadEnvironmentParameter = true;
-        isPostprocess = false;
     }
     
     
@@ -114,19 +156,17 @@ public class DivTestSetting
     {  
         fUpdate = 1;
         fQuery = 1;
-        sf = 15000;
+        fInsert = 15000 * 4;
         
         for (SQLStatement sql : workload)
-            if (sql.getSQLCategory().isSame(INSERT)) {
-                
+            if (sql.getSQLCategory().isSame(INSERT)
+                    || sql.getSQLCategory().isSame(DELETE)) {
                 // for TPCH workload
                 if (sql.getSQL().contains("orders")) 
-                    sql.setStatementWeight(sf);
+                    sql.setStatementWeight(fInsert);
                 else if (sql.getSQL().contains("lineitem"))
-                    sql.setStatementWeight(sf * 3.5);
-            }   
-            else if (sql.getSQLCategory().isSame(DELETE))
-                sql.setStatementWeight(sf);            
+                    sql.setStatementWeight((int) (fInsert * 4));
+            }           
             else if (sql.getSQLCategory().isSame(SELECT))
                 sql.setStatementWeight(fQuery);
             else if (sql.getSQLCategory().isSame(UPDATE))
@@ -246,7 +286,7 @@ public class DivTestSetting
      *      
      * @throws Exception
      */
-    protected static List<Double> computeQueryCostsDB2(Workload workload, Set<Index> conf) throws Exception
+    protected static List<Double> computeCostsDB2(Workload workload, Set<Index> conf) throws Exception
     {           
         double db2Cost;
         List<Double> costs = new ArrayList<Double>();
@@ -281,17 +321,31 @@ public class DivTestSetting
         int id = 0;
         double totalDB2 = 0.0;
         double totalInum = 0.0;
+        List<Integer> goodStmts = new ArrayList<Integer>();
+        boolean isGood;
+        double ratio;
         
         for (SQLStatement sql : workload) {
-            
+            isGood = true;
             db2cost = io.getDelegate().explain(sql, conf).getTotalCost();
             inumPrepared = (InumPreparedSQLStatement) io.prepareExplain(sql);
             inumcost = inumPrepared.explain(conf).getTotalCost();
             Rt.p(" stmt: " + sql.getSQL());
-            if (inumcost < 0.0 || inumcost > Math.pow(10, 9)) 
-                Rt.p("WATCH OUT -----------------");
+            if (inumcost < 0.0 || inumcost > Math.pow(10, 9)) { 
+                Rt.p("NOT GOOD COST = " + inumcost 
+                        + " id = " + id);
+                isGood = false;
+            }
+            ratio = (double) db2cost / inumcost;
+            if (ratio > 2 || ratio < 0.4) {
+                isGood = false;
+                Rt.p(" NOT GOOD, id = " + id);
+            }
+            if (isGood)
+                goodStmts.add(id);
+            
             Rt.p(id + " " + sql.getSQLCategory() + " " + db2cost + " " + inumcost + " " 
-                                + (double) db2cost / inumcost);
+                                + ratio);
             totalDB2 += db2cost;
             totalInum += inumcost;
             id++;
@@ -300,6 +354,22 @@ public class DivTestSetting
         Rt.p(" total INUM = " + totalInum
                 + " total DB2 = " + totalDB2
                 + " DB2 / INUM = " + (totalDB2 / totalInum));
+        
+        Rt.p(" Number of good statements = " + goodStmts.size());
+        
+        // write to file
+        id = 0;
+        StringBuilder sb = new StringBuilder();
+        for (int i : goodStmts){
+            sb.append("-- query" + id + "\n");
+            sb.append(workload.get(i).getSQL() + ";" + "\n");
+            id++;
+        }
+        
+        File folderDir = new File (en.getWorkloadsFoldername());
+        PrintWriter out = new PrintWriter(new FileWriter(folderDir + "/workload_good.sql"), false);
+        out.println(sb.toString());
+        out.close();
     }
 
     /**

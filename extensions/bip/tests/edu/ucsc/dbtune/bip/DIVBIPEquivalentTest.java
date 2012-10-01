@@ -16,16 +16,16 @@ public class DIVBIPEquivalentTest extends DIVPaper
         // data structures
         initialize();
         
-        // 2. special data structures for this class
+        // experiment for DIV equivalent to BIP        
         entries = new HashMap<DivPaperEntry, Double>();
-        divFile = new File(rawDataDir, DIV_DB2_FILE);
-        divFile.delete();
-        divFile = new File(rawDataDir, DIV_DB2_FILE);
-        divFile.createNewFile();
+        runExpts();
         
-        // experiment for DIV equivalent to BIP
-        for (int i = 0; i < dbNames.length; i++) 
-            runExpts(dbNames[i], wlNames[i]);
+        // 2. special data structures for this class
+        
+        divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
+        divFile.delete();
+        divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
+        divFile.createNewFile();
         
         // store in the serialize file
         serializeDivResult(entries, divFile);
@@ -44,15 +44,13 @@ public class DIVBIPEquivalentTest extends DIVPaper
      *      Workload name
      * @throws Exception
      */
-    public static void runExpts(String dbName, String wlName)
-                       throws Exception
+    public static void runExpts() throws Exception
     {
-        //get database instances, candidate indexes
-        getEnvironmentParameters(dbName, wlName);
-
         // get parameters
+        getEnvironmentParameters();        
         setParameters();
         
+        // run algorithms
         double costBip;
         long budget;
         for (double B : listBudgets) 

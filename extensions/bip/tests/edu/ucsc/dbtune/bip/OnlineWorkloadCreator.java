@@ -29,7 +29,7 @@ public class OnlineWorkloadCreator extends DIVPaper
         initialize();
         
         // 1. Read common parameter
-        getEnvironmentParameters(dbNames[0], wlNames[0]);
+        getEnvironmentParameters();
         
         // 2. generate online workload
         generateOnlineWorkload();

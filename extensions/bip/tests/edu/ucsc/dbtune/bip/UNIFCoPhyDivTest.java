@@ -22,26 +22,17 @@ public class UNIFCoPhyDivTest extends DIVPaper
         // wl names
         initialize();
         
-        // 2. special data structures for this class
-        testUNIFCoPhy();
-    }
-    
-    /**
-     * Test UNIF using CoPhy
-     * @throws Exception
-     */
-    protected static void testUNIFCoPhy() throws Exception
-    {
-        entries = new HashMap<DivPaperEntry, Double>();
-        unifCoPhyFile = new File(rawDataDir, UNIF_COPHY_FILE);
-        unifCoPhyFile.delete();
-        unifCoPhyFile = new File(rawDataDir, UNIF_COPHY_FILE);
-        unifCoPhyFile.createNewFile();
-        
         // 3. for each (dbname, wlname) derive 
         // the UNIF cost
-        for (int i = 0; i < dbNames.length; i++) 
-            testUNIFCoPhy(dbNames[i], wlNames[i]);
+        entries = new HashMap<DivPaperEntry, Double>();
+        testUNIFCoPhy();
+        
+        // 2. special data structures for this class
+        
+        unifCoPhyFile = new File(rawDataDir, wlName + "_" + UNIF_COPHY_FILE);
+        unifCoPhyFile.delete();
+        unifCoPhyFile = new File(rawDataDir, wlName + "_" + UNIF_COPHY_FILE);
+        unifCoPhyFile.createNewFile();
         
         // store in the serialize file
         serializeDivResult(entries, unifCoPhyFile);
@@ -50,6 +41,8 @@ public class UNIFCoPhyDivTest extends DIVPaper
         entries = readDivResult(unifCoPhyFile);
         Rt.p(" result UNIF COPHY " + entries);
     }
+    
+    
     
     /**
      * Run UNIFCOPHY on the given database and workload
@@ -60,14 +53,13 @@ public class UNIFCoPhyDivTest extends DIVPaper
      *      Workload
      * @throws Exception
      */
-    public static void testUNIFCoPhy(String dbName, String workloadName)
-                throws Exception
+    public static void testUNIFCoPhy() throws Exception
     {   
-        // 1. Read common parameter
-        getEnvironmentParameters(dbName, workloadName);
-        
-        // 2. set parameter for DivBIP()
+        // 1. Parameter
+        getEnvironmentParameters();
         setParameters();        
+        
+        // 2. Running algorithms
         List<Double> totalCosts;
         long budget;
         for (double B1 : listBudgets) { 
@@ -78,7 +70,7 @@ public class UNIFCoPhyDivTest extends DIVPaper
             for (int i = 0; i < listNumberReplicas.size(); i++){
                 budget = convertBudgetToMB(B1);
                 DivPaperEntry entry = new DivPaperEntry
-                (dbName, workloadName, listNumberReplicas.get(i), budget);
+                (dbName, wlName, listNumberReplicas.get(i), budget);
                 
                 entries.put(entry, totalCosts.get(i));
             }
