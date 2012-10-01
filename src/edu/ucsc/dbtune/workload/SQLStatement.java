@@ -22,7 +22,7 @@ public class SQLStatement implements Serializable
     private String sql;
     
     /** The frequency of the statement in the workload */
-    private double fq;
+    private int fq;
     
     
     /**
@@ -51,8 +51,8 @@ public class SQLStatement implements Serializable
         this.category = category;
         this.sql      = sql;
         
-        // the default weight of the statement is 1.0
-        fq = 1.0;
+        // the default weight of the statement is 1
+        fq = 1;
     }
 
     /**
@@ -85,7 +85,7 @@ public class SQLStatement implements Serializable
      * @return
      *      The weight of this statement
      */
-    public double getStatementWeight()
+    public int getStatementWeight()
     {
         return fq;
     }
@@ -96,7 +96,7 @@ public class SQLStatement implements Serializable
      * @param fq
      *      The weight
      */
-    public void setStatementWeight(double fq)
+    public void setStatementWeight(int fq)
     {
         this.fq = fq;
     }
