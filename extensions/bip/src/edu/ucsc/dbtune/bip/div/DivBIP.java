@@ -2,7 +2,6 @@ package edu.ucsc.dbtune.bip.div;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
-import ilog.concert.IloNumVar;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -89,25 +88,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         upperTotalCost = upper;
     }
     
-    /**
-     * Retrieve the (constant) base table update cost
-     * 
-     * @return
-     *      The base table update cost.
-     */
-    public double getTotalBaseTableUpdateCost()
-    {
-        double totalBaseTableUpdateCost = 0.0;
-        
-        // base update cost on one replicas
-        for (QueryPlanDesc desc : queryPlanDescs)
-            if (desc.getSQLCategory().isSame(NOT_SELECT))
-                totalBaseTableUpdateCost += 
-                        (desc.getBaseTableUpdateCost() * desc.getStatementWeight());
-            
-        // need to time the number of replica
-        return totalBaseTableUpdateCost * nReplicas;
-    }
+    
     
     /**
      * Clear all the structures used
@@ -118,36 +99,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         this.poolVariables.clear();
         this.mapVarSToIndex.clear();
     }   
-    
-    /**
-     * Reads the value of variables corresponding to the presence of indexes
-     * at each replica and returns indexes to materialize at each replica.
-     * 
-     * @return
-     *      List of indexes to be materialized at each replica.
-     *       
-     */
-    @Override
-    protected IndexTuningOutput getOutput() throws Exception 
-    {
-        DivConfiguration conf = new DivConfiguration(nReplicas, loadfactor);
-        
-        // Iterate over variables s^r_{i,w}
-        for (IloNumVar cVar : cplexVar) {
-            if (cplex.getValue(cVar) > 0) {
-                
-                DivVariable var = (DivVariable) poolVariables.get(cVar.getName());
-                
-                if (var.getType() == VAR_S) {
-                    Index index = mapVarSToIndex.get(var.getName());
-                    if (!(index instanceof FullTableScanIndex))
-                        conf.addIndexReplica(var.getReplica(), index);
-                }
-            }
-        }  
-        
-        return conf;
-    }
 
    
     @Override
@@ -172,7 +123,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             usedIndexConstraints();
             
             // 5. Top-m best cost 
-            topMBestCostConstraints();
+            loadBalanceFactorConstraints();
             
             // 6. Space constraints
             spaceConstraints();    
@@ -541,19 +492,20 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      *      If there is error in formulating the expression in CPLEX. 
      * 
      */
-    protected void topMBestCostConstraints() throws IloException
+    protected void loadBalanceFactorConstraints() throws IloException
     {
         for (QueryPlanDesc desc : queryPlanDescs) {
             if (desc.getSQLCategory().isSame(INSERT) || desc.getSQLCategory().isSame(DELETE))
                 continue;
-            topMBestCostConstraints(desc);
+            loadBalanceFactorConstraints(desc);
         }
     }
+    
     /**
      * 
      * 
      */
-    protected void topMBestCostConstraints(QueryPlanDesc desc) throws IloException
+    protected void loadBalanceFactorConstraints(QueryPlanDesc desc) throws IloException
     {   
         IloLinearNumExpr expr; 
         int idY;        
@@ -649,120 +601,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
        return cost;
     }
     
-    /**
-     * Compute the node failure factor when one node fails
-     * 
-     * @return
-     *      The max ratio
-     *      
-     * @throws Exception
-     */
-    public double getFailureImbalance() throws Exception
-    {
-        List<Double> queryReplica;
-        List<List<Double>> queries;
-        
-        queries = new ArrayList<List<Double>>();
-        
-        // get the query execution costs
-        for (QueryPlanDesc desc : super.queryPlanDescs) {
-            
-            // consider select-statement only
-            if (desc.getSQLCategory().isSame(NOT_SELECT))
-                continue;
-        
-            queryReplica = new ArrayList<Double>();
-            
-            for (int r = 0; r < nReplicas; r++) 
-                queryReplica.add(computeVal(queryExpr(r, desc.getStatementID(), desc)));
-            
-            queries.add(queryReplica);
-        }
-        
-        
-        // query 1: replica 0, replica 1
-        // query 2: replica 0, replica 1
-        // query 3: replica 0, replica 1
-        // .....................
-        double maxRatio = -1;
-        double ratio;
-        
-        for (int rFail = 0; rFail < nReplicas; rFail++) {
-            ratio = getFailureImbalance(rFail, queries);
-            maxRatio = (maxRatio > ratio) ? maxRatio : ratio;                   
-        }
-        
-        return maxRatio;
-    }
-    
-    /**
-     * Compute the increase load of other replica when replica {@code rFail} fails.
-     *  
-     * @param rFail
-     *  todo
-     * @param queries
-     * @param increasLoads
-     * @throws Exception  
-     */
-    private double getFailureImbalance(int rFail, List<List<Double>> queries) throws Exception
-    {
-        List<Double> increaseLoad = new ArrayList<Double>();
-        List<Double> replicaCost = new ArrayList<Double>();
-        
-        for (int r = 0; r < nReplicas; r++) {
-            increaseLoad.add(0.0);
-            
-            if (r == rFail)
-                replicaCost.add(0.0);
-            else
-                // remember to take into account the base table update cost
-                replicaCost.add(computeVal(replicaCost(r)) + 
-                                getTotalBaseTableUpdateCost() / nReplicas);
-        }
-        
-        double cost;
-        int q = 0;
-        
-        for (QueryPlanDesc desc : queryPlanDescs) {
-            
-            if (desc.getSQLCategory().isSame(NOT_SELECT))
-                continue;
-            
-            if (queries.get(q).get(rFail) > 0) {
-                // distribute this to other replica that has value greater than 0
-                for (int r = 0; r < nReplicas; r++) {
-                    
-                    if (r == rFail)
-                        continue;
-                    
-                    // avoid small value
-                    if (queries.get(q).get(r) > 0.0) {
-                        cost = increaseLoad.get(r) + queries.get(q).get(r) 
-                                                        / (loadfactor * (loadfactor - 1));
-                        increaseLoad.set(r, cost);
-                    }    
-                }
-            }
-            
-            q++;
-        }
-        
-        
-        // compute the ratio
-        double newLoad;
-        List<Double> costs = new ArrayList<Double>();
-        for (int r = 0; r < nReplicas; r++) {
-            
-            if (r == rFail)
-                continue;
-            
-            newLoad = replicaCost.get(r) + increaseLoad.get(r);
-            if (newLoad > 0.0)
-                costs.add(newLoad);
-        }
-        
-        return maxRatioInList(costs);
-    }
     
     /**
      * Retrieve the max imbalance replica cost
@@ -780,6 +618,112 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         return total;
     }
+    
+    /**
+     * Retrieve the (constant) base table update cost
+     * 
+     * @return
+     *      The base table update cost.
+     */
+    public double getTotalBaseTableUpdateCost()
+    {
+        double totalBaseTableUpdateCost = 0.0;
+        
+        // base update cost on one replicas
+        for (QueryPlanDesc desc : queryPlanDescs)
+            if (desc.getSQLCategory().isSame(NOT_SELECT))
+                totalBaseTableUpdateCost += 
+                        (desc.getBaseTableUpdateCost() * desc.getStatementWeight());
+            
+        // need to time the number of replica
+        return totalBaseTableUpdateCost * nReplicas;
+    }
+    
+    /**
+     * Reads the value of variables corresponding to the presence of indexes
+     * at each replica and returns indexes to materialize at each replica.
+     * 
+     * @return
+     *      List of indexes to be materialized at each replica.
+     *       
+     */
+    @Override
+    protected IndexTuningOutput getOutput() throws Exception 
+    {
+        DivConfiguration conf = new DivConfiguration(nReplicas, loadfactor);
+        
+        // Iterate over variables s^r_{i,w}
+        /*
+        for (IloNumVar cVar : cplexVar) {
+            if (cplex.getValue(cVar) > 0) {
+                DivVariable var = (DivVariable) poolVariables.get(cVar.getName());
+                if (var.getType() == VAR_S) {
+                    Index index = mapVarSToIndex.get(var.getName());
+                    if (!(index instanceof FullTableScanIndex))
+                        conf.addIndexReplica(var.getReplica(), index);
+                }
+            }
+        }  
+        */
+        for (int r = 0; r < nReplicas; r++) 
+            findRecommendedIndexes (r, conf);
+        
+        // {@code y} variables
+        for (QueryPlanDesc desc : queryPlanDescs) {
+            // only distribute queries to replicas
+            // all updates are routed to every replica
+            if (desc.getSQLCategory().equals(NOT_SELECT))
+                continue;
+            
+            routeQuery(desc, conf);
+        }
+        
+        return conf;
+    }
+    
+    /**
+     * Derive the recommended indexes at the given replica
+     * @param r
+     * @param conf
+     */
+    protected void findRecommendedIndexes(int r, DivConfiguration conf)
+            throws Exception
+    {
+        int idS;
+        
+        for (Index index : candidateIndexes) {
+            
+            if ((index instanceof FullTableScanIndex))
+                continue;
+            
+            idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();
+            if (cplex.getValue(cplexVar.get(idS)) > 0)
+                conf.addIndexReplica(r, index);
+        }
+    }
+    
+    /**
+     * Derive the recommended indexes at the given replica
+     * @param r
+     * @param conf
+     */
+    protected void routeQuery(QueryPlanDesc desc, DivConfiguration conf)
+        throws Exception
+    {
+        int idY;
+        int q;
+        q = desc.getStatementID();
+        
+        for (int r = 0; r < nReplicas; r++)
+            for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+                idY = poolVariables.get(VAR_Y, r, q, k, 0, 0).getId();
+                if (cplex.getValue(cplexVar.get(idY)) > 0) {
+                    conf.routeQueryToReplica(q, r);
+                    break;
+                }
+            }
+    }
+    
     
     /**
      * Retrieve the max imbalance replica cost
@@ -800,52 +744,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         }
         
         return maxRatioInList(replicas);
-    }
-    
-    /**
-     * Retrieve the max imbalance replica cost. We only consider SELECT statement only
-     * 
-     * @return
-     *      The imbalance factor
-     * @throws Exception
-     */
-    public double getQueryImbalance() throws Exception
-    {
-        List<Double> queries;
-        double maxRatio = -1;
-        double ratio;
-        double val;
-        
-        for (QueryPlanDesc desc : super.queryPlanDescs) {
-            
-            // the query constraint is on SELECT-statement only
-            // to facilitate the query routing scheme
-            if (desc.getSQLCategory().isSame(NOT_SELECT))
-                continue;
-        
-            queries = new ArrayList<Double>();
-            
-            for (int r = 0; r < nReplicas; r++) {
-                val = computeVal(queryExpr(r, desc.getStatementID(), desc));
-                
-                if (val > 0.0)
-                    queries.add(val);
-            }
-           
-            ratio = maxRatioInList(queries);
-            if (ratio > 10000) {
-                Rt.p("WATCH-OUT list: " + queries + " ratio: " + ratio);
-            }
-            
-            if (queries.size() != loadfactor) {
-                Rt.p("Query's values: " + queries);
-                //throw new RuntimeException("We expect to obtain exactly"
-                  //        + loadfactor + " value of cost(q,r) that are greater than 0");
-            }
-            maxRatio = (maxRatio > ratio) ? maxRatio : ratio;
-        }
-        
-        return maxRatio;
     }
     
     /**

@@ -1,19 +1,33 @@
 package edu.ucsc.dbtune.bip.div;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.metadata.Index;
 
 
+/**
+ * A divergent design, including the set of index configurations
+ * at each replica together with a mapping function
+ * 
+ * @author Quoc Trung Tran
+ *
+ */
 public class DivConfiguration extends IndexTuningOutput
 {
     private int nReplicas;
     private int loadfactor;
     private List<Set<Index>> indexReplicas;
+    
+    // Map each query to the set of replicas
+    // that this query is sent to
+    private Map<Integer, Set<Integer>> routingFunction;
     
     /**
      * Construct an object with a given number of replica
@@ -26,6 +40,7 @@ public class DivConfiguration extends IndexTuningOutput
         this.nReplicas  = nReplicas;
         this.loadfactor = m;
         indexReplicas   = new ArrayList<Set<Index>>();
+        routingFunction = new HashMap<Integer, Set<Integer>>();
         
         for (int r = 0; r < nReplicas; r++)
             indexReplicas.add(new HashSet<Index>());
@@ -65,6 +80,9 @@ public class DivConfiguration extends IndexTuningOutput
         for (int r = 0; r < nReplicas; r++) 
             indexReplicas.add(new HashSet<Index>(divConf.indexesAtReplica(r)));
         
+        for (Entry<Integer, Set<Integer>> entry : routingFunction.entrySet())
+            divConf.routingFunction.put(entry.getKey(), entry.getValue());
+        
     }
     
     /**
@@ -79,7 +97,7 @@ public class DivConfiguration extends IndexTuningOutput
         nReplicas = 0;
         loadfactor = divConf.loadfactor;
         
-        indexReplicas   = new ArrayList<Set<Index>>();
+        indexReplicas = new ArrayList<Set<Index>>();
         
         for (int r = 0; r < divConf.nReplicas; r++) {
             if (divConf.indexesAtReplica(r).size() > 0) {
@@ -142,6 +160,27 @@ public class DivConfiguration extends IndexTuningOutput
     public void addIndexReplica(int r, Index index)
     {
         indexReplicas.get(r).add(index);
+    }
+    
+    /**
+     * Add the information of routing query {@code q}
+     * to replica {@code r}
+     * 
+     * @param q
+     *      The query to be routed
+     * @param r
+     *      The replica where the query is routed
+     */
+    public void routeQueryToReplica(int q, int r)
+    {
+        Set<Integer> replicas;
+        if (!routingFunction.containsKey(q))
+            replicas = new HashSet<Integer>();
+        else 
+            replicas = routingFunction.get(q);
+        
+        replicas.add(r);
+        routingFunction.put(q, replicas);
     }
 
     @Override

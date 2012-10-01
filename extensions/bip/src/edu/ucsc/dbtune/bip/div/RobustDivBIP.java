@@ -69,7 +69,7 @@ public class RobustDivBIP extends DivBIP
             super.usedIndexConstraints();
             
             // 4. Top-m best cost 
-            super.topMBestCostConstraints();
+            super.loadBalanceFactorConstraints();
             
             // 5. Space constraints
             super.spaceConstraints();
