@@ -4,9 +4,7 @@ import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.BIPVariable;
@@ -45,9 +43,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     protected int    loadfactor;    
     protected double B; 
     
-    protected DivVariablePool   poolVariables;    
-    protected Map<String,Index> mapVarSToIndex;
-    
+    protected DivVariablePool   poolVariables;
     protected boolean isUpperTotalCost = false;
     protected double upperTotalCost;
     
@@ -88,8 +84,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         upperTotalCost = upper;
     }
     
-    
-    
     /**
      * Clear all the structures used
      */
@@ -97,7 +91,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     {   
         super.clear();
         this.poolVariables.clear();
-        this.mapVarSToIndex.clear();
     }   
 
    
@@ -139,12 +132,9 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      */
     protected void constructVariables() throws IloException
     {   
-        DivVariable var;
-        
         // reset variable counter
         BIPVariable.resetIdGenerator();
         poolVariables = new DivVariablePool();
-        mapVarSToIndex = new HashMap<String, Index>();
         
         // variable for each query descriptions
         for (int r = 0; r < nReplicas; r++)
@@ -153,11 +143,9 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                  
         // for TYPE_S
         for (int r = 0; r < nReplicas; r++) 
-            for (Index index : candidateIndexes) {
-                var = poolVariables.createAndStore(VAR_S, r, 0, 0, 0, index.getId());
-                mapVarSToIndex.put(var.getName(), index);
-            }
-        
+            for (Index index : candidateIndexes) 
+                poolVariables.createAndStore(VAR_S, r, 0, 0, 0, index.getId());
+            
         // for div_a and mod_a
         for (int r = 0; r < nReplicas; r++)
             for (Index index : candidateIndexes) {
@@ -665,6 +653,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             }
         }  
         */
+        
         for (int r = 0; r < nReplicas; r++) 
             findRecommendedIndexes (r, conf);
         
@@ -697,15 +686,20 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                 continue;
             
             idS = poolVariables.get(VAR_S, r, 0, 0, 0, index.getId()).getId();
-            if (cplex.getValue(cplexVar.get(idS)) > 0)
+            if (cplex.getValue(cplexVar.get(idS)) > 0) 
                 conf.addIndexReplica(r, index);
+            
         }
     }
     
     /**
-     * Derive the recommended indexes at the given replica
-     * @param r
+     * Derive the recommended indexes at the given replica and 
+     * update to the given configuration.
+     * 
+     * @param desc
+     *     The query
      * @param conf
+     *      The divergent configuration
      */
     protected void routeQuery(QueryPlanDesc desc, DivConfiguration conf)
         throws Exception
@@ -723,7 +717,6 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                 }
             }
     }
-    
     
     /**
      * Retrieve the max imbalance replica cost

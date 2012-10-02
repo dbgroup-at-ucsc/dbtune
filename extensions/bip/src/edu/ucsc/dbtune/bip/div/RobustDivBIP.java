@@ -2,19 +2,31 @@ package edu.ucsc.dbtune.bip.div;
 
 
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_S;
+import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_U;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_XO;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_YO;
+import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.imbalanceConstraintOrder;
 import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.modifyCoef;
 import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
 import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+
+import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
+import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.workload.SQLStatement;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
+import ilog.concert.IloNumVar;
 
 /**
  * A robust divergent advisor takes node-imbalance constraints into account
@@ -29,8 +41,24 @@ public class RobustDivBIP extends DivBIP
     protected double optimalTotalCost;
     
     protected double nodeFactor;
-    protected double coefTotalCost;
+    protected double failureFactor;
+    protected double coefWithoutFailure;
+    protected double coefWithFailure;
     protected int newLoadFactor;
+    protected boolean isGreedy;
+    protected QueryCostOptimalBuilderGeneral queryOptimalBuilder;
+    protected Map<String, Double> mapVarVal;
+    
+    
+    /**
+     * Retrieve failure factor
+     * 
+     * @return
+     */
+    public double getFailureFactor()
+    {
+        return failureFactor;
+    }
     
     /**
      * todo
@@ -38,23 +66,26 @@ public class RobustDivBIP extends DivBIP
      * @param nodeFactor
      * @param coef
      */
-    public RobustDivBIP(double optCost, double nodeFactor, double coef)
+    public RobustDivBIP(double optCost, double nodeFactor, double failureFactor)
     {
         this.optimalTotalCost = optCost;
         this.nodeFactor = nodeFactor;
-        this.coefTotalCost = coef;
+        this.failureFactor = failureFactor;
+        
+        if (optCost < 0.0)
+            isGreedy = false;
+        else
+            isGreedy = true;
     }
     
-    public double getCoefTotalCost()
-    {
-        return this.coefTotalCost;
-    }
     
     @Override
     protected void buildBIP() 
     {
         numConstraints = 0;
         newLoadFactor = super.loadfactor;
+        coefWithoutFailure = UtilConstraintBuilder.computeCoefCostWithoutFailure(failureFactor, super.nReplicas);
+        coefWithFailure = UtilConstraintBuilder.computeCoefCostWithFailure(failureFactor, super.nReplicas);
                 
         try {
             UtilConstraintBuilder.cplex = cplex;
@@ -73,9 +104,14 @@ public class RobustDivBIP extends DivBIP
             
             // 5. Space constraints
             super.spaceConstraints();
-            
+           
             // 6. imbalance node factor
-            imbalanceReplicaGreedy(nodeFactor);
+            if (nodeFactor > 0){
+                if (isGreedy)
+                    imbalanceReplicaGreedy(nodeFactor);
+                else
+                    imbalanceReplicaExact(nodeFactor);
+            }
             
             // 7. failure Handler
             failureHandler();
@@ -89,9 +125,140 @@ public class RobustDivBIP extends DivBIP
     }
     
     
+    /*********************************************************
+     * 
+     *   Node imbalance constraint handlers
+     * 
+     * 
+     **********************************************************/
+    
+    /**
+     * Exact solution to handle imbalance constraints
+     * 
+     */
+    protected void imbalanceReplicaExact(double factor) throws Exception
+    {
+        
+        // Constraint for cost(q, r) corresponds to the optimal
+        // execution cost of q on replica r
+        queryOptimalBuilder = new QueryCostOptimalBuilderGeneral(cplex, cplexVar, 
+                poolVariables, true);
+        UtilConstraintBuilder.cplexVar = cplexVar;
+        
+        for (QueryPlanDesc desc : queryPlanDescs) {
+            if (desc.getSQLCategory().isSame(INSERT) || desc.getSQLCategory().isSame(DELETE))
+                continue;
+            for (int r = 0; r < nReplicas; r++)  
+                queryOptimalBuilder.optimalConstraints(r, desc.getStatementID(), desc);
+        }
+        
+        
+        // imbalance constraints
+        List<IloLinearNumExpr> exprs = new ArrayList<IloLinearNumExpr>();
+        
+        for (int r = 0; r < nReplicas; r++) 
+            exprs.add(super.replicaCost(r));
+        
+        // let the load of nreplicas in the order
+        // of 1, 2, ..., nReplicas;
+        for (int r = 0; r < nReplicas - 1; r++)
+            imbalanceConstraintOrder(exprs.get(r), exprs.get(r + 1), 1.00);
+        
+        // load(nReplicas - 1) <= factor * load(1)
+        imbalanceConstraintOrder(exprs.get(nReplicas -1), 
+                                exprs.get(0), factor);
+    }
+    
+    /**
+     * Construct variables for the query expression of the given query
+     * 
+     * @param r
+     *      The replica ID
+     * @param q
+     *      The query ID
+     * @param desc
+     *      The query plan description.
+     *      
+     */
+    protected void constructConstraintVariables(int r, int q, QueryPlanDesc desc)
+    { 
+        boolean isFTS;
+        // U variables for the local optimal
+        for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++)
+            for (int i = 0; i < desc.getNumberOfSlots(k); i++) {
+                isFTS = false;
+                for (Index index : desc.getIndexesAtSlot(k, i)) {
+                    if (index instanceof FullTableScanIndex)
+                        isFTS = true;
+                    poolVariables.createAndStore(VAR_U, r, q, k, i, index.getId());
+                }
+                
+                // We need a variable for FTS of type VAR_U
+                // if FTS has not appeared in this slot
+                if (!isFTS){
+                    Index fts = desc.getFTSAtSlot(k, i);
+                    poolVariables.createAndStore(VAR_U, r, q, k, i, fts.getId());
+                }
+            }    
+    }
+    
+    /**
+     * todo
+     * @param factor
+     * @throws Exception
+     */
+    protected void imbalanceReplicaGreedy(double factor) throws Exception
+    {
+        deriveUpperLoadReplica(factor);
+        
+        for (int r = 0; r < nReplicas; r++)
+            upperReplicaConstraint(r);
+        
+    } 
+    
+    /**
+     * Set replica constraints
+     * @param r
+     * @throws IloException
+     */
+    protected void upperReplicaConstraint(int r) throws IloException
+    {   
+        IloLinearNumExpr expr = replicaCost(r);
+        cplex.addLe(expr, upperReplicaCost, "upper_replica_" + numConstraints);
+        numConstraints++;
+    }
+    
+    /**
+     * Derive the upper value for load replica
+     * @param factor
+     */
+    protected void deriveUpperLoadReplica(double factor)
+    {
+        double alpha;
+        alpha = (factor - 1) / (1 + (nReplicas - 1) * factor);
+        
+        upperReplicaCost = (1 + alpha) * optimalTotalCost / nReplicas;
+        Rt.p("alpha value = " + alpha
+                + " upper cost = " + upperReplicaCost);
+    }
+    
+    /******************************************************
+     * 
+     *   Failure handlers
+     * 
+     * 
+     ******************************************************/
+    
+    /**
+     * Handling the case with failure
+     * 
+     * @throws Exception
+     */
     protected void failureHandler() throws Exception
     {   
-        if (this.coefTotalCost < 1.0){
+        if (coefWithFailure > 0.0){
+            // We take into consideration the case of failure
+            
             // load factor failure
             for (int r = 0; r < nReplicas; r++)
                 loadFactorFailure(r);
@@ -103,15 +270,16 @@ public class RobustDivBIP extends DivBIP
             // used index
             for (int r = 0; r < nReplicas; r++)
                 usedIndexFailureConstraints(r);
-            
         }
         
         // Total cost
         totalCostFailure();
     }
+    
     /**
      * Minimize the objective function: 
-     *      coef * TotalCost + (1 - coef) * TotalCostFailure
+     *      (1 - alpha)^N * TotalCost + 
+     *          alpha * (1-alpha)^{N-1} * TotalCostFailure
      * 
      * @throws Exception
      */
@@ -123,15 +291,17 @@ public class RobustDivBIP extends DivBIP
         
         for (int r = 0; r < nReplicas; r++) { 
             objTot.add(replicaCost(r));
-            if (coefTotalCost < 1.0)
+            if (coefWithFailure > 0.0)
                 objFailure.add(totalCostForFailure(r));
         }
         
-        // adjust the constant factor
-        obj.add(modifyCoef(objTot, coefTotalCost));
-        if (coefTotalCost < 1.0)
-            obj.add(modifyCoef(objFailure, (1 - coefTotalCost) / nReplicas));
-        
+        // add coefficient for cost without failure
+        obj.add(modifyCoef(objTot, coefWithoutFailure));
+        // add coefficient for cost with failure
+        if (coefWithFailure > 0.0)
+            obj.add(modifyCoef(objFailure, coefWithFailure / nReplicas));
+        Rt.p(" without failure coef = " + coefWithoutFailure
+                + " with failure = " + coefWithFailure / nReplicas);
         cplex.addMinimize(obj); 
     }
     
@@ -278,12 +448,6 @@ public class RobustDivBIP extends DivBIP
                     
                 }
     }
-
-    
-    protected void loadFactorFailure() throws Exception
-    {
-        
-    }
     
     /**
      * Load-balance factor constraint
@@ -330,45 +494,6 @@ public class RobustDivBIP extends DivBIP
         numConstraints++;
     }
     
-    /**
-     * todo
-     * @param factor
-     * @throws Exception
-     */
-    protected void imbalanceReplicaGreedy(double factor) throws Exception
-    {
-        deriveUpperLoadReplica(factor);
-        
-        for (int r = 0; r < nReplicas; r++)
-            upperReplicaConstraint(r);
-        
-    } 
-    
-    /**
-     * Set replica constraints
-     * @param r
-     * @throws IloException
-     */
-    protected void upperReplicaConstraint(int r) throws IloException
-    {   
-        IloLinearNumExpr expr = replicaCost(r);
-        cplex.addLe(expr, upperReplicaCost, "upper_replica_" + numConstraints);
-        numConstraints++;
-    }
-    
-    /**
-     * Derive the upper value for load replica
-     * @param factor
-     */
-    protected void deriveUpperLoadReplica(double factor)
-    {
-        double alpha;
-        alpha = (factor - 1) / (1 + (nReplicas - 1) * factor);
-        
-        upperReplicaCost = (1 + alpha) * optimalTotalCost / nReplicas;
-        Rt.p("alpha value = " + alpha
-                + " upper cost = " + upperReplicaCost);
-    }
     
     /**
      * Construct the total cost assuming replica {@code failR} fails,
@@ -387,6 +512,7 @@ public class RobustDivBIP extends DivBIP
         for (int r = 0; r < nReplicas; r++)
             if (r != failR)
                 obj.add(replicaCostFailure(r, failR));
+        
         return obj;
     }
     
@@ -486,6 +612,56 @@ public class RobustDivBIP extends DivBIP
         return expr;
     }
     
+    /**
+     * Derive the recommended indexes at the given replica and 
+     * update to the given configuration.
+     * 
+     * @param desc
+     *     The query
+     * @param conf
+     *      The divergent configuration
+     */
+    protected void routeQueryUnderFailure(QueryPlanDesc desc, DivConfiguration conf, int failR)
+                   throws Exception
+    {
+        int idY;
+        int q;
+        q = desc.getStatementID();
+        
+        for (int r = 0; r < nReplicas; r++) {
+            
+            if (r == failR)
+                continue;
+            
+            for (int k = 0; k < desc.getNumberOfTemplatePlans(); k++) {
+                idY = poolVariables.get(VAR_YO, combineReplicaID(r, failR), q, k, 0, 0).getId();
+                if (cplex.getValue(cplexVar.get(idY)) > 0) {
+                    conf.routeQueryToReplicaUnderFailure(q, r, failR);
+                    break;
+                }
+            }
+        }
+    }
+    
+    /**
+     * Extract the value-assignment by CPLEX
+     * 
+     * @return
+     *      the map between variables' names their
+     *      assignment
+     */
+    public Map<String, Double> extractBinaryVariableAssignment()
+            throws Exception
+    {
+        Map<String, Double> mapVarVal = new HashMap<String, Double>();
+        
+        for (IloNumVar cVar : cplexVar)  
+            mapVarVal.put(cVar.getName(), cplex.getValue(cVar));
+        
+        return mapVarVal;
+    }
+    
+    
     @Override
     protected void constructVariables() throws IloException
     {   
@@ -496,6 +672,12 @@ public class RobustDivBIP extends DivBIP
             for (QueryPlanDesc desc : queryPlanDescs) 
                 constructVariablesForFailure(r, desc.getStatementID(), desc);
         
+        // variable for each query descriptions
+        if (!isGreedy) {
+            for (int r = 0; r < nReplicas; r++)
+                for (QueryPlanDesc desc : queryPlanDescs) 
+                    constructConstraintVariables(r, desc.getStatementID(), desc);
+        }
     }
     
     /**
@@ -525,6 +707,156 @@ public class RobustDivBIP extends DivBIP
                                                          q, k, i, index.getId());
     }
     
+    /**
+     * Reads the value of variables corresponding to the presence of indexes
+     * at each replica and returns indexes to materialize at each replica.
+     * 
+     * @return
+     *      List of indexes to be materialized at each replica.
+     *       
+     */
+    @Override
+    protected IndexTuningOutput getOutput() throws Exception 
+    {   
+        DivConfiguration conf = (DivConfiguration) super.getOutput();
+        
+        if (coefWithFailure > 0.0){
+            for (int r = 0; r < nReplicas; r++)
+             // {@code y} variables
+                for (QueryPlanDesc desc : queryPlanDescs) {
+                    // only distribute queries to replicas
+                    // all updates are routed to every replica
+                    if (desc.getSQLCategory().equals(NOT_SELECT))
+                        continue;
+                    
+                    routeQueryUnderFailure(desc, conf, r);
+                }
+        }
+        
+        return conf;
+    }
+    
+    /**
+     * Compute query cost (Note that for updates, we need to 
+     * implement differently)
+     * 
+     */
+    public double computeOptimizerCost() throws Exception
+    {
+        DivConfiguration conf = (DivConfiguration) getOutput();
+        double costWithoutFailure, costWithFailure;
+        
+        costWithoutFailure = computeOptimizerCostWithoutFailure(conf);
+        if (coefWithFailure > 0.0)
+            costWithFailure = computeOptimizerCostWithFailure(conf);
+        else
+            costWithFailure = 0.0;
+        
+        
+        Rt.p(" cost without failure = " + costWithoutFailure
+                + " WITH coef = " + coefWithoutFailure * costWithoutFailure);
+        Rt.p(" cost WITH failure = " + costWithFailure
+                + " WITH coef = " + 
+                (double) (coefWithFailure * costWithFailure / nReplicas));
+        
+        return (coefWithoutFailure * costWithoutFailure
+                + (double) (coefWithFailure * costWithFailure / nReplicas));
+        
+    }
+    
+    
+    /**
+     * Compute the cost in optimizer unit without failure
+     * 
+     * @param conf      
+     *      The derived configuration
+     *       
+     * @return
+     *      The cost
+     * @throws Exception
+     */
+    protected double computeOptimizerCostWithoutFailure(DivConfiguration conf)
+                throws Exception
+    {
+        QueryPlanDesc desc;
+        double costWithoutFailure;
+        double cost;
+        int counter;
+        int q;
+        
+        costWithoutFailure = 0.0;
+        counter = -1;
+        
+        // Compute cost with failure 
+        for (SQLStatement sql : workload) {
+            
+            counter++;
+            
+            if (sql.getSQLCategory().equals(NOT_SELECT))
+                continue;
+            desc = queryPlanDescs.get(counter); 
+            q = desc.getStatementID();
+            for (int r : conf.getRoutingReplica(q)) {
+                cost = super.inumOptimizer.getDelegate().explain
+                        (sql, conf.indexesAtReplica(r)).getTotalCost();
+                cost = cost * super.getFactorStatement(desc);
+                costWithoutFailure += cost;
+            }
+        }
+        
+        return costWithoutFailure;
+    }
+    
+    /**
+     * Compute the cost in optimizer unit with failure
+     * 
+     * @param conf      
+     *      The derived configuration
+     *       
+     * @return
+     *      The cost
+     * @throws Exception
+     */
+    protected double computeOptimizerCostWithFailure(DivConfiguration conf)
+                throws Exception
+    {
+        double costWithFailure;
+        double cost;
+        int counter;
+        int q;
+
+        costWithFailure = 0.0;    
+        counter = -1;
+        QueryPlanDesc desc;
+        
+        for (int failR = 0; failR < nReplicas; failR++){
+            
+            counter = -1;
+            
+            for (SQLStatement sql : workload) {
+                
+                counter++;
+                
+                if (sql.getSQLCategory().equals(NOT_SELECT))
+                    continue;
+                desc = queryPlanDescs.get(counter);
+                q = desc.getStatementID();
+                
+                for (int r : conf.getRoutingReplicaUnderFailure(q, failR)) {
+                    cost = super.inumOptimizer.getDelegate().explain
+                            (sql, conf.indexesAtReplica(r)).getTotalCost();
+                    cost = cost * this.getFactorStatementFailure(desc);
+                    costWithFailure += cost;
+                }
+                
+                q++;
+            }
+        }
+        
+        return costWithFailure;
+    }
+    
+
     /**
      * Construct a ``pseudo'' ID of a replica that is a combination of a replica with the identifier
      * {@code id} and a replica {@code failID} that is failed.
