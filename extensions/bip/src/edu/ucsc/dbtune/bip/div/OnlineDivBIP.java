@@ -11,7 +11,6 @@ import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
-import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
@@ -42,6 +41,18 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
         throw new RuntimeException("This method is not applicable");
     }
 
+    /**
+     * Set the listener that logs the running time (for experimental purpose)
+     * 
+     * @param listener
+     *      The listener
+     */
+    @Override
+    public void setLogListenter(LogListener logger)
+    {
+        divBIP.setLogListenter(logger);
+    }
+    
     @Override
     protected IndexTuningOutput getOutput() throws Exception 
     {
@@ -72,9 +83,7 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
     // the actual improvement
     @Override
     public void next() throws Exception
-    {
-        logger.setStartTimer();
-        
+    {   
         // Advance one more statement
         endID++;
         if (endID >= workload.size())
@@ -91,8 +100,14 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
         // Set the set of query plan description
         divBIP.setQueryPlanDesc(descs);
         divBIP.solve();
-        logger.onLogEvent(LogListener.EVENT_SOLVING_BIP);
         
+        // This feature is temporarily not used
+        // MIGHT REVISIT LATER
+        /***
+         * Automatically notify DBAs if significant changes
+         * in the workloads have happened
+         */
+        /*
         computeInitialCost();
         double improvementRatio = 1 - getTotalCost() / initialCost;
         if (improvementRatio >= threshold)
@@ -111,6 +126,7 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
             numOverThreshold = 0;
         } else 
             isReconfiguration = false;
+        */
         
         // clear cache
         divBIP.clear();
