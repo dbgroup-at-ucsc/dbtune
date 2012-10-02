@@ -266,6 +266,11 @@ public final class EnvironmentProperties
     public static final String NODE_IMBALANCE = "node.imbalance";
     public static final String FAILURE_IMBALANCE = "failure.imbalance";
     
+    /**
+     * Adaptive DIVBIP parameters
+     */
+    public static final String WINDOW_DURATION = "window.duration";
+    public static final String NUMBER_RUNNING_QUERIES = "number.running.queries";
     
     /**
      * Never invoked.
