@@ -127,7 +127,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
         // to derive the query plan descriptions 
         // including internal cost, index access cost, etc.
         logger.setStartTimer();
-        // only popuplate the plan descs if they have not been assigned
+        // only populate the plan descs if they have not been assigned
         if (!isSetPlanDesc){
             if (communicateInumOnTheFly)
                 populatePlanDescriptionOnTheFly();
@@ -135,7 +135,10 @@ public abstract class AbstractBIPSolver implements BIPSolver
                 populatePlanDescriptionForStatements();
         } else {
             // re-use the set of query plan description
-            candidateIndexes.clear();
+            if (candidateIndexes != null)
+                candidateIndexes.clear();
+            
+            candidateIndexes = new HashSet<Index>();
             for (QueryPlanDesc desc : queryPlanDescs)
                 candidateIndexes.addAll(desc.getIndexes());
         }
@@ -159,8 +162,10 @@ public abstract class AbstractBIPSolver implements BIPSolver
         
         if (isCheckFeasible) 
             cplex.setParam(IntParam.IntSolLim, 1);
-      
-        //cplex.setParam(DoubleParam.EpLin, 1e-1);
+        
+        // Improving performance for DIVBIP
+        // http://www-eio.upc.es/lceio/manuals/cplex-11/html/
+        //cplex.setParam(IntParam.MIPEmphasis, 3);
         
         buildBIP();       
         logger.onLogEvent(LogListener.EVENT_FORMULATING_BIP);
@@ -313,7 +318,6 @@ public abstract class AbstractBIPSolver implements BIPSolver
             for (QueryPlanDesc desc : queryPlanDescs)
                 candidateIndexes.addAll(desc.getFullTableScanIndexes());
         }
-        
     }
     
     /**
