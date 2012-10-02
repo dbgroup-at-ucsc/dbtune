@@ -59,6 +59,11 @@ public class DivBIPFunctionalTest extends DivTestSetting
     
     /**
      * Run the BIP with the parameters set by other functions
+     * @param _n
+     *      Number of replicas
+     * @param _B  
+     *      Space budget
+     *               
      * @throws Exception
      */
     public static double testDiv(int _n, double _B, boolean isOnTheFly) throws Exception
@@ -184,21 +189,21 @@ public class DivBIPFunctionalTest extends DivTestSetting
             
             Rt.p("CPLEX result: number of replicas: " + nReplicas + "\n" 
                     + " TOTAL cost:  " + totalCostBIP + "\n"
-                    + " QUERY cost:  " + queryCost   + "\n"
-                    + " UPDATE cost: " + updateCost  + "\n"
-                    + " ----- Update cost details: "  + "\n"
-                    + "          + query shell & update indexes: " 
-                                        + div.getUpdateCostFromCplex() + "\n"
-                    + " ----- CPLEX info: \n"
-                    + "          + obj value: " + div.getObjValue() + "\n"
-                    + "          + gap from the optimal: " + div.getObjectiveGap() + "\n"
-                    + " NUMBER of distinct indexes: " + divConf.countDistinctIndexes()+ "\n"
-                    + " NUMBER OF queries:          " + 
-                            div.computeNumberQueriesSpecializeForReplica()
+                    //+ " QUERY cost:  " + queryCost   + "\n"
+                    //+ " UPDATE cost: " + updateCost  + "\n"
+                    //+ " ----- Update cost details: "  + "\n"
+                    //+ "          + query shell & update indexes: " 
+                    //                    + div.getUpdateCostFromCplex() + "\n"
+                    //+ " ----- CPLEX info: \n"
+                    //+ "          + obj value: " + div.getObjValue() + "\n"
+                    //+ "          + gap from the optimal: " + div.getObjectiveGap() + "\n"
+                    //+ " NUMBER of distinct indexes: " + divConf.countDistinctIndexes()+ "\n"
+                    //+ " NUMBER OF queries:          " + 
+                     //       div.computeNumberQueriesSpecializeForReplica()
                     );
             
             Rt.p(" TOTAL COST(INUM): " + totalCostBIP);
-            Rt.p(" NODE IMBALANCE: " + div.getNodeImbalance());
+            //Rt.p(" NODE IMBALANCE: " + div.getNodeImbalance());
             
             return totalCostBIP;
             
@@ -212,7 +217,8 @@ public class DivBIPFunctionalTest extends DivTestSetting
      * Run the BIP with the parameters set by other functions
      * @throws Exception
      */
-    public static double testDivSimplify(int _n, double _B, boolean isOnTheFly) throws Exception
+    public static double testDivSimplify(int _n, double _B, boolean isOnTheFly, LogListener logger) 
+            throws Exception
     {
         div = new DivBIP();
         
@@ -223,7 +229,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
         
         Optimizer io = db.getOptimizer();
          
-        LogListener logger = LogListener.getInstance();
+        
         div.setCandidateIndexes(candidates);
         div.setWorkload(workload); 
         div.setOptimizer((InumOptimizer) io);
@@ -241,17 +247,20 @@ public class DivBIPFunctionalTest extends DivTestSetting
         
         if (output != null) {
             divConf = (DivConfiguration) output;
+            /*
             double queryCost = getDB2QueryCostDivConf(divConf);
             double updateCost =  div.getUpdateCostFromCplex();
             double costDB2 = queryCost + updateCost;
-            
+            */
+            Rt.p("temporary NOT COMPUTE DB2 COST");
+            double costDB2 = div.getObjValue();
             Rt.p(" n = " + _n + " B = " + _B
                     + " cost in INUM = "
                     + div.getObjValue());
             Rt.p(" cost in DB2 = " + costDB2);
             Rt.p(" RATIO = " + (costDB2 / div.getObjValue()));
-            Rt.p(" query cost = " + queryCost);
-            Rt.p(" update cost = " + updateCost);
+            //Rt.p(" query cost = " + queryCost);
+            //Rt.p(" update cost = " + updateCost);
             
             return costDB2;
         }
@@ -272,8 +281,8 @@ public class DivBIPFunctionalTest extends DivTestSetting
         nReplicas = 1;
         loadfactor = 1;
         double queryCost, updateCost;
-        
-        double totalCost = testDivSimplify(1, B, false);
+        LogListener logger = LogListener.getInstance();
+        double totalCost = testDivSimplify(1, B, false, logger);
         updateCost = div.getUpdateCostFromCplex();
         queryCost = totalCost - updateCost;
         

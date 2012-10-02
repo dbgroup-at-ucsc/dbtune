@@ -67,8 +67,8 @@ public class OnlineWorkloadCreator extends DIVPaper
             transitions.add(transitionPhase(workload, lengthTransition, id));
         
         // main phase
-        int numFirsts[] = {4, 1, 4, 1};
-        int total = 5;
+        int numFirsts[] = {8, 2, 8, 2};
+        int total = 10;
         
         for (int id = 0; id < numPhase; id++){
             mains.add(mainPhase(sqlFirst, sqlSecond, numFirsts[id], 
@@ -79,8 +79,10 @@ public class OnlineWorkloadCreator extends DIVPaper
         StringBuilder sb = new StringBuilder();
         for (int id = 0; id < numPhase; id++){
             // transition and then main
-            sb.append(transitions.get(id).toString());
             sb.append(mains.get(id).toString());
+            sb.append(transitions.get(id).toString());
+            Rt.p(" main phase " + id + " = " + mains.get(id).sqls.size());
+            Rt.p(" transition phase " + id + " = " + transitions.get(id).sqls.size());
         }
         
         // write to file

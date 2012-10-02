@@ -55,7 +55,7 @@ public class DIVPaper extends DivTestSetting
     protected static final String DESIGN_COPHY_FILE = "design_cophy.bin";
     protected static final String UNIF_COPHY_FILE = "unif_cophy.bin";
     
-    protected static final String ONLINE_FILE = "online.txt";
+    protected static final String ONLINE_FILE = "online.bin";
     
     protected static File unifFile;
     protected static File divFile;
@@ -71,10 +71,9 @@ public class DIVPaper extends DivTestSetting
     protected static Map<DivPaperEntry, Double> mapUnifCoPhy;
     
     protected static boolean isEquivalent = false;
-    protected static boolean isOnline = false;
+    protected static boolean isOnline = true;
     protected static boolean isLatex = false;
-    protected static boolean isCophy = true;
-    
+    protected static boolean isCophy = false;
     
     /**
      *
@@ -320,11 +319,11 @@ public class DIVPaper extends DivTestSetting
         onlineFile = new File(rawDataDir, wlName + "_" + ONLINE_FILE);
         OnlinePaperEntry entry = readOnlineResult(onlineFile);
         
-        String[] competitors = {" 1 - OPT / INITIAL"};
+        String[] competitors = {"OPT"};
         
         int numX = entry.getListInitial().size();
         // the last two for the running time
-        double ratio;
+        double cost;
         double[] xtics = new double[numX];
         String[] xaxis = new String[numX];
         List<Point> points = new ArrayList<Point>();
@@ -333,26 +332,28 @@ public class DIVPaper extends DivTestSetting
             ticks.put(id, id);
             
         for (int i = 0; i < numX; i++) {
-            ratio = 1 - entry.getListOpt().get(i) / entry.getListInitial().get(i);
-            ratio = ratio * 100;
+            cost = entry.getListOpt().get(i);
             
-            if (i == 0 || ticks.containsKey(i))
+            if (i % 50 == 0)
                 xaxis[i] = Integer.toString(i);
             else
                 xaxis[i] = "null"; // NOT mark this
             xtics[i] = i;
-            points.add(new Point(i, ratio));
+            points.add(new Point(i, cost));
         }
         
         plotName = "online";
         xname = "#query ID";
-        yname = "TotalCost improvement (%)";
+        yname = "Optimal cost";
         
         drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                 competitors, figsDir, points);
         
         plots.add(new Plot("figs/" + plotName,  
-                " ONLINE, space = 0.5x, n = 3", 0.5));
+                " ONLINE, space = 0.5x, n = 3"
+                + "time BIP = " + entry.getTimeBIP()
+                + " window duration =  " + entry.getWindowDuration()
+                , 0.5));
         
         Rt.p("reconfiguration: " + entry.getReconfigurationStmts());
         Rt.p(" AVG BIP = " + entry.getTimeBIP() / numX / 1000 + " (secs)");
@@ -469,9 +470,6 @@ public class DIVPaper extends DivTestSetting
             throw new SQLException(e);
         }
         
-        Rt.p("read file = " + file.getName()
-                + " results = " + results);
-        
         return results;
     }
     
@@ -561,6 +559,8 @@ public class DIVPaper extends DivTestSetting
         private double timeBIP;
         private double timeINUM;
         
+        int windowDuration;
+        
         public OnlinePaperEntry()
         {
             initialCosts = new ArrayList<Double>();
@@ -585,9 +585,19 @@ public class DIVPaper extends DivTestSetting
             this.timeINUM = inum;
         }
         
+        public void setWindowDuration(int w)
+        {
+            this.windowDuration = w;
+        }
+        
         public double getTimeBIP()
         {
             return timeBIP;
+        }
+
+        public int getWindowDuration()
+        {
+            return this.windowDuration;
         }
         
         public double getTimeInum()

@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.HashMap;
 import org.junit.Test;
 
+import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.util.Rt;
 
 
@@ -21,7 +22,6 @@ public class DIVBIPEquivalentTest extends DIVPaper
         runExpts();
         
         // 2. special data structures for this class
-        
         divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
         divFile.delete();
         divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
@@ -53,14 +53,22 @@ public class DIVBIPEquivalentTest extends DIVPaper
         // run algorithms
         double costBip;
         long budget;
+        timeBIP = 0.0;
         for (double B : listBudgets) 
             for (int n : listNumberReplicas) {
-                costBip = DivBIPFunctionalTest.testDivSimplify(n, B, false);
+                LogListener logger = LogListener.getInstance();
+                costBip = DivBIPFunctionalTest.testDivSimplify(n, B, false, logger);
                 budget = convertBudgetToMB(B);
                 DivPaperEntry entry = new DivPaperEntry
                         (dbName, wlName, n, budget);
                 
                 entries.put(entry, costBip);
+                timeBIP += logger.getTotalRunningTime();
             }
+        
+        double averageBIP = timeBIP / (listBudgets.size()
+                                        * listNumberReplicas.size());
+        Rt.p("TOTAL running time = " + timeBIP
+                + " AVERGE Running time = " + averageBIP);
     }
 }

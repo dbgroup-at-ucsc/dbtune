@@ -68,6 +68,9 @@ public class DivTestSetting
     protected static String dbName;
     protected static String wlName;
     
+    // protected static
+    protected static double timeBIP;
+    
     // for Debugging purpose only
     protected static double totalIndexSize;
     protected static boolean isExportToFile = false;
@@ -329,6 +332,14 @@ public class DivTestSetting
             isGood = true;
             db2cost = io.getDelegate().explain(sql, conf).getTotalCost();
             inumPrepared = (InumPreparedSQLStatement) io.prepareExplain(sql);
+
+            if (inumPrepared.getTemplatePlans().size() > 9){
+                isGood = false;
+                Rt.p("Not good because too many plans ");
+                id++;
+                continue;
+            }
+                
             inumcost = inumPrepared.explain(conf).getTotalCost();
             Rt.p(" stmt: " + sql.getSQL());
             if (inumcost < 0.0 || inumcost > Math.pow(10, 9)) { 

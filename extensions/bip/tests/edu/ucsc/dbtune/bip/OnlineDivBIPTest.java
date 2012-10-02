@@ -22,9 +22,7 @@ import edu.ucsc.dbtune.workload.Workload;
 import static edu.ucsc.dbtune.bip.util.LogListener.EVENT_SOLVING_BIP;
 
 public class OnlineDivBIPTest extends DIVPaper 
-{
-    // number of statements to create the initial configuration
-    protected static int numStatementsInitialConfiguration;
+{   
     // number of statements to generate graphs 
     protected static int numStatementsOnline;
     // window duration
@@ -36,8 +34,8 @@ public class OnlineDivBIPTest extends DIVPaper
     protected static OnlineDivBIP onlineDiv;
     protected static OnlinePaperEntry onlineEntry;
     
-    protected static boolean isOnline = false;
-    protected static boolean isElasticity = true;
+    protected static boolean isOnline = true;
+    protected static boolean isElasticity = false;
     
     /**
     *
@@ -60,11 +58,9 @@ public class OnlineDivBIPTest extends DIVPaper
        // prepare workload
        prepareWorkload();
        
-       // default parameter
-       nReplicas = 3;
-       B = 2.5 * Math.pow(2, 30);
-       
        // set up online workload
+       // and initial configuration
+       getInitialConfiguration(0, -1);
        initializeOnlineObject();
        
        if (isOnline)
@@ -83,9 +79,10 @@ public class OnlineDivBIPTest extends DIVPaper
     */
    protected static void controlKnobs()
    {
-       numStatementsInitialConfiguration = 10;
-       numStatementsOnline = workload.size() - numStatementsInitialConfiguration;
-       windowDuration = 100;
+       windowDuration = en.getWindowDuration();
+       numStatementsOnline = en.getNumberOfRunningQueries();
+       Rt.p(" window duration = " + windowDuration);
+       Rt.p(" # running queries = " + numStatementsOnline);
    }
    
    /**
@@ -93,18 +90,8 @@ public class OnlineDivBIPTest extends DIVPaper
     * initial configuration and for online workload
     */
    protected static void prepareWorkload()
-   {
-       List<SQLStatement> sqlInitials = new ArrayList<SQLStatement>();
-       List<SQLStatement> sqlOnlines = new ArrayList<SQLStatement>();
-       
-       for (int i = 0; i < workload.size(); i++)
-           if (i < numStatementsInitialConfiguration)
-               sqlInitials.add(workload.get(i));
-           else
-               sqlOnlines.add(workload.get(i));
-       
-       wlInitial = new Workload(sqlInitials);
-       wlOnline = new Workload(sqlOnlines);
+   {   
+       wlOnline = workload;
    }
    
    /**
@@ -128,12 +115,10 @@ public class OnlineDivBIPTest extends DIVPaper
     * @throws Exception
     */
    protected static void runOnline() throws Exception
-   {
-       getInitialConfiguration(0, -1);
-       
-       onlineFile = new File(rawDataDir, ONLINE_FILE);
+   {   
+       onlineFile = new File(rawDataDir, wlName + "_" + ONLINE_FILE);
        onlineFile.delete();
-       onlineFile = new File(rawDataDir, ONLINE_FILE);
+       onlineFile = new File(rawDataDir, wlName + "_" + ONLINE_FILE);
        onlineFile.createNewFile();
     
        onlineEntry = new OnlinePaperEntry();
@@ -145,6 +130,7 @@ public class OnlineDivBIPTest extends DIVPaper
        double timeBIP, timeInum;
        timeBIP = 0.0;
        timeInum = 0.0;
+       Rt.p("Number of statements = " + numStatementsOnline);
        
        for (int i = 0; i < numStatementsOnline; i++) {
            logger.reset();
@@ -156,18 +142,23 @@ public class OnlineDivBIPTest extends DIVPaper
            if (i % 20 == 0)
                Rt.p(" process statement: " + i);
            
+           /**
+            * Compare with initial configuration
+            * Might need to revisit later
+            */
+           /*
            onlineEntry.addCosts(onlineDiv.getTotalCostInitialConfiguration(),
                    onlineDiv.getTotalCost());
            if (onlineDiv.isNeedToReconfiguration()) {
                onlineEntry.addReconfiguration(i);
                Rt.p(" RECONFIGURATION AT : " + i);
            }
-           
-           if (i >= 150)
-               break;
+           */
+           onlineEntry.addCosts(-1, onlineDiv.getTotalCost());
        }
-       
+       onlineEntry.setWindowDuration(windowDuration);
        onlineEntry.setTimes(timeBIP, timeInum);
+       Rt.p(" store in file = " + onlineFile.getName());
        serializeOnlineResult(onlineEntry, onlineFile);
    }
    
@@ -177,11 +168,11 @@ public class OnlineDivBIPTest extends DIVPaper
     */
    protected static void runElasticity() throws Exception
    {
-       // these can come from the list of sticks
+       // these can come from the list of ticks
        // from the online expt.
        // for now: they are hard-coded
        int startInitial = 0;
-       int endInitial = 3;
+       int endInitial = -1;
        int endInvestigation = 55;
        
        // get initial configuration
@@ -198,23 +189,9 @@ public class OnlineDivBIPTest extends DIVPaper
        
        // 2. Get the total deployment cost
        double reConfigurationCost = 0.0;
-       double totalCostBIP  = DivBIPFunctionalTest.testDiv(nReplicas, B, descs);
+       DivBIPFunctionalTest.testDiv(nReplicas, B, descs);
        reConfigurationCost = divConf.transitionCost(initialConf, true);
        Rt.p("Reconfiguration costs: " + reConfigurationCost);
-       
-       // TODO: Remove imbalance approximation scheme
-       Rt.p(" TEMPORARILY CHECK APPROXIMATION SCHEME");
-       //div.setUpperReplicaCost(totalCostBIP * 1.1 / nReplicas);
-       LogListener logger1 = LogListener.getInstance();
-       div.setLogListenter(logger1);
-       div.solve();
-       Rt.p(logger1.toString());
-       
-       Rt.p(" COST OF NODE-BALANCE CONSTRAINT " + div.getObjValue()
-               + " NODE IMBALANCE: " + div.getNodeImbalance()
-               + " NEW RATIO: " + (div.getObjValue() / totalCostBIP)
-               + " EXIT HERE");
-       System.exit(1);
        
        List<Double> costs = new ArrayList<Double>();
        int startExpo = -4;
