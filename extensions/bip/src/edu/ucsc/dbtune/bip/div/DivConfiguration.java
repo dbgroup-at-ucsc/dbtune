@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.metadata.Index;
@@ -27,7 +26,8 @@ public class DivConfiguration extends IndexTuningOutput
     
     // Map each query to the set of replicas
     // that this query is sent to
-    private Map<Integer, Set<Integer>> routingFunction;
+    private RoutingFunction mappingWithoutFailure;
+    private List<RoutingFunction> mappingWithFailures;
     
     /**
      * Construct an object with a given number of replica
@@ -40,11 +40,40 @@ public class DivConfiguration extends IndexTuningOutput
         this.nReplicas  = nReplicas;
         this.loadfactor = m;
         indexReplicas   = new ArrayList<Set<Index>>();
-        routingFunction = new HashMap<Integer, Set<Integer>>();
+        mappingWithoutFailure = new RoutingFunction();
+        mappingWithFailures = new ArrayList<RoutingFunction>();
         
-        for (int r = 0; r < nReplicas; r++)
+        for (int r = 0; r < nReplicas; r++) {
             indexReplicas.add(new HashSet<Index>());
+            
+            RoutingFunction rf = new RoutingFunction();
+            mappingWithFailures.add(rf);
+        }
         
+    }
+    
+    /**
+     * Retrieve the set of replicas where the given query 
+     * can be routed to
+     * 
+     * @param q
+     * @return
+     */
+    public Set<Integer> getRoutingReplica(int q)
+    {
+        return mappingWithoutFailure.getRoutingReplica(q);
+    }
+    
+    /**
+     * Retrieve the set of replicas where the given query 
+     * can be routed to
+     * 
+     * @param q
+     * @return
+     */
+    public Set<Integer> getRoutingReplicaUnderFailure(int q, int failR)
+    {
+        return mappingWithFailures.get(failR).getRoutingReplica(q);
     }
     
     /**
@@ -63,6 +92,7 @@ public class DivConfiguration extends IndexTuningOutput
        return indexes.size();
     }
     
+    
     /**
      * Copy constructor 
      * 
@@ -80,8 +110,7 @@ public class DivConfiguration extends IndexTuningOutput
         for (int r = 0; r < nReplicas; r++) 
             indexReplicas.add(new HashSet<Index>(divConf.indexesAtReplica(r)));
         
-        for (Entry<Integer, Set<Integer>> entry : routingFunction.entrySet())
-            divConf.routingFunction.put(entry.getKey(), entry.getValue());
+        this.mappingWithoutFailure = divConf.mappingWithoutFailure;
         
     }
     
@@ -173,14 +202,24 @@ public class DivConfiguration extends IndexTuningOutput
      */
     public void routeQueryToReplica(int q, int r)
     {
-        Set<Integer> replicas;
-        if (!routingFunction.containsKey(q))
-            replicas = new HashSet<Integer>();
-        else 
-            replicas = routingFunction.get(q);
-        
-        replicas.add(r);
-        routingFunction.put(q, replicas);
+        mappingWithoutFailure.routeQueryToReplica(q, r);
+    }
+    
+    /**
+     * Add the information of routing query {@code q}
+     * to replica {@code r}
+     * 
+     * @param q
+     *      The query to be routed
+     * @param r
+     *      The replica where the query is routed
+     * @param failR
+     *      Assume this replica fails
+     *      
+     */
+    public void routeQueryToReplicaUnderFailure(int q, int r, int failR)
+    {
+        mappingWithFailures.get(failR).routeQueryToReplica(q, r);
     }
 
     @Override
@@ -324,5 +363,52 @@ public class DivConfiguration extends IndexTuningOutput
         }    
         
         return transCost;
+    }
+    
+    static class RoutingFunction
+    {
+        private Map<Integer, Set<Integer>> mapping;
+        
+        public RoutingFunction()
+        {
+            mapping = new HashMap<Integer, Set<Integer>>();
+        }
+        
+        /**
+         * Route the given query to the given replica
+         * 
+         * @param q
+         *      the query ID
+         * @param r
+         *      the replica ID
+         */
+        public void routeQueryToReplica(int q, int r)
+        {
+            Set<Integer> replicas;
+            if (!mapping.containsKey(q))
+                replicas = new HashSet<Integer>();
+            else 
+                replicas = mapping.get(q);
+            
+            replicas.add(r);
+            mapping.put(q, replicas);
+        }
+        
+        /**
+         * Retrieve the routing replicas for the given query
+         * 
+         * @param q
+         *      The given query
+         * @return
+         *      List of routing replicas
+         */
+        public Set<Integer> getRoutingReplica(int q)
+        {
+            if (mapping.containsKey(q))
+                return mapping.get(q);
+            else
+                throw new RuntimeException("ERROR, does not know" +
+                       " how to route query " + q);
+        }
     }
 }
