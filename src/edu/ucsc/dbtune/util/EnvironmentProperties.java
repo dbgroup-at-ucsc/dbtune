@@ -243,6 +243,11 @@ public final class EnvironmentProperties
      */
     public static final String NUMBER_OF_REPLICA = "number.of.replica";
     
+    /**
+     * Show optimizer cost
+     *  
+     */
+    public static final String SHOW_OPTIMIZER_COST = "optimizer.caculate.cost";
     
     /**
      * List of space budgets (in MB) for physical designs

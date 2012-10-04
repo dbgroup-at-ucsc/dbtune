@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.bip.core;
 import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -150,6 +151,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
                     plans.add(planBIP);
             }
             
+            removeRedundantPlans();
         }
         
         // 4. Get the update costs if the statement is not SELECT statement
@@ -157,6 +159,31 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
         if (stmt.getSQLCategory().isSame(NOT_SELECT))
             getUpdateCostsFromInum(preparedStmt, candidates);
     }
+    
+    /**
+     * Remove the redundant plans in {@code plans} objects
+     * 
+     */
+    protected void removeRedundantPlans()
+    {
+        double minWorstCase = Double.MAX_VALUE;
+        
+        for (PlanInBIP plan : plans)
+            if (plan.getMaxCost() < minWorstCase)
+                minWorstCase = plan.getMaxCost();
+        
+        // remove plan
+        List<PlanInBIP> usefulPlans = new ArrayList<PlanInBIP>();
+        for (PlanInBIP plan : plans){
+            if (plan.getMinCost() < minWorstCase)
+                usefulPlans.add(plan);
+        }
+        
+        Rt.p("ORGINIAL = " + plans.size()
+                + " AFTER PRUNING = " + usefulPlans.size());
+        plans = usefulPlans;
+    }
+    
     	
 	/**
 	 * Retrieve the update costs of the indexes that are relevant to the statement
@@ -353,6 +380,14 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
         
         /** A plan is dead if at least one of its slot is dead */
         private boolean isDead;
+        
+        /** The possible minimum cost (resp. maximum cost) of plugging 
+         * any indexes for this plan */
+        private double minCost;
+        private double maxCost;
+        private double minCostSlot;
+        private double maxCostSlot;
+        
                
         @Override
         public String toString() 
@@ -377,62 +412,101 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
          */
         public void getPlanCostsFromInum(Set<Index> candidates, InumPlan plan) throws SQLException
         {   
-            double cost;
-            
             internalCost = plan.getInternalCost();
             slots = new ArrayList<SlotInBIP>();
             isDead = false;
             
+            // Compute the min and maximum cost of this plan
+            minCost = internalCost;
+            maxCost = internalCost;
+            SlotInBIP slotBIP;
+            
             for (TableAccessSlot slot : plan.getSlots()) {
                 
-                SlotInBIP slotBIP = new SlotInBIP();
-                
-                slotBIP.table = slot.getTable();
-                slotBIP.indexes = new ArrayList<Index>();         
-                slotBIP.withoutFTSIndexes = new ArrayList<Index>();
-                slotBIP.accessCost = new HashMap<Index, Double>();
-                slotBIP.isDead = true;
-                
-                // normal index (not the full table scan index)
-                for (Index index : candidates) 
-                    if (index.getTable().equals(slot.getTable()) && 
-                            !(index instanceof FullTableScanIndex)){     
-                        
-                        cost = plan.plug(slot, index);
-                        
-                        // if the cost is INF ==> the index
-                        // is not used in this slot of this particular
-                        // template plan
-                        if (!Double.isInfinite(cost)) {
-                            slotBIP.indexes.add(index);
-                            slotBIP.withoutFTSIndexes.add(index);
-                            slotBIP.accessCost.put(index, cost);
-                            slotBIP.isDead = false;
-                        }
-                            
-                    }
-                
-                // add the Full Table Scan Index at the last position in this slot
-                FullTableScanIndex ftsIdx = getFullTableScanIndexInstance(slot.getTable());
-                cost = plan.plug(slot, ftsIdx);
-                
-                if (!Double.isInfinite(cost)) {
-                    slotBIP.isDead = false;
-                    slotBIP.indexes.add(ftsIdx);
-                    slotBIP.accessCost.put(ftsIdx, cost);
-                }
-                
+                slotBIP = getSlotFromInum(candidates, plan, slot);
                 slots.add(slotBIP);
                 
-                // At least one slot is dead, 
-                // then the plan is dead also
+                // At least one slot is dead, then the plan is dead also
                 // This plan will not be used
                 if (slotBIP.isDead) {
                     isDead = true;
                     break;
-                    
                 }
+                
+                minCost += minCostSlot;
+                maxCost += maxCostSlot;
             }
+        }
+        
+        /**
+         * Retrieve slot information from INUM and derive the min
+         * and max cost of plugging an index into this slot
+         *  
+         * @param candidates
+         *      Set of candidate indexes
+         * @param plan
+         *      The INUM plan
+         * @param slot
+         *      The slot
+         * @return
+         *      The slot information
+         *      
+         * @throws SQLException
+         */
+        protected SlotInBIP getSlotFromInum(Set<Index> candidates, InumPlan plan, 
+                                            TableAccessSlot slot)
+                throws SQLException
+        {
+            double cost;
+            List<Double> costSlot = new ArrayList<Double>();
+            SlotInBIP slotBIP = new SlotInBIP();
+            
+            slotBIP.table = slot.getTable();
+            slotBIP.indexes = new ArrayList<Index>();         
+            slotBIP.withoutFTSIndexes = new ArrayList<Index>();
+            slotBIP.accessCost = new HashMap<Index, Double>();
+            slotBIP.isDead = true;
+            
+            // normal index (not the full table scan index)
+            for (Index index : candidates) 
+                if (index.getTable().equals(slot.getTable()) && 
+                        !(index instanceof FullTableScanIndex)){     
+                    
+                    cost = plan.plug(slot, index);
+                    
+                    // if the cost is INF ==> the index
+                    // is not used in this slot of this particular
+                    // template plan
+                    if (!Double.isInfinite(cost)) {
+                        slotBIP.indexes.add(index);
+                        slotBIP.withoutFTSIndexes.add(index);
+                        slotBIP.accessCost.put(index, cost);
+                        slotBIP.isDead = false;
+                        
+                        // to determine min and max cost
+                        costSlot.add(cost);
+                    }   
+                }
+            
+            // add the Full Table Scan Index at the last position in this slot
+            FullTableScanIndex ftsIdx = getFullTableScanIndexInstance(slot.getTable());
+            cost = plan.plug(slot, ftsIdx);
+            
+            if (!Double.isInfinite(cost)) {
+                slotBIP.isDead = false;
+                slotBIP.indexes.add(ftsIdx);
+                slotBIP.accessCost.put(ftsIdx, cost);
+            } 
+            // If FTS cannot be put into this slot
+            // the worst case (or max cost of this slot)
+            // should be INF
+            costSlot.add(cost);
+            
+            // Get the min cost slot and max cost slot
+            Collections.sort(costSlot);
+            minCostSlot = costSlot.get(0);
+            maxCostSlot = costSlot.get(costSlot.size() - 1);
+            return slotBIP;
         }
         
         /**
@@ -444,6 +518,32 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
         public double getInternalPlanCost()
         {
             return internalCost;
+        }
+        
+        /**
+         * Retrieve the minimum possible cost of this plan
+         * with respect to the set of candidates that are used
+         * to populate this plan
+         * 
+         * @return
+         *      The minimum cost
+         */
+        public double getMinCost()
+        {
+            return minCost;
+        }
+        
+        /**
+         * Retrieve the maximum possible cost of this plan
+         * with respect to the set of candidates that are used
+         * to populate this plan
+         * 
+         * @return
+         *      The maximum cost
+         */
+        public double getMaxCost()
+        {
+            return maxCost;
         }
         
         /**
