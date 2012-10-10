@@ -60,11 +60,18 @@ public class RobustDivBIP extends DivBIP
         return failureFactor;
     }
     
+    
     /**
-     * todo
+     * Constructor of a DIVBIP with node-failure and imbalance constraint
+     * 
      * @param optCost
+     *      The optimal cost to be used for approximation of node-imbalance constraint
+     *      If this value is -1, it means that we use the exact solution
      * @param nodeFactor
-     * @param coef
+     *      The node-imbalance factor           
+     * @param failureFactor
+     *      The failure-imbalance factor 
+     *  
      */
     public RobustDivBIP(double optCost, double nodeFactor, double failureFactor)
     {
