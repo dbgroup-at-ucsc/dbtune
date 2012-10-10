@@ -11,6 +11,7 @@ import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
@@ -28,7 +29,7 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
     // The threshold to raise an alert
     protected double threshold = 0.5;
     // Number of consecutive times that 
-    protected int maxNumOverThreshod = 4;
+    protected int maxNumOverThreshod = 10;
     
     // counter
     protected int numOverThreshold;
@@ -51,6 +52,7 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
     public void setLogListenter(LogListener logger)
     {
         divBIP.setLogListenter(logger);
+        this.logger = logger;
     }
     
     @Override
@@ -107,13 +109,11 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
          * Automatically notify DBAs if significant changes
          * in the workloads have happened
          */
-        /*
         computeInitialCost();
         double improvementRatio = 1 - getTotalCost() / initialCost;
         if (improvementRatio >= threshold)
             numOverThreshold++;
-        else  // reset
-            numOverThreshold = 0;
+        
         Rt.p(" improvement ratio: " + improvementRatio
                 + " num over treshold: " + numOverThreshold);
         if (numOverThreshold >= maxNumOverThreshod){
@@ -126,7 +126,7 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
             numOverThreshold = 0;
         } else 
             isReconfiguration = false;
-        */
+        
         
         // clear cache
         divBIP.clear();

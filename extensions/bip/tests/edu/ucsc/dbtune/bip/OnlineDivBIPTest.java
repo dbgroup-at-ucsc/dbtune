@@ -58,15 +58,14 @@ public class OnlineDivBIPTest extends DIVPaper
        // prepare workload
        prepareWorkload();
        
-       // set up online workload
-       // and initial configuration
-       getInitialConfiguration(0, -1);
-       initializeOnlineObject();
-       
-       if (isOnline)
+       if (isOnline) {
+           getInitialConfiguration(0, -1);
+           initializeOnlineObject();
            runOnline();
+       }
        
        if (isElasticity) {
+           initializeOnlineObject();
            runElasticity();
            // move this functionality to DivPaper later
            LatexGenerator.generateLatex(latexFile, outputDir, plots);
@@ -131,6 +130,7 @@ public class OnlineDivBIPTest extends DIVPaper
        timeBIP = 0.0;
        timeInum = 0.0;
        Rt.p("Number of statements = " + numStatementsOnline);
+       onlineEntry.setWindowDuration(windowDuration);
        
        for (int i = 0; i < numStatementsOnline; i++) {
            logger.reset();
@@ -139,24 +139,28 @@ public class OnlineDivBIPTest extends DIVPaper
            timeBIP += logger.getRunningTime(EVENT_SOLVING_BIP);
            timeInum += logger.getRunningTime(EVENT_SOLVING_BIP);
            
-           if (i % 20 == 0)
-               Rt.p(" process statement: " + i);
-           
            /**
             * Compare with initial configuration
             * Might need to revisit later
             */
-           /*
+           
            onlineEntry.addCosts(onlineDiv.getTotalCostInitialConfiguration(),
                    onlineDiv.getTotalCost());
            if (onlineDiv.isNeedToReconfiguration()) {
                onlineEntry.addReconfiguration(i);
                Rt.p(" RECONFIGURATION AT : " + i);
            }
-           */
-           onlineEntry.addCosts(-1, onlineDiv.getTotalCost());
+           
+           //onlineEntry.addCosts(-1, onlineDiv.getTotalCost());
+           
+           if (i % 20 == 0) {
+               Rt.p(" AFTER process statement: " + i);
+               onlineEntry.setTimes(timeBIP, timeInum);
+               Rt.p(" store in file = " + onlineFile.getName());
+               serializeOnlineResult(onlineEntry, onlineFile);
+           }
        }
-       onlineEntry.setWindowDuration(windowDuration);
+       
        onlineEntry.setTimes(timeBIP, timeInum);
        Rt.p(" store in file = " + onlineFile.getName());
        serializeOnlineResult(onlineEntry, onlineFile);
@@ -171,9 +175,9 @@ public class OnlineDivBIPTest extends DIVPaper
        // these can come from the list of ticks
        // from the online expt.
        // for now: they are hard-coded
-       int startInitial = 0;
-       int endInitial = -1;
-       int endInvestigation = 55;
+       int startInitial = 190;
+       int endInitial = 200;
+       int endInvestigation = 280;
        
        // get initial configuration
        // empty configuration
@@ -181,11 +185,11 @@ public class OnlineDivBIPTest extends DIVPaper
        
        // set up the new workload
        List<SQLStatement> sqls = new ArrayList<SQLStatement>();
-       for (int i = startInitial; i <= endInvestigation; i++)
+       for (int i = endInitial; i <= endInvestigation; i++)
            sqls.add(wlOnline.get(i));
        workload = new Workload(sqls);
        
-       List<QueryPlanDesc> descs = onlineDiv.getQueryPlanDescs(startInitial, endInvestigation);
+       List<QueryPlanDesc> descs = onlineDiv.getQueryPlanDescs(endInitial, endInvestigation);
        
        // 2. Get the total deployment cost
        double reConfigurationCost = 0.0;
@@ -276,8 +280,10 @@ public class OnlineDivBIPTest extends DIVPaper
             sqls.add(wlOnline.get(i));
         
         workload = new Workload(sqls);
+       
+        List<QueryPlanDesc> descs = onlineDiv.getQueryPlanDescs(startID, endID);
         Rt.p("Initial configuration: " + workload.size());
-        DivBIPFunctionalTest.testDiv(nReplicas, B, true);
+        DivBIPFunctionalTest.testDiv(nReplicas, B, descs);
         initialConf = divConf;
     }
 }

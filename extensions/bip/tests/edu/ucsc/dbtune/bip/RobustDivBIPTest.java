@@ -37,7 +37,10 @@ public class RobustDivBIPTest extends DIVPaper
         
         // test with greedy first
         //testConstraintDiv(true);
-        testConstraintDiv(false);
+        testConstraintDiv(true);
+        
+        // not to draw graph
+        resetParameterNotDrawingGraph();
     }
     
     /**

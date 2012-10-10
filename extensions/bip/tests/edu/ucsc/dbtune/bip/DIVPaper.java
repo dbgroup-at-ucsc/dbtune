@@ -71,7 +71,7 @@ public class DIVPaper extends DivTestSetting
     protected static Map<DivPaperEntry, Double> mapUnifCoPhy;
     
     protected static boolean isEquivalent = false;
-    protected static boolean isOnline = true;
+    protected static boolean isOnline = false;
     protected static boolean isLatex = false;
     protected static boolean isCophy = false;
     
@@ -107,6 +107,13 @@ public class DIVPaper extends DivTestSetting
             LatexGenerator.generateLatex(latexFile, outputDir, plots);
     }
     
+    protected static void resetParameterNotDrawingGraph()
+    {
+        isEquivalent = false;
+        isOnline = false;
+        isLatex = false;
+        isCophy = false;
+    }
     /**
      * Initialize the locations that stored file
      */
@@ -319,7 +326,7 @@ public class DIVPaper extends DivTestSetting
         onlineFile = new File(rawDataDir, wlName + "_" + ONLINE_FILE);
         OnlinePaperEntry entry = readOnlineResult(onlineFile);
         
-        String[] competitors = {"OPT"};
+        String[] competitors = {"1 - OPT/INITIAL"};
         
         int numX = entry.getListInitial().size();
         // the last two for the running time
@@ -330,21 +337,28 @@ public class DIVPaper extends DivTestSetting
         Map<Integer, Integer> ticks = new HashMap<Integer, Integer>();
         for (int id : entry.getReconfigurationStmts())
             ticks.put(id, id);
+        
+        double ratio;
             
         for (int i = 0; i < numX; i++) {
             cost = entry.getListOpt().get(i);
             
-            if (i % 50 == 0)
+            if (i == 0 || ticks.containsKey(i))
                 xaxis[i] = Integer.toString(i);
             else
                 xaxis[i] = "null"; // NOT mark this
             xtics[i] = i;
-            points.add(new Point(i, cost));
+            ratio = 1 - cost / entry.getListInitial().get(i);
+            if (ratio < 0)
+                ratio = 0.0;
+            
+            ratio = ratio * 100;
+            points.add(new Point(i, ratio));
         }
         
         plotName = "online";
         xname = "#query ID";
-        yname = "Optimal cost";
+        yname = "Improvement";
         
         drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                 competitors, figsDir, points);

@@ -228,8 +228,6 @@ public class DivBIPFunctionalTest extends DivTestSetting
         loadfactor = (int) Math.ceil( (double) nReplicas / 2);
         
         Optimizer io = db.getOptimizer();
-         
-        
         div.setCandidateIndexes(candidates);
         div.setWorkload(workload); 
         div.setOptimizer((InumOptimizer) io);
@@ -245,24 +243,29 @@ public class DivBIPFunctionalTest extends DivTestSetting
         if (isExportToFile)
             div.exportCplexToFile(en.getWorkloadsFoldername() + "/test.lp");
         
+        double totalCost;
+        
         if (output != null) {
             divConf = (DivConfiguration) output;
-            /*
-            double queryCost = getDB2QueryCostDivConf(divConf);
-            double updateCost =  div.getUpdateCostFromCplex();
-            double costDB2 = queryCost + updateCost;
-            */
-            Rt.p("temporary NOT COMPUTE DB2 COST");
-            double costDB2 = div.getObjValue();
+            
+            if (isShowOptimizerCost){
+                double queryCost = getDB2QueryCostDivConf(divConf);
+                double updateCost =  div.getUpdateCostFromCplex();
+                totalCost = queryCost + updateCost;
+            }
+            else {
+                Rt.p("temporary NOT COMPUTE DB2 COST");
+                totalCost = div.getObjValue();
+            }
+            
             Rt.p(" n = " + _n + " B = " + _B
                     + " cost in INUM = "
                     + div.getObjValue());
-            Rt.p(" cost in DB2 = " + costDB2);
-            Rt.p(" RATIO = " + (costDB2 / div.getObjValue()));
-            //Rt.p(" query cost = " + queryCost);
-            //Rt.p(" update cost = " + updateCost);
+            Rt.p(" cost in DB2 = " + totalCost);
+            Rt.p(" RATIO = " + (totalCost / div.getObjValue()));
+            Rt.p(" REPLICA IMBALANCE = " + div.getNodeImbalance());
             
-            return costDB2;
+            return totalCost;
         }
         else {
             Rt.p(" NO SOLUTION ");

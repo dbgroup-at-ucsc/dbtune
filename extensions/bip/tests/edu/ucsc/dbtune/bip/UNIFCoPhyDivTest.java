@@ -40,6 +40,9 @@ public class UNIFCoPhyDivTest extends DIVPaper
         // test the result
         entries = readDivResult(unifCoPhyFile);
         Rt.p(" result UNIF COPHY " + entries);
+        
+     // not to draw graph
+        resetParameterNotDrawingGraph();
     }
     
     

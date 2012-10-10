@@ -41,6 +41,9 @@ public class UNIFDB2AdvisorTest extends DIVPaper
         // test the result
         entries = readDivResult(unifFile);
         Rt.p(" result " + entries);
+        
+     // not to draw graph
+        resetParameterNotDrawingGraph();
     }
     
 

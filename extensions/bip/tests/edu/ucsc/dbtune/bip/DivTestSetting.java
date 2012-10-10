@@ -67,8 +67,8 @@ public class DivTestSetting
     protected static DB2Advisor db2Advis;
     protected static String dbName;
     protected static String wlName;
+    protected static boolean isShowOptimizerCost;
     
-    // protected static
     protected static double timeBIP;
     
     // for Debugging purpose only
@@ -78,8 +78,7 @@ public class DivTestSetting
     protected static boolean isShowRecommendation = false;
     protected static boolean isDB2Cost = false;
     protected static boolean isGetAverage = false;
-    protected static boolean isPostprocess = false; 
-    protected static boolean isAllImbalanceConstraint = false;
+    protected static boolean isPostprocess = false;
     protected static boolean isCoPhyDesign = false;
     
     
@@ -101,11 +100,13 @@ public class DivTestSetting
             return;
         
         folder = en.getWorkloadsFoldername();
-        
-        dbName = db.getCatalog().getName();
+        isShowOptimizerCost = en.getIsShowOptimizerCost();
+        dbName = db.getCatalog().getName().toLowerCase();
         String[] tmp = en.getWorkloadsFoldername().split("/");
-        wlName = tmp[tmp.length - 1];
-        Rt.p(" db name = " + dbName + " wl name = " + wlName);
+        wlName = tmp[tmp.length - 1].toLowerCase();
+        Rt.p(" db name = " + dbName + " wl name = " + wlName
+                + " is show optimzier cost = "
+                + isShowOptimizerCost);
         
         // get workload and candidates
         workload = workload(folder);
@@ -181,7 +182,6 @@ public class DivTestSetting
         isShowRecommendation = false;        
         isGetAverage = false;
         isDB2Cost = false;
-        isAllImbalanceConstraint = false;
         
         div = new DivBIP();
         
@@ -278,7 +278,6 @@ public class DivTestSetting
         
         return costs;
     }
-    
     
     
     /**
