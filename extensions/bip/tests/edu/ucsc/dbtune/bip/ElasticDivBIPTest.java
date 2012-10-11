@@ -1,115 +1,130 @@
 package edu.ucsc.dbtune.bip;
 
-import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
-
+import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
 
+import org.junit.Test;
 
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.div.ElasticDivBIP;
+import edu.ucsc.dbtune.bip.util.LatexGenerator;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.bip.util.LatexGenerator.Plot;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 
-import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.computeDeploymentCost;
-
-public class ElasticDivBIPFunctionalTest extends DivTestSetting 
+public class ElasticDivBIPFunctionalTest extends AdaptiveDivBIPTest 
 {   
-    private static double upperCost;
-    private static DivConfiguration sourceConf;
     private static int nDeploys;
     
-    /**
-     * Setup for the test.
-     */
-    @BeforeClass
-    public static void beforeClassSetUp() throws Exception
-    {
-        en = Environment.getInstance();
-        db = newDatabaseSystem(en);
-    }
-    
     @Test
-    public void testShrinkReplicaDivergentDesign() throws Exception
+    public void main() throws Exception
     {   
-        LogListener logger = LogListener.getInstance();
+        // 1. initialize file locations & necessary 
+        // data structures
+        initialize();
         
-        //double updateCost;
-        //double queryCost;
-        double totalCostBIP;
-        
-        // 1. Set common parameters
+        // get database instances, candidate indexes
         getEnvironmentParameters();
-        
-        // 2. set parameters
         setParameters();
         
-        if (!(io instanceof InumOptimizer))
-            return;
+        // set control knobs
+        controlKnobs();
         
-        // compute the  upper bound cost
-        //computeUpperBoundDeployCost();
-                
-        double factors[] = {Math.pow(2, -1), Math.pow(2, -2), Math.pow(2, -3), Math.pow(2, -4), 
-                            Math.pow(2, -5), Math.pow(2, -6), Math.pow(2, -7),
-                            Math.pow(2, -12),
-                            Math.pow(2, -16), 0};
+        // prepare workload
+        prepareWorkload();
         
-        double deployCost; 
-        DivConfiguration dest = new DivConfiguration(0, 0);
-        
-        nReplicas = 4;
-        nDeploys = 3;
-        loadfactor = 2;
-        
-        for (double factor : factors) { 
-            // Call elastic
-            ElasticDivBIP elastic = new ElasticDivBIP();
-            elastic.setCandidateIndexes(candidates);
-            elastic.setWorkload(workload); 
-            elastic.setOptimizer((InumOptimizer) io);
-            elastic.setSpaceBudget(B);
-            elastic.setLogListenter(logger);
-            
-            //elastic.setUpperDeployCost(upperCost * factor);
-            elastic.setInitialConfiguration(sourceConf);
-            elastic.setNumberDeployReplicas(nDeploys);
-
-            // process after
-            DivConfiguration after = (DivConfiguration) elastic.solve();
-                   
-            if (isExportToFile)
-                elastic.exportCplexToFile(en.getWorkloadsFoldername() + "/test.lp");
-            
-            
-            
-            // add the update-base-table-constant costs
-            // this handling is tricky
-            // since we actually deploy only {@nDeploys}
-            totalCostBIP = elastic.getObjValue();
-            
-            dest.copyAndRemoveEmptyConfiguration(after);
-            
-            // output the result
-            deployCost = computeDeploymentCost(sourceConf, after);
-            
-            
-            System.out.println("\n\n\n------------ upperbound cost: " + (factor * upperCost) + "\n"
-                               + " new deploy cost: " + deployCost + "\n"
-                               + " TOTAL cost: " + totalCostBIP +  "\n"
-                               );
-                               //+ " NEW configuration: " + dest);
-        }
+        initializeOnlineObject();
+        runElasticity();
+        // move this functionality to DivPaper later
+        LatexGenerator.generateLatex(latexFile, outputDir, plots);
     }
     
     
+    /**
+     * Set up elasticity experiments
+     * @throws Excpetion
+     */
+    protected static void runElasticity() throws Exception
+    {
+        // these can come from the list of ticks
+        // from the online expt.
+        // for now: they are hard-coded
+        
+        int endInvestigation = 211;
+        int startInvestigation = endInvestigation - en.getWindowDuration();
+        
+        
+        // get initial configuration
+        // empty configuration
+        getInitialConfiguration(0, 199);
+        
+        // set up the new workload
+        List<SQLStatement> sqls = new ArrayList<SQLStatement>();
+        for (int i = startInvestigation; i <= endInvestigation; i++)
+            sqls.add(wlOnline.get(i));
+        workload = new Workload(sqls);
+        
+        List<QueryPlanDesc> descs = onlineDiv.getQueryPlanDescs(startInvestigation, endInvestigation);
+        
+        // 2. Get the total deployment cost
+        double reConfigurationCost = 0.0;
+        DivBIPFunctionalTest.testDiv(nReplicas, B, descs);
+        reConfigurationCost = divConf.transitionCost(initialConf, true);
+        Rt.p("Reconfiguration costs: " + reConfigurationCost);
+        
+        List<Double> costs = new ArrayList<Double>();
+        int startExpo = -4;
+        int endExpo = 0;
+        int numX;
+        numX = endExpo - startExpo + 1;
+        double[] xtics = new double[numX];
+        String[] xaxis = new String[numX];
+        List<Point> points = new ArrayList<Point>();
+        for (int i = startExpo; i <= endExpo; i++) {
+            costs.add(reConfigurationCost * Math.pow(2,  i));
+            xtics[i + numX - 1] = i + numX;
+            xaxis[i + numX - 1] = Double.toString(Math.pow(2,  i)) + "x";
+        }
+        
+        String[] competitors = {"n = 2", "n = 3", "n = 4"};
+        List< List<Double> > totalCostCompetitors = new ArrayList<List<Double>>();
+        double totalTime = 0.0;
+        for (nDeploys = 2; nDeploys <= 4; nDeploys++) {
+            LogListener logger = LogListener.getInstance();
+            totalCostCompetitors.add(ElasticDivBIPFunctionalTest.testElasticity
+                                 (initialConf, costs, nDeploys, logger, descs));
+            totalTime += logger.getTotalRunningTime();
+        }
+        
+        for (int i = 0; i < numX; i++){
+            for (int j = 0; j < competitors.length; j++)
+                points.add(new Point(xtics[i], totalCostCompetitors.get(j).get(i)));
+            
+        }
+       
+        plotName = dbName + "_" + wlName + "elastic";
+        xname = "Reconfiguration cost, each unit is " 
+                    + Double.toString(reConfigurationCost);
+        yname = "Total cost";
+     
+        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                competitors, figsDir, points);
+        totalTime /= 1000;
+        
+        plots.add(new Plot("figs/" + plotName, 
+                " Database = " + dbName + ", workload = " + wlName +
+                " Elasticity, initial configuration includes the first 20 queries"
+                + ". The running time to generate this graph = "
+                + totalTime + " secs ", 0.5));
+               
+    }
     
     /**
      * Test the elasticity aspect

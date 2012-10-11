@@ -71,7 +71,7 @@ public class DIVPaper extends DivTestSetting
     protected static Map<DivPaperEntry, Double> mapUnifCoPhy;
     
     protected static boolean isEquivalent = false;
-    protected static boolean isOnline = false;
+    protected static boolean isOnline = true;
     protected static boolean isLatex = false;
     protected static boolean isCophy = false;
     
@@ -323,7 +323,9 @@ public class DIVPaper extends DivTestSetting
      */
     public static void drawOnline() throws Exception
     {   
-        onlineFile = new File(rawDataDir, wlName + "_" + ONLINE_FILE);
+        int windowDuration = en.getWindowDuration();
+        onlineFile = new File(rawDataDir, wlName + "_" + ONLINE_FILE
+                + "_windows_" + windowDuration);
         OnlinePaperEntry entry = readOnlineResult(onlineFile);
         
         String[] competitors = {"1 - OPT/INITIAL"};
@@ -356,7 +358,7 @@ public class DIVPaper extends DivTestSetting
             points.add(new Point(i, ratio));
         }
         
-        plotName = "online";
+        plotName = dbName + "_" + wlName + "_online_windows_" + windowDuration;
         xname = "#query ID";
         yname = "Improvement";
         
@@ -372,6 +374,7 @@ public class DIVPaper extends DivTestSetting
         Rt.p("reconfiguration: " + entry.getReconfigurationStmts());
         Rt.p(" AVG BIP = " + entry.getTimeBIP() / numX / 1000 + " (secs)");
         Rt.p(" AVG INUM = " + entry.getTimeInum() / numX / 1000 + " (secs) ");
+        Rt.p(" TOTAL TIME = " + entry.getTotalTime() / 1000 + "(secs)");
     }
     
     
@@ -572,6 +575,7 @@ public class DIVPaper extends DivTestSetting
         
         private double timeBIP;
         private double timeINUM;
+        private double totalTime;
         
         int windowDuration;
         
@@ -593,10 +597,11 @@ public class DIVPaper extends DivTestSetting
             this.stmtReconfiguration.add(id);
         }
         
-        public void setTimes(double bip, double inum)
+        public void setTimes(double bip, double inum, double total)
         {
             this.timeBIP = bip;
             this.timeINUM = inum;
+            this.totalTime = total;
         }
         
         public void setWindowDuration(int w)
@@ -617,6 +622,11 @@ public class DIVPaper extends DivTestSetting
         public double getTimeInum()
         {
             return timeINUM;
+        }
+        
+        public double getTotalTime()
+        {
+            return totalTime;
         }
         
         public List<Double> getListInitial()
