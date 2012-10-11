@@ -3,13 +3,17 @@ package edu.ucsc.dbtune.bip.div;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
+import edu.ucsc.dbtune.bip.util.CachedInumQueryCost;
 import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -23,6 +27,7 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
     protected DivConfiguration initialConf; 
     // map the cost of statements w.r.t  initial configuration
     protected Map<Integer, Double> mapStmtInitialCost;
+    protected Map<CachedInumQueryCost, Double> mapInumQueryCost;
     protected double initialCost;
     protected boolean isReconfiguration;
     
@@ -98,8 +103,9 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
         List<QueryPlanDesc> descs = new ArrayList<QueryPlanDesc>();
         for (int id = startID; id <= endID; id++)
             descs.add(super.queryPlanDescs.get(id));        
-        
+       
         // Set the set of query plan description
+        divBIP.clear();
         divBIP.setQueryPlanDesc(descs);
         divBIP.solve();
         
@@ -188,6 +194,7 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
     {
         this.initialConf = conf;
         this.mapStmtInitialCost = new HashMap<Integer, Double>();
+        this.mapInumQueryCost = new HashMap<CachedInumQueryCost, Double>();
     }
     
     /**
@@ -214,10 +221,28 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
         double cost;
         List<Double> costs = new ArrayList<Double>();
         InumPreparedSQLStatement inumPrepared;
+        // Enable the cache
+        // The idea is to cache query & a set of indexes
+        // return the query cost 
+        CachedInumQueryCost inumCost;
+        Set<Integer> indexIDs;
         
         for (int r = 0; r < initialConf.getNumberReplicas(); r++) {
-            inumPrepared = (InumPreparedSQLStatement) this.inumOptimizer.prepareExplain(sql);
-            cost = inumPrepared.explain(initialConf.indexesAtReplica(r)).getTotalCost();
+            
+            indexIDs = new HashSet<Integer>();
+            for (Index i : initialConf.indexesAtReplica(r))
+                indexIDs.add(i.getId());
+            
+            inumCost = new CachedInumQueryCost(sql.getSQL(), indexIDs);
+            Object exist = this.mapInumQueryCost.get(inumCost);
+            if (exist != null){
+                cost = (Double) exist;
+            } else {             
+                inumPrepared = (InumPreparedSQLStatement) this.inumOptimizer.prepareExplain(sql);
+                cost = inumPrepared.explain(initialConf.indexesAtReplica(r)).getTotalCost();
+                this.mapInumQueryCost.put(inumCost, cost);
+            }
+            
             costs.add(cost);
         }
         
