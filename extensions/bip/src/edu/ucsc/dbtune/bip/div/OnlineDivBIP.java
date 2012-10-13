@@ -122,6 +122,7 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
         
         Rt.p(" improvement ratio: " + improvementRatio
                 + " num over treshold: " + numOverThreshold);
+        /*
         if (numOverThreshold >= maxNumOverThreshod){
             // reconfiguration
             isReconfiguration = true;
@@ -132,7 +133,9 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
             numOverThreshold = 0;
         } else 
             isReconfiguration = false;
-        
+        */
+        // Do not need to reconfigure
+        isReconfiguration = false;
         
         // clear cache
         divBIP.clear();
@@ -186,6 +189,31 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
         logger.onLogEvent(LogListener.EVENT_POPULATING_INUM);
     }
     
+    /**
+     * Compute INUM cost for queries in the given ranges with 
+     * the given input configuration 
+     * 
+     * @param startID
+     *      Start ID
+     * @param endID
+     *      End ID
+     * @param initial
+     *      Initial configuration
+     */
+    public double computeINUMCost(int startID, int endID, DivConfiguration initial)
+            throws Exception
+    {
+        this.initialConf = initial;
+        initialCost = 0.0;
+        double cost;
+        for (int id = startID; id <= endID; id++){
+            cost = computeInitialCost(workload.get(id));
+            initialCost += cost;
+            Rt.p("INUM cost for query " + id);
+        }
+        
+        return initialCost;
+    }
     /**
      * Set the initial configuration
      * @param conf

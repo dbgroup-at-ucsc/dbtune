@@ -1,6 +1,5 @@
 package edu.ucsc.dbtune.bip;
 
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -56,6 +55,8 @@ public class DIVPaper extends DivTestSetting
     protected static final String UNIF_COPHY_FILE = "unif_cophy.bin";
     
     protected static final String ONLINE_FILE = "online.bin";
+    protected static final String FAILURE_FILE = "failure.bin";
+    protected static final String IMBALANCE_FILE = "imbalance.bin";
     
     protected static File unifFile;
     protected static File divFile;
@@ -64,6 +65,9 @@ public class DIVPaper extends DivTestSetting
     protected static File designCoPhyFile;
     protected static File onlineFile;
     
+    protected static File failureFile;
+    protected static File imbalanceFile;
+    
     protected static Map<DivPaperEntry, Double> mapUnif;
     protected static Map<DivPaperEntry, Double> mapDiv;
     protected static Map<DivPaperEntry, Double> mapDesign;    
@@ -71,10 +75,11 @@ public class DIVPaper extends DivTestSetting
     protected static Map<DivPaperEntry, Double> mapUnifCoPhy;
     
     protected static boolean isEquivalent = false;
-    protected static boolean isOnline = true;
+    protected static boolean isOnline = false;
     protected static boolean isLatex = false;
     protected static boolean isCophy = false;
-    
+    protected static boolean isFailure = false;
+    protected static boolean isImbalance = true;
     /**
      *
      * Generate paper results
@@ -102,7 +107,14 @@ public class DIVPaper extends DivTestSetting
         if (isOnline)
             drawOnline();
         
-        isLatex = isOnline || isEquivalent || isCophy;
+        if (isFailure)
+            drawFailureImbalance(isFailure);
+        
+        if (isImbalance)
+            drawFailureImbalance(false);
+        
+        isLatex = isOnline || isEquivalent || isCophy || isFailure
+                    || isImbalance;
         if (isLatex)
             LatexGenerator.generateLatex(latexFile, outputDir, plots);
     }
@@ -113,6 +125,8 @@ public class DIVPaper extends DivTestSetting
         isOnline = false;
         isLatex = false;
         isCophy = false;
+        isFailure = false;
+        isImbalance = false;
     }
     /**
      * Initialize the locations that stored file
@@ -315,12 +329,12 @@ public class DIVPaper extends DivTestSetting
     }
     
     
-    /*
+    /***************************************************
+     * 
      * Draw online graph
-     */
-    /**
-     * Read the data from files and draw the graphs
-     */
+     * 
+     * 
+     ***************************************************/
     public static void drawOnline() throws Exception
     {   
         int windowDuration = en.getWindowDuration();
@@ -377,6 +391,79 @@ public class DIVPaper extends DivTestSetting
         Rt.p(" TOTAL TIME = " + entry.getTotalTime() / 1000 + "(secs)");
     }
     
+    
+    /***************************************************
+     * 
+     * Draw failure graph
+     * 
+     * 
+     ***************************************************/
+    public static void drawFailureImbalance(boolean isFailure) throws Exception
+    {   
+        File file;
+        
+        if (isFailure)
+            file = new File(rawDataDir, wlName + "_" + FAILURE_FILE);
+        else 
+            file = new File(rawDataDir, wlName + "_" + IMBALANCE_FILE);
+        Rt.p(" file = " + file.getName());
+        List<RobustPaperEntry> entries = readFailureImbalanceResult(file);
+        Rt.p(" Number entries = " + entries.size());
+        String[] competitors = {"1 - DIVBIP/UNIF"};
+        
+        int numX = entries.size();
+
+        double[] xtics = new double[numX];
+        String[] xaxis = new String[numX];
+        List<Point> points = new ArrayList<Point>();
+        double ratio;
+        RobustPaperEntry entry;
+        double time = 0.0;
+            
+        for (int i = 0; i < numX; i++) {
+            entry = entries.get(i);
+            
+            if (isFailure)
+                xaxis[i] = Double.toString(entry.failureFactor);
+            else 
+                xaxis[i] = Double.toString(entry.nodeFactor);
+            
+            xtics[i] = i;
+            ratio = entry.getCostImprovement();
+            
+            if (ratio < 0)
+                ratio = 0.0;
+            
+            ratio = ratio * 100;
+            points.add(new Point(i, ratio));
+            
+            time += entry.timeDivg;
+        }
+        
+        Rt.p(" time = " + time);
+        
+        if (isFailure) {
+            plotName = dbName + "_" + wlName + "_failure";
+            xname = "Failure factor";
+        }
+        else {
+            plotName = dbName + "_" + wlName + "_imbalance";
+            xname = "Imbalance factor";
+        }
+        
+        yname = "TotalCost Improvement (%)";
+        
+        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                competitors, figsDir, points);
+        
+        plots.add(new Plot("figs/" + plotName,  
+                " IMBALANCE/FAILURE, space = 0.5x, n = 3"
+                + "time BIP = " + time
+                + " AVG TIME = " + (time / numX), 0.5));
+        
+        Rt.p("Total time BIP = " + time);
+        Rt.p(" Averge = " + (time / numX));
+    }
     
     /**
      * Write into a text file
@@ -537,6 +624,53 @@ public class DIVPaper extends DivTestSetting
         return results;
     }
     
+    
+    /**
+     * Store the maps of divergent results into binary object file
+     * 
+     * @param maps
+     *      The map that stores the result           
+     * @param file
+     *      The filename on which the data is written on
+     *      
+     * @throws Exception
+     */
+    protected static void serializeFailureResult(List<RobustPaperEntry> entries, File file) throws Exception 
+    {    
+        ObjectOutputStream write;
+        Rt.p("Store in file = " + file.getName());
+        try {
+            FileOutputStream fileOut = new FileOutputStream(file, false);
+            write = new ObjectOutputStream(fileOut);
+            write.writeObject(entries);
+            write.close();
+            fileOut.close();
+        } catch(IOException e) {
+            throw new SQLException(e);
+        }
+    }
+    
+    protected static List<RobustPaperEntry> readFailureImbalanceResult(File file) 
+            throws Exception
+    {
+        ObjectInputStream in;
+        List<RobustPaperEntry> results = null;
+        try {
+            FileInputStream fileIn = new FileInputStream(file);
+            in = new ObjectInputStream(fileIn);
+            results = (List<RobustPaperEntry>) in.readObject();
+
+            in.close();
+            fileIn.close();
+        } catch(IOException e) {
+            throw new SQLException(e);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException(e);
+        }
+        
+        return results;
+    }
+            
     /**
      * Class of data points drawn in GnuPlot
      * 
@@ -566,156 +700,6 @@ public class DIVPaper extends DivTestSetting
         //return (long) (B / Math.pow(2, 20));
     }
     
-    public static class OnlinePaperEntry implements Serializable
-    {
-        private static final long serialVersionUID = 1L;
-        private List<Double> initialCosts;
-        private List<Double> optCosts;
-        private List<Integer> stmtReconfiguration;
-        
-        private double timeBIP;
-        private double timeINUM;
-        private double totalTime;
-        
-        int windowDuration;
-        
-        public OnlinePaperEntry()
-        {
-            initialCosts = new ArrayList<Double>();
-            optCosts = new ArrayList<Double>();
-            stmtReconfiguration = new ArrayList<Integer>();
-        }
-        
-        public void addCosts(double initial, double opt)
-        {
-            this.initialCosts.add(initial);
-            this.optCosts.add(opt);
-        }
-        
-        public void addReconfiguration(int id)
-        {
-            this.stmtReconfiguration.add(id);
-        }
-        
-        public void setTimes(double bip, double inum, double total)
-        {
-            this.timeBIP = bip;
-            this.timeINUM = inum;
-            this.totalTime = total;
-        }
-        
-        public void setWindowDuration(int w)
-        {
-            this.windowDuration = w;
-        }
-        
-        public double getTimeBIP()
-        {
-            return timeBIP;
-        }
-
-        public int getWindowDuration()
-        {
-            return this.windowDuration;
-        }
-        
-        public double getTimeInum()
-        {
-            return timeINUM;
-        }
-        
-        public double getTotalTime()
-        {
-            return totalTime;
-        }
-        
-        public List<Double> getListInitial()
-        {
-            return this.initialCosts;
-        }
-        
-        public List<Double> getListOpt()
-        {
-            return this.optCosts;
-        }
-        
-        public List<Integer> getReconfigurationStmts()
-        {
-            return this.stmtReconfiguration;
-        }
-    }
-    /**
-     * This class stores the total cost of 
-     * each method (UNIF, DIVBIP, DIVGDESIN)
-     * on a particular instance of the divergent 
-     * problem: database name, workload name,
-     * number of replicas, and space budget
-     * 
-     * @author Quoc Trung Tran
-     *
-     */
-    public static class DivPaperEntry implements Serializable
-    {
-        private static final long serialVersionUID = 1L;
-        private String dbName;
-        private String wlName;
-        private int n;
-        private long B;
-        private int fHashCode;
-        
-        public DivPaperEntry(String _db, String _wl, int _n, long _B)
-        {
-            dbName = _db;
-            wlName = _wl;
-            n = _n;
-            B = _B;
-        }
-
-        @Override
-        public boolean equals(Object obj) 
-        {   
-            if (!(obj instanceof DivPaperEntry))
-                return false;
-            
-            DivPaperEntry competitor = (DivPaperEntry) obj;    
-            if ( !(this.dbName.equals(competitor.dbName)) ||   
-                 !(this.wlName.equals(competitor.wlName)) ||
-                 (this.n != competitor.n) ||  
-                 (this.B != competitor.B))  
-                return false;
-            
-            return true;
-        }
-        
-        @Override
-        public String toString()
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.append("db = " + dbName + "\n")
-              .append("wl = " + wlName + "\n")
-              .append("number of replicas = " + n + "\n")
-              .append("space budget = " + (B / Math.pow(2, 20)) + "\n");
-            
-            return sb.toString();
-        }
-        
-        @Override
-        public int hashCode() 
-        {
-            if (fHashCode == 0) {
-                int result = HashCodeUtil.SEED;
-                result = HashCodeUtil.hash(result, this.dbName.hashCode());
-                result = HashCodeUtil.hash(result, this.wlName.hashCode());
-                result = HashCodeUtil.hash(result, this.n);
-                result = HashCodeUtil.hash(result, this.B);
-                fHashCode = result;
-            }
-            
-            return fHashCode;
-        }
-    }
-    
-    
     /**
      * Read the data from files and draw the graphs
      */
@@ -738,21 +722,21 @@ public class DIVPaper extends DivTestSetting
         
         // 4. DIVGDESIGN-COPHY
         designCoPhyFile = new File(rawDataDir, wlName + "_" + DESIGN_COPHY_FILE);
-        //mapDesignCoPhy = readDivResult(designCoPhyFile);
+        mapDesignCoPhy = readDivResult(designCoPhyFile);
         
         String[] competitors;
         
         // 3. draw graphs
         if (drawRatio)
             competitors = new String[] {
-                //"1 - DIV-BIP/DESIGN-COPHY",
+                "1 - DIV-BIP/DESIGN-COPHY",
                 "1 - DIV-BIP/UNIF-COPHY",
                 "1 - DIV-BIP/UNIF-DB2"};
             //competitors = new String[] {"1 - DIV-BIP/UNIF-COPHY"};
         else 
             competitors = new String[] {
                                         "DIV-BIP", 
-                                        //"DESIGN-COPHY",
+                                        "DESIGN-COPHY",
                                         "UNIF-COPHY", 
                                         "UNIF-DB2"
                                         };
@@ -857,7 +841,7 @@ public class DIVPaper extends DivTestSetting
         costDiv = mapDiv.get(entry);
         costUnif = mapUnif.get(entry);
         costUnifCoPhy = mapUnifCoPhy.get(entry);
-        //costDesignCoPhy = mapDesignCoPhy.get(entry);
+        costDesignCoPhy = mapDesignCoPhy.get(entry);
         
         Rt.p(" entry: " + entry);
         Rt.p(" cost UNIF = " + (costUnif / Math.pow(10, 6)));
@@ -866,11 +850,11 @@ public class DIVPaper extends DivTestSetting
         
         ratioDiv = 1 - (double) costDiv / costUnif;
         ratioCoPhy = 1 - (double) costDiv / costUnifCoPhy;
-        //ratioDesign = 1 - (double) costDiv / costDesignCoPhy;
+        ratioDesign = 1 - (double) costDiv / costDesignCoPhy;
         
         ratioDiv = ratioDiv * 100;
         ratioCoPhy = ratioCoPhy * 100;
-        //ratioDesign = ratioDesign * 100;
+        ratioDesign = ratioDesign * 100;
         
         if (ratioDiv < 0.0) {
             Rt.p(" watch out, entry = " + entry
@@ -883,15 +867,14 @@ public class DIVPaper extends DivTestSetting
                     + ", ratioCoPhy = " + ratioCoPhy);
             ratioCoPhy = 0.05;
         }
-        /*
+        
         if (ratioDesign < 0.0){
             Rt.p("watch out, entry = " + entry 
                     + ", ratioDesign = " + ratioDesign);
             ratioDesign = 0.05;
         }
-        */
         
-        //points.add(new Point(xcoordinate, ratioDesign));
+        points.add(new Point(xcoordinate, ratioDesign));
         points.add(new Point(xcoordinate, ratioCoPhy));
         points.add(new Point(xcoordinate, ratioDiv));
         
@@ -910,11 +893,200 @@ public class DIVPaper extends DivTestSetting
         costDiv = mapDiv.get(entry);
         costUnifCoPhy = mapUnifCoPhy.get(entry);
         costUnif = mapUnif.get(entry);
-        //costDesignCoPhy = mapDesignCoPhy.get(entry);
+        costDesignCoPhy = mapDesignCoPhy.get(entry);
         
         points.add(new Point(xcoordinate, costDiv));
-        //points.add(new Point(xcoordinate, costDesignCoPhy));
+        points.add(new Point(xcoordinate, costDesignCoPhy));
         points.add(new Point(xcoordinate, costUnifCoPhy));
         points.add(new Point(xcoordinate, costUnif));
+    }
+    
+    /**
+     * This class stores the total cost of 
+     * each method (UNIF, DIVBIP, DIVGDESIN)
+     * on a particular instance of the divergent 
+     * problem: database name, workload name,
+     * number of replicas, and space budget
+     * 
+     * @author Quoc Trung Tran
+     *
+     */
+    public static class DivPaperEntry implements Serializable
+    {
+        private static final long serialVersionUID = 1L;
+        private String dbName;
+        private String wlName;
+        private int n;
+        private long B;
+        private int fHashCode;
+        // TODO: include the running time
+        
+        public DivPaperEntry(String _db, String _wl, int _n, long _B)
+        {
+            dbName = _db;
+            wlName = _wl;
+            n = _n;
+            B = _B;
+        }
+
+        @Override
+        public boolean equals(Object obj) 
+        {   
+            if (!(obj instanceof DivPaperEntry))
+                return false;
+            
+            DivPaperEntry competitor = (DivPaperEntry) obj;    
+            if ( !(this.dbName.equals(competitor.dbName)) ||   
+                 !(this.wlName.equals(competitor.wlName)) ||
+                 (this.n != competitor.n) ||  
+                 (this.B != competitor.B))  
+                return false;
+            
+            return true;
+        }
+        
+        @Override
+        public String toString()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.append("db = " + dbName + "\n")
+              .append("wl = " + wlName + "\n")
+              .append("number of replicas = " + n + "\n")
+              .append("space budget = " + (B / Math.pow(2, 20)) + "\n");
+            
+            return sb.toString();
+        }
+        
+        @Override
+        public int hashCode() 
+        {
+            if (fHashCode == 0) {
+                int result = HashCodeUtil.SEED;
+                result = HashCodeUtil.hash(result, this.dbName.hashCode());
+                result = HashCodeUtil.hash(result, this.wlName.hashCode());
+                result = HashCodeUtil.hash(result, this.n);
+                result = HashCodeUtil.hash(result, this.B);
+                fHashCode = result;
+            }
+            
+            return fHashCode;
+        }
+    }
+    
+    /**
+     * Online result
+     * @author Quoc Trung Tran
+     *
+     */
+    public static class OnlinePaperEntry implements Serializable
+    {
+        private static final long serialVersionUID = 1L;
+        private List<Double> initialCosts;
+        private List<Double> optCosts;
+        private List<Integer> stmtReconfiguration;
+        
+        private double timeBIP;
+        private double timeINUM;
+        private double totalTime;
+        
+        int windowDuration;
+        
+        public OnlinePaperEntry()
+        {
+            initialCosts = new ArrayList<Double>();
+            optCosts = new ArrayList<Double>();
+            stmtReconfiguration = new ArrayList<Integer>();
+        }
+        
+        public void addCosts(double initial, double opt)
+        {
+            this.initialCosts.add(initial);
+            this.optCosts.add(opt);
+        }
+        
+        public void addReconfiguration(int id)
+        {
+            this.stmtReconfiguration.add(id);
+        }
+        
+        public void setTimes(double bip, double inum, double total)
+        {
+            this.timeBIP = bip;
+            this.timeINUM = inum;
+            this.totalTime = total;
+        }
+        
+        public void setWindowDuration(int w)
+        {
+            this.windowDuration = w;
+        }
+        
+        public double getTimeBIP()
+        {
+            return timeBIP;
+        }
+
+        public int getWindowDuration()
+        {
+            return this.windowDuration;
+        }
+        
+        public double getTimeInum()
+        {
+            return timeINUM;
+        }
+        
+        public double getTotalTime()
+        {
+            return totalTime;
+        }
+        
+        public List<Double> getListInitial()
+        {
+            return this.initialCosts;
+        }
+        
+        public List<Double> getListOpt()
+        {
+            return this.optCosts;
+        }
+        
+        public List<Integer> getReconfigurationStmts()
+        {
+            return this.stmtReconfiguration;
+        }
+    }
+    
+    /**
+     * Store the results of evaluating failures
+     * 
+     * @author Quoc Trung Tran
+     *
+     */
+    public static class RobustPaperEntry implements Serializable
+    {
+        private static final long serialVersionUID = 1L;
+   
+        double failureFactor;
+        double nodeFactor; // usually 0.0
+        double costDivg;
+        double costUnif;
+        double timeDivg;
+        
+        public RobustPaperEntry(double failure, double node,
+                                double divg, double unif,
+                                 double time)
+        {
+            this.failureFactor = failure;
+            this.nodeFactor = node;
+            this.costDivg = divg;
+            this.costUnif = unif;
+            this.timeDivg = time;
+        }
+        
+        public double getCostImprovement()
+        {
+            return 1 - (costDivg/ costUnif);
+        }       
     }
 }

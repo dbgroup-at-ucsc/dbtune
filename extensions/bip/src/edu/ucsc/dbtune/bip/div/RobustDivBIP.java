@@ -60,6 +60,15 @@ public class RobustDivBIP extends DivBIP
         return failureFactor;
     }
     
+    /**
+     * Retrieve node factor
+     * 
+     * @return
+     */
+    public double getNodeFactor()
+    {
+        return nodeFactor;
+    }
     
     /**
      * Constructor of a DIVBIP with node-failure and imbalance constraint
@@ -148,8 +157,9 @@ public class RobustDivBIP extends DivBIP
         
         // Constraint for cost(q, r) corresponds to the optimal
         // execution cost of q on replica r
+        boolean isApproximation = true;
         queryOptimalBuilder = new QueryCostOptimalBuilderGeneral(cplex, cplexVar, 
-                poolVariables, true);
+                poolVariables, isApproximation);
         UtilConstraintBuilder.cplexVar = cplexVar;
         
         for (QueryPlanDesc desc : queryPlanDescs) {
@@ -158,7 +168,6 @@ public class RobustDivBIP extends DivBIP
             for (int r = 0; r < nReplicas; r++)  
                 queryOptimalBuilder.optimalConstraints(r, desc.getStatementID(), desc);
         }
-        
         
         // imbalance constraints
         List<IloLinearNumExpr> exprs = new ArrayList<IloLinearNumExpr>();

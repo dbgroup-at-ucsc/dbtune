@@ -31,8 +31,8 @@ import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
  */
 public class DivBIPFunctionalTest extends DivTestSetting
 {   
-    protected static boolean isComparedDB2 = true;
-    protected static boolean isComparedUnif = false;
+    protected static boolean isComparedDB2 = false;
+    protected static boolean isComparedUnif = true;
     
     @Test
     public void main() throws Exception

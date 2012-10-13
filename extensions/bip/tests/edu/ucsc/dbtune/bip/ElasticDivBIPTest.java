@@ -19,7 +19,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
 
-public class ElasticDivBIPFunctionalTest extends AdaptiveDivBIPTest 
+public class ElasticDivBIPTest extends AdaptiveDivBIPTest 
 {   
     private static int nDeploys;
     
@@ -56,10 +56,8 @@ public class ElasticDivBIPFunctionalTest extends AdaptiveDivBIPTest
         // these can come from the list of ticks
         // from the online expt.
         // for now: they are hard-coded
-        
         int endInvestigation = 211;
         int startInvestigation = endInvestigation - en.getWindowDuration();
-        
         
         // get initial configuration
         // empty configuration
@@ -70,7 +68,10 @@ public class ElasticDivBIPFunctionalTest extends AdaptiveDivBIPTest
         for (int i = startInvestigation; i <= endInvestigation; i++)
             sqls.add(wlOnline.get(i));
         workload = new Workload(sqls);
-        
+        // compute the cost of current configuration
+        double currentCost = onlineDiv.computeINUMCost(startInvestigation, endInvestigation,
+                                        initialConf);
+        Rt.p(" current cost = " + currentCost);
         List<QueryPlanDesc> descs = onlineDiv.getQueryPlanDescs(startInvestigation, endInvestigation);
         
         // 2. Get the total deployment cost
@@ -93,20 +94,21 @@ public class ElasticDivBIPFunctionalTest extends AdaptiveDivBIPTest
             xaxis[i + numX - 1] = Double.toString(Math.pow(2,  i)) + "x";
         }
         
-        String[] competitors = {"n = 2", "n = 3", "n = 4"};
+        String[] competitors = {"n = 2", "n = 3", "n = 4", "CURRENT"};
         List< List<Double> > totalCostCompetitors = new ArrayList<List<Double>>();
         double totalTime = 0.0;
         for (nDeploys = 2; nDeploys <= 4; nDeploys++) {
             LogListener logger = LogListener.getInstance();
-            totalCostCompetitors.add(ElasticDivBIPFunctionalTest.testElasticity
+            totalCostCompetitors.add(testElasticity
                                  (initialConf, costs, nDeploys, logger, descs));
             totalTime += logger.getTotalRunningTime();
         }
         
-        for (int i = 0; i < numX; i++){
-            for (int j = 0; j < competitors.length; j++)
+        for (int i = 0; i < numX; i++) {
+            for (int j = 0; j < competitors.length - 1; j++) 
                 points.add(new Point(xtics[i], totalCostCompetitors.get(j).get(i)));
             
+            points.add(new Point(xtics[i], currentCost));
         }
        
         plotName = dbName + "_" + wlName + "elastic";

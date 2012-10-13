@@ -3,15 +3,12 @@ package edu.ucsc.dbtune.bip;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.junit.Test;
 
-import edu.ucsc.dbtune.bip.DIVPaper.DivPaperEntry;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.div.RobustDivBIP;
-import edu.ucsc.dbtune.bip.div.UtilConstraintBuilder;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.util.Rt;
@@ -22,8 +19,8 @@ import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.computeCoefCostWithF
 public class RobustDivBIPTest extends DIVPaper 
 {   
     private static RobustDivBIP constraintDiv;
+    private static List<RobustPaperEntry> entries;
     
- 
     @Test
     public void testConstraintDiv() throws Exception
     {
@@ -32,34 +29,6 @@ public class RobustDivBIPTest extends DIVPaper
         getEnvironmentParameters();
         setParameters();
         
-        if (!(io instanceof InumOptimizer))
-            return;
-        
-        // test with greedy first
-        //testConstraintDiv(true);
-        testConstraintDiv(true);
-        
-        // not to draw graph
-        resetParameterNotDrawingGraph();
-    }
-    
-    /**
-     * Use greedy approach
-     * 
-     * @throws Exception
-     */
-    protected static void testConstraintDiv(boolean isGreedy) throws Exception
-    {   
-        double optimalTotalCost;
-        
-        // get optimal total cost value
-        if (isGreedy) {
-            optimalTotalCost = DivBIPFunctionalTest.testDiv(nReplicas, B, false);
-            div.clear();
-        } else
-            optimalTotalCost = -1;
-
-        Rt.p(" optimal total cost = " + optimalTotalCost);
         List<Double> nodeFactors = new ArrayList<Double>();
         List<Double> failureFactors = new ArrayList<Double>();
         
@@ -78,22 +47,87 @@ public class RobustDivBIPTest extends DIVPaper
             ;
         }
         
-        for (int i = 0; i < nodeFactors.size(); i++){
+        // Test failures
+        testFailure(failureFactors);
+        
+        // Test imbalance
+        testImbalance(nodeFactors, true);
+        
+        // not to draw graph
+        resetParameterNotDrawingGraph();
+    }
+    
+    
+    protected static void testFailure(List<Double> failureFactors) throws Exception
+    {
+        entries = new ArrayList<RobustPaperEntry>();
+        for (int i = 0; i < failureFactors.size(); i++) {
             // initialize object
-            constraintDiv = new RobustDivBIP(optimalTotalCost, nodeFactors.get(i), 
+            constraintDiv = new RobustDivBIP(-1, 0.0, 
                              failureFactors.get(i));
-            runImbalanceConstraintBIP(constraintDiv, isGreedy);
+            
+            failureFile = new File(rawDataDir, wlName + "_" + FAILURE_FILE);
+            failureFile.delete();
+            failureFile = new File(rawDataDir, wlName + "_" + FAILURE_FILE);
+            failureFile.createNewFile();
+            runFullDDT(constraintDiv, true);
+            
+            // ----------------------------------
+            // store to file (since it takes time)
+            serializeFailureResult(entries, failureFile);
         }
     }
     
     /**
-     * Run the BIP 
+     * Use greedy approach
      * 
      * @throws Exception
      */
-    public static double runImbalanceConstraintBIP(RobustDivBIP robustDiv, boolean isGreedy) 
+    protected static void testImbalance(List<Double> nodeFactors, boolean isGreedy) throws Exception
+    {   
+        double optimalTotalCost;
+        
+        // get optimal total cost value
+        if (isGreedy) {
+            optimalTotalCost = DivBIPFunctionalTest.testDiv(nReplicas, B, false);
+            div.clear();
+        } else
+            optimalTotalCost = -1;
+
+        Rt.p(" optimal total cost = " + optimalTotalCost);
+        entries = new ArrayList<RobustPaperEntry>();
+        String name = IMBALANCE_FILE;
+        if (isGreedy)
+            name += "_greedy";
+        else
+            name += "_exact";
+        
+        for (int i = 0; i < nodeFactors.size(); i++){
+            // initialize object
+            constraintDiv = new RobustDivBIP(optimalTotalCost, nodeFactors.get(i), 
+                             0.0);
+            
+            imbalanceFile = new File(rawDataDir, wlName + "_" + name);
+            imbalanceFile.delete();
+            imbalanceFile = new File(rawDataDir, wlName + "_" + name);
+            imbalanceFile.createNewFile();
+            runFullDDT(constraintDiv, isGreedy);
+            
+            // ----------------------------------
+            // store to file (since it takes time)
+            serializeFailureResult(entries, imbalanceFile);
+        }
+        
+    }
+    
+    /**
+     * Handle both load-imbalance and failures
+     * 
+     * @throws Exception
+     */
+    public static void runFullDDT(RobustDivBIP robustDiv, boolean isGreedy) 
             throws Exception
-    {        
+    {           
         double totalCostBIP = -1.0;
         io = db.getOptimizer();
         
@@ -112,6 +146,8 @@ public class RobustDivBIPTest extends DIVPaper
             robustDiv.exportCplexToFile(en.getWorkloadsFoldername() + "/test.lp");
         
         Rt.p(logger.toString());
+        double time = logger.getTotalRunningTime();
+        
         if (output != null) {
             
             double costUnifUnderFailure = computeCostUNIFUnderFailure (constraintDiv.getFailureFactor(), 
@@ -127,6 +163,10 @@ public class RobustDivBIPTest extends DIVPaper
                     + " DIVBIP / UNIF = " + (totalCostBIP / costUnifUnderFailure)
                 );
             
+            RobustPaperEntry entry = new RobustPaperEntry
+                    (robustDiv.getFailureFactor(), robustDiv.getNodeFactor(),
+                            totalCostBIP, costUnifUnderFailure, time);
+            entries.add(entry);
             
             if (isShowRecommendation)
                 Rt.p(" solution: " + output);
@@ -137,9 +177,16 @@ public class RobustDivBIPTest extends DIVPaper
         } else 
             Rt.p(" NO SOLUTION ");
         
-        return totalCostBIP;
     }
     
+    /**
+     * Get the cost under failure
+     * 
+     * @param factor
+     * @param N
+     * @return
+     * @throws Exception
+     */
     protected static double computeCostUNIFUnderFailure(double factor, int N)
             throws Exception
     {
@@ -147,6 +194,9 @@ public class RobustDivBIPTest extends DIVPaper
         double costUnif;
         //  1. Read the result from UNIF file
         unifFile = new File(rawDataDir, wlName + "_" + UNIF_DB2_FILE);
+        Rt.p(" file name = " + unifFile.getName()
+                + " absolute path = "
+                + unifFile.getAbsolutePath());
         mapUnif = readDivResult(unifFile);
     
         DivPaperEntry entry = new DivPaperEntry(dbName, wlName, nReplicas, convertBudgetToMB (B));

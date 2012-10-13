@@ -1,14 +1,12 @@
 package edu.ucsc.dbtune.bip;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
-import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
+
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
@@ -17,8 +15,6 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.util.Rt;
 
-
-import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
@@ -54,6 +50,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
         if (file.exists())
             file.delete();
         
+        /*
         // reset the counter in Index class
         int maxID = -1;
         for (Index index : candidates)
@@ -62,6 +59,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
         
         Index.IN_MEMORY_ID = new AtomicInteger(maxID + 1);
         // ----------------------------------------------------
+        */
         
         B = listBudgets.get(0);
         nReplicas = listNumberReplicas.get(0);
@@ -82,6 +80,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
      */
     private static void testDiv() throws Exception
     {
+        /*
         List<Double> inumOpt= computeQueryCostsInum(workload, candidates);
         List<Double> db2Opt= computeCostsDB2(workload, candidates);
         double inumTotal = 0.0, db2Total = 0.0;
@@ -114,6 +113,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
                 + " DB2 (FTS indexes): " + db2FTSTotal
                 + " INUM / DB2 = " + (inumFTSTotal / db2FTSTotal));
         System.exit(1);
+        */
         
         div = new DivBIP();
         

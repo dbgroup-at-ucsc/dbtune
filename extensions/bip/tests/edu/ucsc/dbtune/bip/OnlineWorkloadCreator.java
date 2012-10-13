@@ -25,8 +25,8 @@ public class OnlineWorkloadCreator extends DIVPaper
     private static List<SQLStatement> sqlFirst;
     private static List<SQLStatement> sqlSecond;
     
-    protected static boolean isPartitionWorkload = false;
-    protected static boolean isGenerateWorkload = true;
+    protected static boolean isPartitionWorkload = true;
+    protected static boolean isGenerateWorkload = false;
     
     @Test
     public void main() throws Exception
