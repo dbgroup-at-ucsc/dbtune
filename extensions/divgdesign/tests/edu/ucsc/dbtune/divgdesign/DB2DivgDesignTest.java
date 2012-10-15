@@ -22,7 +22,6 @@ public class DB2DivgDesignTest extends DIVPaper
         // wl names
         initialize();
         
-        
         long start = System.currentTimeMillis();
         
         // 3. 
@@ -34,13 +33,16 @@ public class DB2DivgDesignTest extends DIVPaper
         Rt.p(" Total running time" + totalTimes
                 + " avg: " + totalTimes / (listBudgets.size() * listNumberReplicas.size()));
         // 2. special data structures for this class
+        storeResult();
         
+    }
+    
+    protected static void storeResult() throws Exception
+    {
         designFile = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
         designFile.delete();
         designFile = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
         designFile.createNewFile();
-        
-        
         
         // store in the serialize file
         serializeDivResult(entries, designFile);
@@ -48,6 +50,9 @@ public class DB2DivgDesignTest extends DIVPaper
         // test the result
         entries = readDivResult(designFile);
         Rt.p(" result " + entries);
+        
+        // not to draw graph
+        resetParameterNotDrawingGraph();
     }
     
 
@@ -81,6 +86,9 @@ public class DB2DivgDesignTest extends DIVPaper
                         (dbName, wlName, n, budget);
                 
                 entries.put(entry, costDiv);
+                // since it is expensive
+                // store after one result is obtained
+                storeResult();
             }
     }
     

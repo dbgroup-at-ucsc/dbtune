@@ -143,6 +143,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
             // add the update-base-table-constant costs
             totalCostBIP = div.getObjValue() ; // +div.getTotalBaseTableUpdateCost();            
             Rt.p(" TOTAL COST(INUM): " + totalCostBIP);
+            Rt.p("NODE IMBALANCE = " + div.getNodeImbalance());
             
             Set<Index> conf;
             DivConfiguration divConf = (DivConfiguration) output;

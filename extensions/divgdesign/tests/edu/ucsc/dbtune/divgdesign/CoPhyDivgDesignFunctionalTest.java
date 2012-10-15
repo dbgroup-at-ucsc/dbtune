@@ -65,6 +65,9 @@ public class CoPhyDivgDesignFunctionalTest extends DIVPaper
         // test the result
         entries = readDivResult(designCoPhyFile);
         Rt.p(" result " + entries);
+        
+     // not to draw graph
+        resetParameterNotDrawingGraph();
     }
     
 

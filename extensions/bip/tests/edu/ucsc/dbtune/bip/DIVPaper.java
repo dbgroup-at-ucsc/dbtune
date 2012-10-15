@@ -24,7 +24,6 @@ import edu.ucsc.dbtune.util.GnuPlotLine;
 import edu.ucsc.dbtune.util.HashCodeUtil;
 import edu.ucsc.dbtune.util.Rt;
 
-
 /**
  * Run experiments presented in the DIV-paper
  * 
@@ -56,7 +55,11 @@ public class DIVPaper extends DivTestSetting
     
     protected static final String ONLINE_FILE = "online.bin";
     protected static final String FAILURE_FILE = "failure.bin";
-    protected static final String IMBALANCE_FILE = "imbalance.bin";
+    protected static final String IMBALANCE_EXACT_FILE = "imbalance_exact.bin";
+    protected static final String IMBALANCE_GREEDY_FILE = "imbalance_greedy.bin";
+
+    protected static final String FAILURE_IMBALANCE_EXACT_FILE = "failure_imbalance_exact.bin";
+    protected static final String FAILURE_IMBALANCE_GREEDY_FILE = "failure_imbalance_greedy.bin";
     
     protected static File unifFile;
     protected static File divFile;
@@ -67,6 +70,7 @@ public class DIVPaper extends DivTestSetting
     
     protected static File failureFile;
     protected static File imbalanceFile;
+    protected static File failureImbalanceFile;
     
     protected static Map<DivPaperEntry, Double> mapUnif;
     protected static Map<DivPaperEntry, Double> mapDiv;
@@ -75,11 +79,13 @@ public class DIVPaper extends DivTestSetting
     protected static Map<DivPaperEntry, Double> mapUnifCoPhy;
     
     protected static boolean isEquivalent = false;
-    protected static boolean isOnline = false;
+    protected static boolean isOnline = true;
     protected static boolean isLatex = false;
     protected static boolean isCophy = false;
     protected static boolean isFailure = false;
-    protected static boolean isImbalance = true;
+    protected static boolean isImbalance = false;
+    protected static boolean isFailureImbalance = false;
+    
     /**
      *
      * Generate paper results
@@ -108,13 +114,16 @@ public class DIVPaper extends DivTestSetting
             drawOnline();
         
         if (isFailure)
-            drawFailureImbalance(isFailure);
+            drawFailure(isFailure);
         
         if (isImbalance)
-            drawFailureImbalance(false);
+            drawImbalance();
+        
+        if (isFailureImbalance)
+            drawImbalanceFailure();
         
         isLatex = isOnline || isEquivalent || isCophy || isFailure
-                    || isImbalance;
+                    || isImbalance || isFailureImbalance;
         if (isLatex)
             LatexGenerator.generateLatex(latexFile, outputDir, plots);
     }
@@ -354,6 +363,8 @@ public class DIVPaper extends DivTestSetting
         for (int id : entry.getReconfigurationStmts())
             ticks.put(id, id);
         
+        Rt.p(" ticks: " + ticks);
+        
         double ratio;
             
         for (int i = 0; i < numX; i++) {
@@ -379,10 +390,16 @@ public class DIVPaper extends DivTestSetting
         drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                 competitors, figsDir, points);
         
+        double avgInum = entry.getTimeInum() / numX / 1000;
+        double avgBip = entry.getTimeBIP() / numX / 1000;
+        
         plots.add(new Plot("figs/" + plotName,  
                 " ONLINE, space = 0.5x, n = 3"
                 + "time BIP = " + entry.getTimeBIP()
                 + " window duration =  " + entry.getWindowDuration()
+                + " AVG Inum = " + avgInum  + "(secs)"
+                + " AVG BIP = " + avgBip  + "(secs)"
+                + " AVG one query = " + (avgInum + avgBip) + "(secs)"
                 , 0.5));
         
         Rt.p("reconfiguration: " + entry.getReconfigurationStmts());
@@ -398,14 +415,14 @@ public class DIVPaper extends DivTestSetting
      * 
      * 
      ***************************************************/
-    public static void drawFailureImbalance(boolean isFailure) throws Exception
+    public static void drawFailure(boolean isFailure) throws Exception
     {   
         File file;
         
         if (isFailure)
             file = new File(rawDataDir, wlName + "_" + FAILURE_FILE);
         else 
-            file = new File(rawDataDir, wlName + "_" + IMBALANCE_FILE);
+            file = new File(rawDataDir, wlName + "_" + IMBALANCE_EXACT_FILE);
         Rt.p(" file = " + file.getName());
         List<RobustPaperEntry> entries = readFailureImbalanceResult(file);
         Rt.p(" Number entries = " + entries.size());
@@ -463,6 +480,144 @@ public class DIVPaper extends DivTestSetting
         
         Rt.p("Total time BIP = " + time);
         Rt.p(" Averge = " + (time / numX));
+    }
+
+    /***************************************************
+     * 
+     * Draw imbalance
+     * 
+     * 
+     ***************************************************/
+    public static void drawImbalance() throws Exception
+    {   
+        File fileExact, fileGreedy;
+        fileExact = new File(rawDataDir, wlName + "_" + IMBALANCE_EXACT_FILE);
+        fileGreedy = new File(rawDataDir, wlName + "_" + IMBALANCE_GREEDY_FILE);
+        
+        List<RobustPaperEntry> exactEntries = readFailureImbalanceResult(fileExact);
+        List<RobustPaperEntry> greedyEntries = readFailureImbalanceResult(fileGreedy);
+
+        Rt.p(" Number entries = " + exactEntries.size());
+        String[] competitors = {"1 - DIVBIP-exact/UNIF", "1 - DIVBIP-greedy/UNIF"};
+        
+        int numX = exactEntries.size();
+
+        double[] xtics = new double[numX];
+        String[] xaxis = new String[numX];
+        List<Point> points = new ArrayList<Point>();
+        double ratio;
+        RobustPaperEntry entry;
+        double timeExact = 0.0;
+        double timeGreedy = 0.0;
+        
+        for (int i = 0; i < numX; i++) {
+            entry = exactEntries.get(i);
+            
+            xaxis[i] = Double.toString(entry.nodeFactor);
+            xtics[i] = i;
+       
+            ratio = entry.getCostImprovement();
+            timeExact += entry.timeDivg;
+            if (ratio < 0)
+                ratio = 0.0;            
+            ratio = ratio * 100;
+            points.add(new Point(i, ratio));
+            
+            entry = greedyEntries.get(i);
+            ratio = entry.getCostImprovement();
+            timeGreedy += entry.timeDivg;
+            if (ratio < 0)
+                ratio = 0.0;            
+            ratio = ratio * 100;
+            points.add(new Point(i, ratio));
+        }
+        
+        Rt.p(" timeExact = " + timeExact);
+        Rt.p(" timeGreedy = " + timeGreedy);
+        
+        plotName = dbName + "_" + wlName + "_imbalance";
+        xname = "Imbalance factor";        
+        yname = "TotalCost Improvement (%)";
+        
+        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                competitors, figsDir, points);
+        
+        plots.add(new Plot("figs/" + plotName,  
+                " IMBALANCE/FAILURE, space = 0.5x, n = 3"
+                + "time EXACT = " + timeExact
+                + " avg EXACT TIME = " + (timeExact / numX)
+                + "time GREEDY = " + timeGreedy
+                + " avg GREEDY TIME = " + (timeGreedy / numX),
+                0.5));
+    }
+
+    /***************************************************
+     * 
+     * Draw imbalance and Failure
+     * 
+     * 
+     ***************************************************/
+    public static void drawImbalanceFailure() throws Exception
+    {   
+        File fileExact, fileGreedy;
+        fileExact = new File(rawDataDir, wlName + "_" + FAILURE_IMBALANCE_EXACT_FILE);
+        fileGreedy = new File(rawDataDir, wlName + "_" + FAILURE_IMBALANCE_GREEDY_FILE);
+        
+        List<RobustPaperEntry> exactEntries = readFailureImbalanceResult(fileExact);
+        List<RobustPaperEntry> greedyEntries = readFailureImbalanceResult(fileGreedy);
+
+        Rt.p(" Number entries = " + exactEntries.size());
+        String[] competitors = {"1 - DIVBIP-exact/UNIF", "1 - DIVBIP-greedy/UNIF"};
+        
+        int numX = exactEntries.size();
+
+        double[] xtics = new double[numX];
+        String[] xaxis = new String[numX];
+        List<Point> points = new ArrayList<Point>();
+        double ratio;
+        RobustPaperEntry entry;
+        double timeExact = 0.0;
+        double timeGreedy = 0.0;
+        
+        for (int i = 0; i < numX; i++) {
+            entry = exactEntries.get(i);
+            
+            xaxis[i] = Double.toString(entry.nodeFactor);
+            xtics[i] = i;
+            Rt.p(" node factor = " + entry.nodeFactor);
+            ratio = entry.getCostImprovement();
+            timeExact += entry.timeDivg;
+            if (ratio < 0)
+                ratio = 0.0;            
+            ratio = ratio * 100;
+            points.add(new Point(i, ratio));
+            
+            entry = greedyEntries.get(i);
+            ratio = entry.getCostImprovement();
+            timeGreedy += entry.timeDivg;
+            if (ratio < 0)
+                ratio = 0.0;            
+            ratio = ratio * 100;
+            points.add(new Point(i, ratio));
+        }
+        
+        Rt.p(" timeExact = " + timeExact);
+        Rt.p(" timeGreedy = " + timeGreedy);
+        
+        plotName = dbName + "_" + wlName + "_failure_imbalance";
+        xname = "Imbalance factor";        
+        yname = "TotalCost Improvement (%)";
+        
+        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                competitors, figsDir, points);
+        
+        plots.add(new Plot("figs/" + plotName,  
+                " IMBALANCE and FAILURE, space = 0.5x, n = 3, failure=  0.2"
+                + "time EXACT = " + timeExact
+                + " avg EXACT TIME = " + (timeExact / numX)
+                + "time GREEDY = " + timeGreedy
+                + " avg GREEDY TIME = " + (timeGreedy / numX),
+                0.5));
     }
     
     /**
@@ -635,7 +790,7 @@ public class DIVPaper extends DivTestSetting
      *      
      * @throws Exception
      */
-    protected static void serializeFailureResult(List<RobustPaperEntry> entries, File file) throws Exception 
+    protected static void serializeFailureImbalanceResult(List<RobustPaperEntry> entries, File file) throws Exception 
     {    
         ObjectOutputStream write;
         Rt.p("Store in file = " + file.getName());
