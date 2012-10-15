@@ -48,6 +48,23 @@ public class CoPhyDivgDesignFunctionalTest extends DIVPaper
         // Run algorithms
         testDivgDesignCoPhy();
         
+        designCoPhyFile = new File(rawDataDir, wlName + "_" + DESIGN_COPHY_FILE);
+        designCoPhyFile.delete();
+        designCoPhyFile = new File(rawDataDir, wlName + "_" + DESIGN_COPHY_FILE);
+        designCoPhyFile.createNewFile();
+        
+        long end = System.currentTimeMillis();
+        long totalTimes= (end - start) / 1000; // in secs
+        Rt.p(" Total running time" + totalTimes
+                + " avg: " + totalTimes / (listBudgets.size() * listNumberReplicas.size()));
+        // store in the serialize file
+        serializeDivResult(entries, designCoPhyFile);
+        
+        // test the result
+        entries = readDivResult(designCoPhyFile);
+        Rt.p(" result " + entries);
+        
+     // not to draw graph
         resetParameterNotDrawingGraph();
     }
     

@@ -32,9 +32,9 @@ public class DB2DivgDesignTest extends DIVPaper
         long totalTimes= (end - start) / 1000; // in secs
         Rt.p(" Total running time" + totalTimes
                 + " avg: " + totalTimes / (listBudgets.size() * listNumberReplicas.size()));
+        // 2. special data structures for this class
+        storeResult();
         
-        // not to draw graph
-        resetParameterNotDrawingGraph();
     }
     
     protected static void storeResult() throws Exception
@@ -46,6 +46,13 @@ public class DB2DivgDesignTest extends DIVPaper
         
         // store in the serialize file
         serializeDivResult(entries, designFile);
+        
+        // test the result
+        entries = readDivResult(designFile);
+        Rt.p(" result " + entries);
+        
+        // not to draw graph
+        resetParameterNotDrawingGraph();
     }
     
 
