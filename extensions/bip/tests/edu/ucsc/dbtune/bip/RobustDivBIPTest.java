@@ -21,6 +21,8 @@ public class RobustDivBIPTest extends DIVPaper
     private static RobustDivBIP constraintDiv;
     private static List<RobustPaperEntry> entries;
     
+    private static boolean isRunBoth = true;
+    
     @Test
     public void testConstraintDiv() throws Exception
     {
@@ -31,6 +33,7 @@ public class RobustDivBIPTest extends DIVPaper
         
         List<Double> nodeFactors = new ArrayList<Double>();
         List<Double> failureFactors = new ArrayList<Double>();
+        boolean isGreedy;
         
         // get the imbalance factors from inputs
         try {   
@@ -47,17 +50,76 @@ public class RobustDivBIPTest extends DIVPaper
             ;
         }
         
+        // test both failure and imbalance at the same time
+        if (isRunBoth) {
+            isGreedy = false;
+            testFailureImbalance(failureFactors, nodeFactors, isGreedy);
+            return;
+        }
+        
         // Test failures
         testFailure(failureFactors);
         
         // Test imbalance
-        testImbalance(nodeFactors, true);
+        // 
+        isGreedy = false;
+        Rt.p("Node factors = " + nodeFactors);
+        testImbalance(nodeFactors, isGreedy);
         
         // not to draw graph
         resetParameterNotDrawingGraph();
     }
     
+    /**
+     * Test with failure only
+     * 
+     * @param failureFactors
+     * @throws Exception
+     */
+    protected static void testFailureImbalance(List<Double> failureFactors,
+            List<Double> nodeFactors, boolean isGreedy) throws Exception
+    {
+        double optimalTotalCost;
+        
+        // get optimal total cost value
+        if (isGreedy) {
+            optimalTotalCost = DivBIPFunctionalTest.testDiv(nReplicas, B, false);
+            div.clear();
+        } else
+            optimalTotalCost = -1;
+
+        Rt.p(" optimal total cost = " + optimalTotalCost);
+        entries = new ArrayList<RobustPaperEntry>();
+        String name;
+        
+        if (isGreedy)
+            name = FAILURE_IMBALANCE_GREEDY_FILE;
+        else
+            name = FAILURE_IMBALANCE_EXACT_FILE;
+        
+        for (int i = 0; i < nodeFactors.size(); i++){
+            // initialize object
+            constraintDiv = new RobustDivBIP(optimalTotalCost, nodeFactors.get(i), 
+                             failureFactors.get(i));
+            
+            imbalanceFile = new File(rawDataDir, wlName + "_" + name);
+            imbalanceFile.delete();
+            imbalanceFile = new File(rawDataDir, wlName + "_" + name);
+            imbalanceFile.createNewFile();
+            runFullDDT(constraintDiv, isGreedy);
+            
+            // ----------------------------------
+            // store to file (since it takes time)
+            serializeFailureImbalanceResult(entries, imbalanceFile);
+        }
+    }
     
+    /**
+     * Test with failure only
+     * 
+     * @param failureFactors
+     * @throws Exception
+     */
     protected static void testFailure(List<Double> failureFactors) throws Exception
     {
         entries = new ArrayList<RobustPaperEntry>();
@@ -74,12 +136,12 @@ public class RobustDivBIPTest extends DIVPaper
             
             // ----------------------------------
             // store to file (since it takes time)
-            serializeFailureResult(entries, failureFile);
+            serializeFailureImbalanceResult(entries, failureFile);
         }
     }
     
     /**
-     * Use greedy approach
+     * Test Node-imbalance only
      * 
      * @throws Exception
      */
@@ -96,11 +158,12 @@ public class RobustDivBIPTest extends DIVPaper
 
         Rt.p(" optimal total cost = " + optimalTotalCost);
         entries = new ArrayList<RobustPaperEntry>();
-        String name = IMBALANCE_FILE;
+        String name;
+        
         if (isGreedy)
-            name += "_greedy";
+            name = IMBALANCE_GREEDY_FILE;
         else
-            name += "_exact";
+            name = IMBALANCE_EXACT_FILE;
         
         for (int i = 0; i < nodeFactors.size(); i++){
             // initialize object
@@ -115,7 +178,7 @@ public class RobustDivBIPTest extends DIVPaper
             
             // ----------------------------------
             // store to file (since it takes time)
-            serializeFailureResult(entries, imbalanceFile);
+            serializeFailureImbalanceResult(entries, imbalanceFile);
         }
         
     }

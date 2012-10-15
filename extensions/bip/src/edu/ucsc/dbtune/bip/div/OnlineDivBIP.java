@@ -122,7 +122,7 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
         
         Rt.p(" improvement ratio: " + improvementRatio
                 + " num over treshold: " + numOverThreshold);
-        /*
+        
         if (numOverThreshold >= maxNumOverThreshod){
             // reconfiguration
             isReconfiguration = true;
@@ -133,9 +133,9 @@ public class OnlineDivBIP extends AbstractBIPSolver implements OnlineBIP
             numOverThreshold = 0;
         } else 
             isReconfiguration = false;
-        */
+        
         // Do not need to reconfigure
-        isReconfiguration = false;
+        //isReconfiguration = false;
         
         // clear cache
         divBIP.clear();
