@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Set;
 import java.util.Vector;
 
@@ -28,8 +29,13 @@ import edu.ucsc.dbtune.inum.AbstractSpaceComputation;
 import edu.ucsc.dbtune.inum.DerbyInterestingOrdersExtractor;
 import edu.ucsc.dbtune.inum.IBGSpaceComputation;
 import edu.ucsc.dbtune.inum.InumInterestingOrder;
+import edu.ucsc.dbtune.inum.prune.InumSpacePrune;
+import edu.ucsc.dbtune.inum.prune.PrunableInumPlan;
+import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
+import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.ExplainTables;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
@@ -196,10 +202,17 @@ public class InumTest2 {
         String[] columns = cs.split("\\+");
         Vector<Column> v = new Vector<Column>();
         HashMap<Column, Boolean> map = new HashMap<Column, Boolean>();
+        Table table = null;
+        if (db == null)
+            table = new Table(new Schema(new Catalog(""), ""), "");
         for (int i = 0; i < columns.length; i++) {
             String s = columns[i];
             String cname = s.substring(0, s.indexOf('('));
-            Column c = (Column) db.getCatalog().findByQualifiedName(cname);
+            Column c = null;
+            if (db != null)
+                c = (Column) db.getCatalog().findByQualifiedName(cname);
+            else
+                c = new Column(table, cname);
             if (c == null)
                 throw new Error(cname);
             v.add(c);
@@ -239,22 +252,22 @@ public class InumTest2 {
         double inumFtsAll = 0;
         Workload workload = new Workload("", new StringReader(query));
 
-        // Rt.error("load index");
-        // Set<Index> indexes = new HashSet<Index>();
-        // String[] names = Rt.readResourceAsLines(InumTest2.class,
-        // "index.txt");
-        // for (String name2 : names) {
-        // indexes.add(createIndex(db, name2));
-        // }
+        Rt.error("load index");
+        Set<Index> indexes = new HashSet<Index>();
+        String[] names = Rt.readResourceAsLines(InumTest2.class,
+                "tpcds40index.txt");
+        for (String name2 : names) {
+            indexes.add(createIndex(db, name2));
+        }
 
         // workload = new Workload("", new
         // StringReader(workload.get(2).getSQL()+";"));
-        CandidateGenerator candGen = new OptimizerCandidateGenerator(
-                getBaseOptimizer(db.getOptimizer()));
-        Set<Index> indexes = candGen.generate(workload);
-        for (Index index : indexes) {
-            Rt.np(index);
-        }
+//        CandidateGenerator candGen = new OptimizerCandidateGenerator(
+//                getBaseOptimizer(db.getOptimizer()));
+//        Set<Index> indexes = candGen.generate(workload);
+//        for (Index index : indexes) {
+//            Rt.np(index);
+//        }
 
         // AbstractSpaceComputation.setInumSpacePopulateIndexSet(indexes);
 
@@ -275,6 +288,7 @@ public class InumTest2 {
                 InumPreparedSQLStatement space;
                 space = (InumPreparedSQLStatement) optimizer
                         .prepareExplain(workload.get(i));
+                space.pruneInumSpace(indexes);
                 ExplainedSQLStatement inumPlan = space.explain(indexes);
                 double inumIndex = inumPlan.getTotalCost();
                 SQLStatementPlan plan = inumPlan.getPlan();
@@ -284,22 +298,23 @@ public class InumTest2 {
 
                 Rt
                         .np(
-                                "-- query=%d\tDB2(FTS)=%,.0f\tINUM(FTS)=%,.0f"
+                                "query=%d\tDB2(FTS)=%,.0f\tINUM(FTS)=%,.0f"
                                         + "\tDB2(Index)=%,.0f\tINUM(Index)=%,.0f\tINUM/DB2=%.2f",
                                 i, db2fts, inumFts, db2index, inumIndex,
                                 inumIndex / db2index);
                 if (0.9 <= inumIndex / db2index && inumIndex / db2index <= 1.2) {
-                    Rt.np(workload.get(i).getSQL() + ";");
+                    // Rt.np(workload.get(i).getSQL() + ";");
                 } else {
-                    Rt.np("-- " + workload.get(i).getSQL() + ";");
+                    // Rt.np("-- " + workload.get(i).getSQL() + ";");
                 }
                 db2indexAll += db2index;
                 db2ftsAll += db2fts;
                 inumIndexAll += inumIndex;
                 inumFtsAll += inumFts;
             } catch (Exception e) {
-                Rt.np("-- query=%d %s", i, e.getMessage());
-                Rt.np("-- " + workload.get(i).getSQL() + ";");
+                e.printStackTrace();
+                // Rt.np("-- query=%d %s", i, e.getMessage());
+                // Rt.np("-- " + workload.get(i).getSQL() + ";");
             }
             // Rt.np("query=%d\tDB2(FTS)=%,.0f" + "\tDB2(Index)=%,.0f", i,
             // db2fts,
@@ -499,26 +514,31 @@ public class InumTest2 {
 
     public InumTest2() throws Exception {
         Environment en = Environment.getInstance();
-        String dbName = "test";
-        en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
         en.setProperty("username", "db2inst1");
         en.setProperty("password", "db2inst1admin");
         en.setProperty("workloads.dir", "resources/workloads/db2");
-        DatabaseSystem test = newDatabaseSystem(en);
+        DatabaseSystem test = null, tpch10g = null;
+        String dbName = "test";
+        en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
+        test = newDatabaseSystem(en);
         dbName = "tpch10g";
         en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
-        DatabaseSystem tpch10g = newDatabaseSystem(en);
+        // tpch10g = newDatabaseSystem(en);
 
         String tpch = Rt.readFile(new File(
                 "resources/workloads/db2/tpch/complete.sql"));
         String tpcds = Rt.readFile(new File(
                 "resources/workloads/db2/tpcds/db2.sql"));
+        String tpcds40 = Rt.readFile(new File(
+                "resources/workloads/db2/deployAware/tpcds_40.sql"));
         // String update = Rt.readFile(new File(
         // "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
         String otab = Rt.readFile(new File(
                 "resources/workloads/db2/online-benchmark-100/workload.sql"));
-//        sqlTest(tpch10g, tpch, 10);
-        sqlTest(test, otab, 95);
+        // sqlTest(tpch10g, tpch, 1);
+        // sqlTest(test, otab, 95);
+//         pruneTest(test, tpcds40);
+        // sqlTest(test, tpcds40, 33);
         // sqlTest(
         // test,
         // "SELECT 3, COUNT(*)  FROM tpch.lineitem WHERE  tpch.lineitem.l_tax BETWEEN 0.01596699754645524 AND 0.029823160830179565 AND tpch.lineitem.l_extendedprice BETWEEN 19178.598547906164 AND 19756.721297981876 AND tpch.lineitem.l_receiptdate BETWEEN 'Thu Mar 24 14:48:29 PST 1994' AND 'Mon Jan 30 14:48:29 PST 1995';",
@@ -530,21 +550,104 @@ public class InumTest2 {
         // compareWorkload(test, tpch, "tpch");
         // compareInterestingOrders(test, tpch);
         // compareWorkload(tpch10g, tpch, "tpch10g");
-        compareWorkload(test, tpcds, "tpcds");
+        compareWorkload(test, tpcds40, "tpcds40");
+        // compareWorkload(test, tpcds, "tpcds");
         // compareWorkload(test, update, "update");
         test.getConnection().close();
         tpch10g.getConnection().close();
+    }
+
+    void pruneTest(DatabaseSystem db, String query) throws Exception {
+        InumOptimizer optimizer = db == null ? null : (InumOptimizer) db
+                .getOptimizer();
+        Set<Index> indexes = new HashSet<Index>();
+        Rt.error("load index");
+        String[] names = Rt.readResourceAsLines(InumTest2.class,
+                "tpcds40index.txt");
+        for (String name : names) {
+            indexes.add(createIndex(db, name));
+        }
+        // ExplainTables.showWarnings = true;
+
+        Workload workload = new Workload("", new StringReader(query));
+
+        // CandidateGenerator candGen = new OptimizerCandidateGenerator(
+        // getBaseOptimizer(db.getOptimizer()));
+        // indexes = candGen.generate(workload);
+        // Rt.np("Generated Indexes:");
+        // for (Index index : indexes) {
+        // Rt.np(index);
+        // }
+
+        Hashtable<String, Index> map = new Hashtable<String, Index>();
+        for (Index index : indexes)
+            map.put(index.toString(), index);
+        int[] count = new int[3];
+        int[] count1 = new int[3];
+        int[] count2 = new int[3];
+        int[] count3 = new int[3];
+        for (int i = 0; i < workload.size(); i++) {
+            File file = new File("/home/wangrui/dbtune/inum/prune/" + i
+                    + ".xml");
+            if (!file.exists()) {
+                InumPreparedSQLStatement space = (InumPreparedSQLStatement) optimizer
+                        .prepareExplain(workload.get(i));
+                PrunableInumPlan[] plans = InumSpacePrune.getPrunableInumSpace(
+                        space.getTemplatePlans(), indexes);
+                InumSpacePrune.save(file, plans);
+            }
+            PrunableInumPlan[] plans = InumSpacePrune.load(db == null ? null
+                    : db.getCatalog(), file, map);
+            int[] is = InumSpacePrune.statistics(plans);
+            for (int j = 0; j < 3; j++)
+                count[j] += is[j];
+            // plans = InumSpacePrune.prune1(plans, indexes);
+            is = InumSpacePrune.statistics(plans);
+            for (int j = 0; j < 3; j++)
+                count1[j] += is[j];
+            plans = InumSpacePrune.prune2(plans, indexes);
+            is = InumSpacePrune.statistics(plans);
+            for (int j = 0; j < 3; j++)
+                count2[j] += is[j];
+            plans = InumSpacePrune.prune3(plans, indexes);
+            is = InumSpacePrune.statistics(plans);
+            for (int j = 0; j < 3; j++)
+                count3[j] += is[j];
+            // HashSet<InumPlan> inumSpace = new HashSet<InumPlan>();
+            // for (PrunableInumPlan p : plans)
+            // inumSpace.add(p);
+            // InumPreparedSQLStatement space;
+            // space = (InumPreparedSQLStatement) optimizer.prepareExplain(
+            // workload.get(i), inumSpace);
+            // ExplainedSQLStatement inumPlan = space.explain(indexes);
+            // double inumIndex = inumPlan.getTotalCost();
+            // inumPlan = space.explain(new HashSet<Index>());
+            // double inumFts = inumPlan.getTotalCost();
+            //
+            // Rt.np("query=%d\tINUM(FTS)=%,.0f\tINUM(Index)=%,.0f", i, inumFts,
+            // inumIndex);
+        }
+        Rt.np("plans=%d\tslots=%,d\tindex=%,d", count[0], count[1], count[2]);
+        Rt.np("plans=%d\tslots=%,d\tindex=%,d\t%.0f%%", count1[0], count1[1],
+                count1[2], 100 - (double) count1[2] / count[2] * 100);
+        Rt.np("plans=%d\tslots=%,d\tindex=%,d\t%.0f%%", count2[0], count2[1],
+                count2[2], 100 - (double) count2[2] / count1[2] * 100);
+        Rt.np("plans=%d\tslots=%,d\tindex=%,d\t%.0f%%", count3[0], count3[1],
+                count3[2], 100 - (double) count3[2] / count2[2] * 100);
+
+        System.exit(0);
     }
 
     void sqlTest(DatabaseSystem db, String query, int queryId) throws Exception {
         InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
         DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
         Set<Index> indexes = new HashSet<Index>();
-        Rt.error("load index");
-        String[] names = Rt.readResourceAsLines(InumTest2.class, "index.txt");
-        for (String name : names) {
-            indexes.add(createIndex(db, name));
-        }
+        // Rt.error("load index");
+        // String[] names = Rt.readResourceAsLines(InumTest2.class,
+        // "index.txt");
+        // for (String name : names) {
+        // indexes.add(createIndex(db, name));
+        // }
         // ExplainTables.showWarnings = true;
 
         Workload workload = new Workload("", new StringReader(query));
@@ -576,13 +679,13 @@ public class InumTest2 {
         // }
         // System.exit(0);
 
-//         CandidateGenerator candGen = new OptimizerCandidateGenerator(
-//         getBaseOptimizer(db.getOptimizer()));
-//         indexes = candGen.generate(workload);
-//         Rt.np("Generated Indexes:");
-//         for (Index index : indexes) {
-//         Rt.np(index);
-//         }
+        CandidateGenerator candGen = new OptimizerCandidateGenerator(
+                getBaseOptimizer(db.getOptimizer()));
+        indexes = candGen.generate(workload);
+        Rt.np("Generated Indexes:");
+        for (Index index : indexes) {
+            Rt.np(index);
+        }
 
         // ExplainTables.dumpPlanId=211;
         ExplainedSQLStatement db2plan = db2optimizer.explain(sql, indexes);
@@ -592,7 +695,7 @@ public class InumTest2 {
         Rt.np("Index used by DB2 plan:");
         for (Index index2 : db2plan.getUsedConfiguration())
             Rt.np(index2);
-        
+
         InumPreparedSQLStatement space;
         // space = (InumPreparedSQLStatement) optimizer
         // .prepareExplain(new SQLStatement(sql));

@@ -1,5 +1,8 @@
 package edu.ucsc.dbtune.optimizer.plan;
 
+import java.sql.SQLException;
+
+import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Rx;
@@ -35,6 +38,22 @@ public class Predicate
         predicateText = text;
     }
     
+    /**
+     * load from xml node
+     * @param catalog
+     * @param rx
+     * @throws SQLException 
+     */
+    public Predicate(Catalog catalog,Rx rx) throws SQLException
+    {
+        Rx a=rx.findChild("columnA");
+        if (a!=null)
+            this.columnA= (Column) catalog.findByQualifiedName(a.getText());
+        Rx b=rx.findChild("columnB");
+        if (b!=null)
+            this.columnB= (Column) catalog.findByQualifiedName(b.getText());
+        predicateText = rx.getChildText("predicateText");
+    }
     /**
      * save everything to a xml node
      * @param rx

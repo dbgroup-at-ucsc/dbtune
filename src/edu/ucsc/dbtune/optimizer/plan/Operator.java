@@ -2,11 +2,18 @@ package edu.ucsc.dbtune.optimizer.plan;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
 
+import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.metadata.Catalog;
+import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.util.Tree.Entry;
 
@@ -197,7 +204,7 @@ public class Operator
                 predicate.save(pre.createChild("predicate"));
             }
         }
-        if (rawPredicateList.size() > 0) {
+        if (rawPredicateList!=null&&rawPredicateList.size() > 0) {
             Rx pre = rx.createChild("rawPredicates");
             for (String predicate : rawPredicateList) {
                 pre.createChild("predicate",predicate);
@@ -213,6 +220,145 @@ public class Operator
             for (Entry<Operator> child : self.getChildren()) {
                 child.getElement().save(rx.createChild("operator"), child);
             }
+        }
+    }
+
+    /**
+     * load children of this node from a xml node
+     * @param rx
+     * @throws SQLException 
+     */    
+    public void loadChild(Catalog catalog,Rx rx, SQLStatementPlan plan) throws SQLException {
+         for (Rx rx2 : rx.findChilds("operator")) {
+             Operator c=new Operator(catalog,rx2);
+             if ("TABLE.ACCESS.SLOT".equals(c.name)) {
+                 if (c.getDatabaseObjects().get(0) instanceof Index)
+                     c.name="INDEX.SCAN";
+                 else
+                     c.name="TABLE.SCAN";
+                 c=new TableAccessSlot(c);
+             }
+             plan.setChild(this, c);
+             c.loadChild(catalog,rx2, plan);
+         }
+    }
+    
+    /**
+     * load operator from a xml node
+     * @param rx
+     * @throws SQLException 
+     */
+    public Operator(Catalog catalog,Rx rx) throws SQLException {
+        this.name=rx.getAttribute("name");
+        this.id=rx.getIntAttribute("id");
+        Rx params=rx.findChild("parameters");
+        accumulatedCost= params.getDoubleAttribute("accumulatedCost");
+        cardinality= params.getDoubleAttribute("cardinality");
+        internalCost= params.getDoubleAttribute("internalCost");
+        coefficient= params.getDoubleAttribute("coefficient");
+        Rx extra=rx.findChild("extraParameters");
+        ioCost= extra.getDoubleAttribute("ioCost");
+        cpuCost= extra.getDoubleAttribute("cpuCost");
+        first_row_cost= extra.getDoubleAttribute("first_row_cost");
+        re_total_cost= extra.getDoubleAttribute("re_total_cost");
+        re_io_cost= extra.getDoubleAttribute("re_io_cost");
+        re_cpu_cost= extra.getDoubleAttribute("re_cpu_cost");
+        buffers= extra.getDoubleAttribute("buffers");
+        this.objects         = new ArrayList<DatabaseObject>();
+        this.predicates      = new ArrayList<Predicate>();
+        Rx dbo=rx.findChild("databaseObjects");
+        if (dbo!=null) {
+            for (Rx  object : dbo.findChilds("object")) {
+                DatabaseObject obj=loadIndexOrTable(catalog,object.getText());
+                objects.add(obj);
+            }
+        }
+        Rx pre = rx.findChild("predicates");
+        if (pre!=null) {
+            for (Rx  predicate : pre.findChilds("predicate")) {
+                  predicates.add(new Predicate(catalog, predicate));
+            }
+        }
+        Rx rawPredicates = rx.findChild("rawPredicates");
+        if (rawPredicates!=null) {
+            rawPredicateList=new Vector<String>();
+            for (Rx predicate : rawPredicates.findChilds("predicate")) {
+                rawPredicateList.add(predicate.getText());
+            }
+        }
+        Rx interestingOrder=rx.findChild("interestingOrder");
+        if (interestingOrder != null)
+            this.columnsFetched= loadInterestingOrder(catalog, interestingOrder.getText());
+        Rx rawColumnNames = rx.findChild("rawColumnNames");
+        if (rawColumnNames != null)
+            this.rawColumnNames=rawColumnNames.getText();
+//        if (slot != null)
+//            rx.createChild("slot", slot.toString());
+    }
+
+    public static InterestingOrder loadInterestingOrder(Catalog catalog, String cs)
+            throws SQLException {
+        if (cs.startsWith("["))
+            cs = cs.substring(1);
+        if (cs.startsWith("+"))
+            cs = cs.substring(1);
+        if (cs.endsWith("]"))
+            cs = cs.substring(0, cs.length() - 1);
+        String[] columns = cs.split("\\+");
+        Vector<Column> v = new Vector<Column>();
+        HashMap<Column, Boolean> map = new HashMap<Column, Boolean>();
+        Table table = null;
+        if (catalog == null)
+            table = new Table(new Schema(new Catalog(""), ""), "");
+        for (int i = 0; i < columns.length; i++) {
+            String s = columns[i];
+            String cname = s.substring(0, s.indexOf('('));
+            Column c = null;
+            if (catalog != null)
+                c = (Column) catalog.findByQualifiedName(cname);
+            else
+                c = new Column(table, cname);
+            if (c == null)
+                throw new Error(cname);
+            v.add(c);
+            map.put(c, "(A)".equals(s.substring(s.indexOf('('))));
+        }
+        return new InterestingOrder(v, map);
+    }
+    public static DatabaseObject loadIndexOrTable(Catalog catalog, String cs) throws SQLException {
+        if (cs.startsWith("[")) {
+            cs = cs.substring(1);
+            if (cs.startsWith("+"))
+                cs = cs.substring(1);
+            if (cs.endsWith("]"))
+                cs = cs.substring(0, cs.length() - 1);
+            String[] columns = cs.split("\\+");
+            Vector<Column> v = new Vector<Column>();
+            HashMap<Column, Boolean> map = new HashMap<Column, Boolean>();
+            Table table = null;
+            if (catalog == null)
+                table = new Table(new Schema(new Catalog(""), ""), "");
+            for (int i = 0; i < columns.length; i++) {
+                String s = columns[i];
+                String cname = s.substring(0, s.indexOf('('));
+                Column c = null;
+                if (catalog != null)
+                    c = (Column) catalog.findByQualifiedName(cname);
+                else
+                    c = new Column(table, cname);
+                if (c == null)
+                    throw new Error(cname);
+                v.add(c);
+                map.put(c, "(A)".equals(s.substring(s.indexOf('('))));
+            }
+            return new Index(v, map);
+        } else {
+            if ( catalog==null) {
+                Table table=new Table(new Schema(new Catalog(""), ""), cs);
+//                table.add(new Column(table, "c0"));
+                return table;
+            }
+            return catalog.findByQualifiedName(cs);
         }
     }
 

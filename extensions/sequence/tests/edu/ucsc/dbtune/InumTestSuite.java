@@ -425,8 +425,9 @@ public class InumTestSuite {
         ps.println("</table>");
     }
 
+    public static int IBGTIMEOUT=15000;
     void compareWorkload(Workload workload, IndexSet set) throws Exception {
-        IBGSpaceComputation.maxTime = 15000;
+        IBGSpaceComputation.maxTime = IBGTIMEOUT;
         for (int i = 0; i < workload.workload.size(); i++) {
             if (set.results[i] != null)
                 continue;

@@ -24,12 +24,15 @@ public class InumGenerateHtmlReport {
         Workload[] workloads = {
 //                new Workload("tpch10g_22", "tpch10g", "TPC-H",
 //                        "resources/workloads/db2/tpch/complete.sql"),
-                new Workload("tpcds10g_99", "test", "TPCDS",
-                        "resources/workloads/db2/tpcds/db2.sql"),
-                new Workload("online-benchmark-100", "test", "OTAB",
-                        "resources/workloads/db2/online-benchmark-100/workload.sql"), //
+//                new Workload("tpcds10g_99", "test", "TPCDS",
+//                        "resources/workloads/db2/tpcds/db2.sql"),
+                new Workload("tpcds10g_40", "test", "TPCDS40",
+                        "resources/workloads/db2/deployAware/tpcds_40.sql"),
+//                new Workload("online-benchmark-100", "test", "OTAB",
+//                        "resources/workloads/db2/online-benchmark-100/workload.sql"), //
         };
 //         clearPreviousResult(workloads);
+        InumTestSuite.IBGTIMEOUT=30000;
         InumTestSuite suite = new InumTestSuite(workloads, true);
         suite.compare();
         for (Workload workload : workloads) {

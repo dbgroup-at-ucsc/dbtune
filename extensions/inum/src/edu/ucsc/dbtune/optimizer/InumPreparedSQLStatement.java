@@ -11,6 +11,8 @@ import java.util.Set;
 import javax.xml.transform.TransformerException;
 
 import edu.ucsc.dbtune.inum.MatchingStrategy;
+import edu.ucsc.dbtune.inum.prune.InumSpacePrune;
+import edu.ucsc.dbtune.inum.prune.PrunableInumPlan;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.util.Rt;
@@ -62,6 +64,19 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
 
         inumSpace = optimizer.computeInumSpace(sql);
     }
+    
+    InumPreparedSQLStatement(
+            InumOptimizer optimizer,
+            SQLStatement sql,
+            MatchingStrategy matchingStrategy,Set<InumPlan> inumSpace)
+            throws SQLException
+            {
+        super(optimizer, sql);
+        
+        this.matchingStrategy = matchingStrategy;
+        
+        this.inumSpace=inumSpace;
+    }
 
     /**
      * save everything to a xml file
@@ -80,16 +95,19 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
      */
     public void save(Rx rx) {
         rx.createChild("numOfPlans", inumSpace.size());
-//        rx.createChild("whatIfCount", IBGSpaceComputation.whatIfCount);
         rx.createChild("matchingStrategy", matchingStrategy.toString());
         rx.createChild("sql", sql.getSQL());
-//        Rx indexes=rx.createChild("indexes");
-//        for (Index index : IBGSpaceComputation.indexes) {
-//            indexes.createChild("index",index.toString());
-//        }
         for (InumPlan plan : inumSpace) {
             plan.save(rx.createChild("plan"));
         }
+    }
+    
+    /**
+     * Prune inum space 
+     * @throws SQLException 
+     */
+    public void pruneInumSpace(Set<Index> candidates) throws SQLException {
+        inumSpace = InumSpacePrune.prune(inumSpace, candidates);
     }
     
     /**
@@ -141,5 +159,16 @@ public class InumPreparedSQLStatement extends DefaultPreparedSQLStatement
     public Set<InumPlan> getTemplatePlans()
     {
         return inumSpace;
+    }
+    
+    /**
+     * Change INUM space.
+     *
+     * @return
+     *      set of template plans
+     */
+    public void setTemplatePlans(Set<InumPlan> inumSpace)
+    {
+        this.inumSpace=inumSpace;
     }
 }

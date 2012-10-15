@@ -1,9 +1,11 @@
 package edu.ucsc.dbtune.optimizer.plan;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
@@ -44,8 +46,19 @@ public class SQLStatementPlan extends Tree<Operator>
      * @param rx
      */
     public void save(Rx rx) {
-//        rx.createChild("sql", sql.getSQL());
+        rx.createChild("sql", sql.getSQL());
         this.root.getElement().save(rx.createChild("operator"), this.root);
+    }
+    
+    /**
+     * load everything from a xml node
+     * @param rx
+     * @throws SQLException 
+     */
+    public SQLStatementPlan(Catalog catalog,Rx rx) throws SQLException {
+        super(new Operator(catalog,rx.findChild("operator")));
+        sql=new SQLStatement(rx.getChildText("sql"));
+        this.root.getElement().loadChild(catalog,rx.findChild("operator"), this);
     }
     
     /**

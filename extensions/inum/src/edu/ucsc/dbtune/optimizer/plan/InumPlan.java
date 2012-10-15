@@ -19,6 +19,7 @@ import static java.lang.Double.doubleToLongBits;
 import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
+import edu.ucsc.dbtune.metadata.Catalog;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.DatabaseObject;
 import edu.ucsc.dbtune.metadata.Index;
@@ -142,6 +143,7 @@ public class InumPlan extends SQLStatementPlan
 //        calculateCoefficient(this, this.getRootElement(), 1);
         this.internalPlanCost =calculateInternalCost(this.getRootElement());
         qidToOperator=new Hashtable<String, Operator>();
+        slots = new HashMap<Table, TableAccessSlot>();
         slotsById=new Hashtable<Integer, TableAccessSlot>();
         for (Operator o :   nodes()) {
             if (o.aliasInExplainTables!=null)
@@ -150,8 +152,10 @@ public class InumPlan extends SQLStatementPlan
                 qidToOperator.put(o.aliasInExplainTables2, o);
             if (o.fetchAliasInExplainTables!=null)
                 qidToOperator.put(o.fetchAliasInExplainTables, o);
-            if (o instanceof TableAccessSlot)
+            if (o instanceof TableAccessSlot) {
+                slots.put(((TableAccessSlot) o).getTable(), (TableAccessSlot) o);
                 slotsById.put(((TableAccessSlot) o).id, (TableAccessSlot) o);
+            }
         }
     }
     public SQLStatementPlan orgPlan;
@@ -161,7 +165,7 @@ public class InumPlan extends SQLStatementPlan
      * @param other
      *      plan being copied
      */
-    InumPlan(InumPlan other)
+    protected InumPlan(InumPlan other)
     {
         super(other);
 
@@ -191,6 +195,29 @@ public class InumPlan extends SQLStatementPlan
         updatedTable = other.updatedTable;
         baseTableUpdateCost = other.baseTableUpdateCost;
         orgPlan=other.orgPlan;
+    }
+    
+    /**
+     * load plan from xml
+     * @throws SQLException 
+     */
+    public InumPlan(Catalog catalog,Rx rx) throws SQLException {
+        super(catalog,rx);
+        qidToOperator=new Hashtable<String, Operator>();
+        slots = new HashMap<Table, TableAccessSlot>();
+        slotsById=new Hashtable<Integer, TableAccessSlot>();
+        for (Operator o :   nodes()) {
+            if (o.aliasInExplainTables!=null)
+                qidToOperator.put(o.aliasInExplainTables, o);
+            if (o.aliasInExplainTables2!=null)
+                qidToOperator.put(o.aliasInExplainTables2, o);
+            if (o.fetchAliasInExplainTables!=null)
+                qidToOperator.put(o.fetchAliasInExplainTables, o);
+            if (o instanceof TableAccessSlot) {
+                slots.put(((TableAccessSlot) o).getTable(), (TableAccessSlot) o);
+                slotsById.put(((TableAccessSlot) o).id, (TableAccessSlot) o);
+            }
+        }
     }
 
 

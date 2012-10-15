@@ -80,7 +80,7 @@ public class TableAccessSlot extends Operator
         this.index = other.index;
         this.nextSlotId = other.nextSlotId;
     }
-
+    
     /**
      * {@inheritDoc}
      */
