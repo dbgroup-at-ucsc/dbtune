@@ -83,7 +83,7 @@ public class DB2DivgDesignTest extends DIVPaper
                 costDiv = testDivgDesign(n, B);
                 budget = convertBudgetToMB(B);
                 DivPaperEntry entry = new DivPaperEntry
-                        (dbName, wlName, n, budget, divConf);
+                        (dbName, wlName, n, budget, null);
                 
                 entries.put(entry, costDiv);
                 // since it is expensive

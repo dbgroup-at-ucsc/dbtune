@@ -78,6 +78,7 @@ public class DIVPaper extends DivTestSetting
     
     // robustness features
     protected static boolean isEquivalent = false;
+
     protected static boolean isFailure = false;
     protected static boolean isImbalance = false;
     // online & elasticity
@@ -116,13 +117,14 @@ public class DIVPaper extends DivTestSetting
         if (isOnline)
             drawOnline();
         
+
         if (isElastic)
             drawElastic();
         
         
         isLatex = isOnline || isEquivalent || isFailure
                     || isImbalance || isElastic;
-        
+
         if (isLatex)
             LatexGenerator.generateLatex(latexFile, outputDir, plots);
     }
@@ -437,6 +439,7 @@ public class DIVPaper extends DivTestSetting
      * 
      * 
      ***************************************************/
+
     public static void drawFailure() throws Exception
     {   
         File file;
@@ -490,6 +493,75 @@ public class DIVPaper extends DivTestSetting
         
         Rt.p("Total time BIP = " + time);
         Rt.p(" Averge = " + (time / numX));
+    }
+
+    /***************************************************
+     * 
+     * Draw imbalance and Failure
+     * 
+     * 
+     ***************************************************/
+    public static void drawImbalanceFailure() throws Exception
+    {   
+        File fileExact, fileGreedy;
+        fileExact = new File(rawDataDir, wlName + "_" + FAILURE_IMBALANCE_EXACT_FILE);
+        fileGreedy = new File(rawDataDir, wlName + "_" + FAILURE_IMBALANCE_GREEDY_FILE);
+        
+        List<RobustPaperEntry> exactEntries = readFailureImbalanceResult(fileExact);
+        List<RobustPaperEntry> greedyEntries = readFailureImbalanceResult(fileGreedy);
+
+        Rt.p(" Number entries = " + exactEntries.size());
+        String[] competitors = {"1 - DIVBIP-exact/UNIF", "1 - DIVBIP-greedy/UNIF"};
+        
+        int numX = exactEntries.size();
+
+        double[] xtics = new double[numX];
+        String[] xaxis = new String[numX];
+        List<Point> points = new ArrayList<Point>();
+        double ratio;
+        RobustPaperEntry entry;
+        double timeExact = 0.0;
+        double timeGreedy = 0.0;
+        
+        for (int i = 0; i < numX; i++) {
+            entry = exactEntries.get(i);
+            
+            xaxis[i] = Double.toString(entry.nodeFactor);
+            xtics[i] = i;
+            Rt.p(" node factor = " + entry.nodeFactor);
+            ratio = entry.getCostImprovement();
+            timeExact += entry.timeDivg;
+            if (ratio < 0)
+                ratio = 0.0;            
+            ratio = ratio * 100;
+            points.add(new Point(i, ratio));
+            
+            entry = greedyEntries.get(i);
+            ratio = entry.getCostImprovement();
+            timeGreedy += entry.timeDivg;
+            if (ratio < 0)
+                ratio = 0.0;            
+            ratio = ratio * 100;
+            points.add(new Point(i, ratio));
+        }
+        
+        Rt.p(" timeExact = " + timeExact);
+        Rt.p(" timeGreedy = " + timeGreedy);
+        
+        plotName = dbName + "_" + wlName + "_failure_imbalance";
+        xname = "Imbalance factor";        
+        yname = "TotalCost Improvement (%)";
+        
+        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                competitors, figsDir, points);
+        
+        plots.add(new Plot("figs/" + plotName,  
+                " IMBALANCE and FAILURE, space = 0.5x, n = 3, failure=  0.2"
+                + "time EXACT = " + timeExact
+                + " avg EXACT TIME = " + (timeExact / numX)
+                + "time GREEDY = " + timeGreedy
+                + " avg GREEDY TIME = " + (timeGreedy / numX),
+                0.5));
     }
     
     protected static List<Double> costUnderFailure(List<Double> alphas, Map<DivPaperEntry, Double> mapVal)
@@ -775,6 +847,7 @@ public class DIVPaper extends DivTestSetting
      *      
      * @throws Exception
      */
+
     protected static void serializeElasticResult(ElasticPaperEntry elasticEntry, 
                                                 File file) throws Exception 
     {    
