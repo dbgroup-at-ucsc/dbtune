@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.bip.div;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,7 +20,10 @@ import edu.ucsc.dbtune.metadata.Index;
  *
  */
 public class DivConfiguration extends IndexTuningOutput
+        implements Serializable
 {
+    private static final long serialVersionUID = 1L;
+
     private int nReplicas;
     private int loadfactor;
     private List<Set<Index>> indexReplicas;
@@ -285,6 +289,40 @@ public class DivConfiguration extends IndexTuningOutput
     }
     
     /**
+     * Show the number of indexes per replica and 
+     * the maximum creation cost
+     */
+    public String indexAtReplicaInfo()
+    {
+        StringBuilder sb = new StringBuilder();
+        
+        double costAtReplica;
+        double totalCreationCost = 0.0;
+        double maxCreationCost = -1; 
+            
+        sb.append("Number of indexes at each replica = [");
+        for (int r = 0; r < nReplicas; r++) {
+            sb.append(indexReplicas.get(r).size());
+            sb.append(",");
+            
+            costAtReplica = 0.0;
+            for (Index i : indexReplicas.get(r))
+               costAtReplica += i.getCreationCost();
+            
+            if (costAtReplica > maxCreationCost)
+                maxCreationCost = costAtReplica;
+            
+            totalCreationCost += costAtReplica;
+        }
+        sb.append("]\n");
+        
+        sb.append("TOTAL creation cost = " + totalCreationCost + "\n")
+          .append("MAX creation cost = " + maxCreationCost + "\n");
+        
+        return sb.toString();
+    }
+    
+    /**
      * Compute the transition cost from the given {@code initial} configuration
      * to this configuration.
      * 
@@ -365,8 +403,9 @@ public class DivConfiguration extends IndexTuningOutput
         return transCost;
     }
     
-    static class RoutingFunction
+    static class RoutingFunction  implements Serializable
     {
+        private static final long serialVersionUID = 1L;
         private Map<Integer, Set<Integer>> mapping;
         
         public RoutingFunction()
