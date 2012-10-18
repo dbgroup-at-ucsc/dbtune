@@ -18,11 +18,6 @@ import static edu.ucsc.dbtune.bip.div.UtilConstraintBuilder.computeCoefCostWithF
 
 public class RobustDivBIPTest extends DIVPaper 
 {   
-    private static RobustDivBIP constraintDiv;
-    private static List<RobustPaperEntry> entries;
-    
-    private static boolean isRunBoth = true;
-    
     @Test
     public void testConstraintDiv() throws Exception
     {
@@ -33,7 +28,6 @@ public class RobustDivBIPTest extends DIVPaper
         
         List<Double> imbalanceFactors = new ArrayList<Double>();
         List<Double> failureFactors = new ArrayList<Double>();
-        boolean isGreedy;
         
         // get the imbalance factors from inputs
         try {   
@@ -50,98 +44,21 @@ public class RobustDivBIPTest extends DIVPaper
             ;
         }
         
-        // test both failure and imbalance at the same time
-        if (isRunBoth) {
-            isGreedy = false;
-            testFailureImbalance(failureFactors, nodeFactors, isGreedy);
-            return;
+        if (imbalanceFactors.size() != failureFactors.size()){
+            Rt.p(" List of imbalance factors must have the same size "
+                    + " with list of failure factors");
+            System.exit(1);
         }
-        
-        // Test failures
-        testFailure(failureFactors);
-        
-        // Test imbalance
-        // 
-        isGreedy = false;
-        Rt.p("Node factors = " + nodeFactors);
-        testImbalance(nodeFactors, isGreedy);
-        
+            
+        // run the test
+        testFailureImbalance(failureFactors, imbalanceFactors, true);
+
         // not to draw graph
         resetParameterNotDrawingGraph();
     }
     
     /**
      * Test with failure only
-     * 
-     * @param failureFactors
-     * @throws Exception
-     */
-    protected static void testFailureImbalance(List<Double> failureFactors,
-            List<Double> nodeFactors, boolean isGreedy) throws Exception
-    {
-        double optimalTotalCost;
-        
-        // get optimal total cost value
-        if (isGreedy) {
-            optimalTotalCost = DivBIPFunctionalTest.testDiv(nReplicas, B, false);
-            div.clear();
-        } else
-            optimalTotalCost = -1;
-
-        Rt.p(" optimal total cost = " + optimalTotalCost);
-        entries = new ArrayList<RobustPaperEntry>();
-        String name;
-        
-        if (isGreedy)
-            name = FAILURE_IMBALANCE_GREEDY_FILE;
-        else
-            name = FAILURE_IMBALANCE_EXACT_FILE;
-        
-        for (int i = 0; i < nodeFactors.size(); i++){
-            // initialize object
-            constraintDiv = new RobustDivBIP(optimalTotalCost, nodeFactors.get(i), 
-                             failureFactors.get(i));
-            
-            imbalanceFile = new File(rawDataDir, wlName + "_" + name);
-            imbalanceFile.delete();
-            imbalanceFile = new File(rawDataDir, wlName + "_" + name);
-            imbalanceFile.createNewFile();
-            runFullDDT(constraintDiv, isGreedy);
-            
-            // ----------------------------------
-            // store to file (since it takes time)
-            serializeFailureImbalanceResult(entries, imbalanceFile);
-        }
-    }
-    
-    /**
-     * Test with failure only
-     * 
-     * @param failureFactors
-     * @throws Exception
-     */
-    protected static void testFailure(List<Double> failureFactors) throws Exception
-    {
-        entries = new ArrayList<RobustPaperEntry>();
-        for (int i = 0; i < failureFactors.size(); i++) {
-            // initialize object
-            constraintDiv = new RobustDivBIP(-1, 0.0, 
-                             failureFactors.get(i));
-            
-            failureFile = new File(rawDataDir, wlName + "_" + FAILURE_FILE);
-            failureFile.delete();
-            failureFile = new File(rawDataDir, wlName + "_" + FAILURE_FILE);
-            failureFile.createNewFile();
-            runFullDDT(constraintDiv, true);
-            
-            // ----------------------------------
-            // store to file (since it takes time)
-            serializeFailureImbalanceResult(entries, failureFile);
-        }
-    }
-    
-    /**
-     * Test Node-imbalance only
      * 
      * @param failureFactors
      * @throws Exception
@@ -157,12 +74,7 @@ public class RobustDivBIPTest extends DIVPaper
         div.clear();
         Rt.p(" optimal total cost = " + optimalTotalCost);
         entries = new ArrayList<RobustPaperEntry>();
-        String name;
-        
-        if (isGreedy)
-            name = IMBALANCE_GREEDY_FILE;
-        else
-            name = IMBALANCE_EXACT_FILE;
+        String name = FAILURE_IMBALANCE_GREEDY_FILE;
         
         for (int i = 0; i < nodeFactors.size(); i++){
 
@@ -180,6 +92,7 @@ public class RobustDivBIPTest extends DIVPaper
             serializeFailureImbalanceResult(entries, imbalanceFile);
         }
     }
+    
     
     
     
