@@ -51,13 +51,14 @@ public class InumSpacePrune {
         Rt.write(file, rx.getXml().getBytes());
     }
 
-    public static PrunableInumPlan[] load(Catalog catalog,File file, Map<String, Index> map)
-            throws SAXException, IOException, SQLException {
+    public static PrunableInumPlan[] load(Catalog catalog, File file,
+            Map<String, Index> map) throws SAXException, IOException,
+            SQLException {
         Rx rx = Rx.findRoot(Rt.readFile(file));
         Rx[] rs = rx.findChilds("plan");
         Vector<PrunableInumPlan> vs = new Vector<PrunableInumPlan>();
         for (int i = 0; i < rs.length; i++) {
-            PrunableInumPlan plan = new PrunableInumPlan(catalog,rs[i], map);
+            PrunableInumPlan plan = new PrunableInumPlan(catalog, rs[i], map);
             vs.add(plan);
         }
         return vs.toArray(new PrunableInumPlan[vs.size()]);
@@ -102,14 +103,17 @@ public class InumSpacePrune {
 
     public static PrunableInumPlan[] prune1(PrunableInumPlan[] ps,
             Set<Index> candidates) throws SQLException {
-        double maxCost=Double.POSITIVE_INFINITY;
+        double maxCost = Double.POSITIVE_INFINITY;
+        PrunableInumPlan bestPlan = null;
         for (PrunableInumPlan p1 : ps) {
-            if (p1.maxCost< maxCost)
-                maxCost=p1.maxCost;
+            if (p1.maxCost < maxCost) {
+                maxCost = p1.maxCost;
+                bestPlan = p1;
+            }
         }
         Vector<PrunableInumPlan> v = new Vector<PrunableInumPlan>();
         for (PrunableInumPlan p : ps) {
-            if (p.minCost< maxCost)
+            if (p == bestPlan || p.minCost < maxCost)
                 v.add(p);
         }
         return v.toArray(new PrunableInumPlan[v.size()]);

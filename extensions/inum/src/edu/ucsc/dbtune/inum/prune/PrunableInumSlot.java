@@ -25,6 +25,7 @@ public class PrunableInumSlot extends TableAccessSlot {
     public double maxCost;
     public boolean usable = true;
     public double ftsCost;
+    public String name;
     List<Index> indexes = new Vector<Index>();
     Hashtable<Index, Double> accessCost = new Hashtable<Index, Double>();
 
@@ -66,6 +67,11 @@ public class PrunableInumSlot extends TableAccessSlot {
             minCost = ftsCost;
         if (ftsCost > maxCost)
             maxCost = ftsCost;
+//        Rt.p(ftsCost);
+//        Rt.p(maxCost);
+        name=getIndex().toString();
+        if ("[]".equals(name))
+            name=getTable().toString();
     }
 
     public PrunableInumSlot(PrunableInumPlan plan,Rx rx, Map<String, Index> map) throws SQLException {
@@ -83,6 +89,9 @@ public class PrunableInumSlot extends TableAccessSlot {
             indexes.add(index);
             accessCost.put(index, cost);
         }
+        name=getIndex().toString();
+        if ("[]".equals(name))
+            name=getTable().toString();
     }
 
     public int numOfIndex() {

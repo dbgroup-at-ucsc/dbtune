@@ -3,8 +3,11 @@ package edu.ucsc.dbtune.inum.prune;
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +18,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Rx;
 
 /**
@@ -30,6 +34,27 @@ public class PrunableInumPlan extends InumPlan {
     public double maxCost;
     public boolean usable = true;
     public boolean redundant = false;
+
+    public PrunableInumPlan(InumPlan plan, Set<Index> candidates)
+            throws SQLException {
+        super(plan);
+        minCost = maxCost = internalCost = plan.getInternalCost();
+        for (TableAccessSlot slot : plan.getSlots()) {
+            PrunableInumSlot s = new PrunableInumSlot(slot, plan, candidates);
+            slots.add(s);
+            hash.add(s);
+
+            if (!s.usable) {
+                usable = false;
+                break;
+            }
+            minCost += s.minCost;
+            maxCost += s.maxCost;
+            // Rt.p(s.maxCost);
+            // Rt.p(maxCost);
+        }
+        // Rt.p(maxCost);
+    }
 
     /**
      * save everything to a xml node
@@ -137,6 +162,36 @@ public class PrunableInumPlan extends InumPlan {
         return sum;
     }
 
+    public void sortSlots() {
+        Collections.sort(slots, new Comparator<PrunableInumSlot>() {
+            @Override
+            public int compare(PrunableInumSlot o1, PrunableInumSlot o2) {
+                return o1.name.compareTo(o2.name);
+            }
+        });
+    }
+
+    public void print() {
+        Rt.np("internal=%,.0f  min=%,.0f max=%,.0f", internalCost, minCost,
+                maxCost);
+        sortSlots();
+        for (PrunableInumSlot slot : slots) {
+            Rt.np("\t%,.0f %s", slot.ftsCost, slot.name);
+            Index[] indexs = slot.accessCost.keySet().toArray(
+                    new Index[slot.accessCost.size()]);
+            Arrays.sort(indexs, new Comparator<Index>() {
+                @Override
+                public int compare(Index o1, Index o2) {
+                    return o1.toString().compareTo(o2.toString());
+                }
+            });
+            for (Index index : indexs) {
+                Rt.np("\t\t%,.0f %s", slot.accessCost.get(index), index
+                        .toString());
+            }
+        }
+    }
+
     @Override
     public double getInternalCost() {
         return internalCost;
@@ -149,10 +204,10 @@ public class PrunableInumPlan extends InumPlan {
 
     public Operator instantiate2(TableAccessSlot slot, Index index)
             throws SQLException {
-        double cost= plug(slot, index);
-        Operator operator=slot.duplicate();
-        operator.slot=slot;
-        operator.scanCost=operator.accumulatedCost=cost;
+        double cost = plug(slot, index);
+        Operator operator = slot.duplicate();
+        operator.slot = slot;
+        operator.scanCost = operator.accumulatedCost = cost;
         return operator;
     }
 
@@ -163,23 +218,5 @@ public class PrunableInumPlan extends InumPlan {
         if (!hash.contains(slot))
             throw new SQLException("slot is not returned by this class");
         return ((PrunableInumSlot) slot).plug(slot, index);
-    }
-
-    public PrunableInumPlan(InumPlan plan, Set<Index> candidates)
-            throws SQLException {
-        super(plan);
-        minCost = maxCost = internalCost = plan.getInternalCost();
-        for (TableAccessSlot slot : plan.getSlots()) {
-            PrunableInumSlot s = new PrunableInumSlot(slot, plan, candidates);
-            slots.add(s);
-            hash.add(s);
-
-            if (!s.usable) {
-                usable = false;
-                break;
-            }
-            minCost += s.minCost;
-            maxCost += s.maxCost;
-        }
     }
 }

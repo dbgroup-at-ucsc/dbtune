@@ -262,12 +262,12 @@ public class InumTest2 {
 
         // workload = new Workload("", new
         // StringReader(workload.get(2).getSQL()+";"));
-//        CandidateGenerator candGen = new OptimizerCandidateGenerator(
-//                getBaseOptimizer(db.getOptimizer()));
-//        Set<Index> indexes = candGen.generate(workload);
-//        for (Index index : indexes) {
-//            Rt.np(index);
-//        }
+        // CandidateGenerator candGen = new OptimizerCandidateGenerator(
+        // getBaseOptimizer(db.getOptimizer()));
+        // Set<Index> indexes = candGen.generate(workload);
+        // for (Index index : indexes) {
+        // Rt.np(index);
+        // }
 
         // AbstractSpaceComputation.setInumSpacePopulateIndexSet(indexes);
 
@@ -285,8 +285,7 @@ public class InumTest2 {
                 double db2fts = db2plan.getTotalCost();
 
                 // Rt.p("start inum");
-                InumPreparedSQLStatement space;
-                space = (InumPreparedSQLStatement) optimizer
+                InumPreparedSQLStatement space = (InumPreparedSQLStatement) optimizer
                         .prepareExplain(workload.get(i));
                 space.pruneInumSpace(indexes);
                 ExplainedSQLStatement inumPlan = space.explain(indexes);
@@ -531,13 +530,13 @@ public class InumTest2 {
                 "resources/workloads/db2/tpcds/db2.sql"));
         String tpcds40 = Rt.readFile(new File(
                 "resources/workloads/db2/deployAware/tpcds_40.sql"));
-        // String update = Rt.readFile(new File(
-        // "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
+        String update = Rt.readFile(new File(
+                "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
         String otab = Rt.readFile(new File(
                 "resources/workloads/db2/online-benchmark-100/workload.sql"));
         // sqlTest(tpch10g, tpch, 1);
         // sqlTest(test, otab, 95);
-//         pruneTest(test, tpcds40);
+        pruneTest(test, update);
         // sqlTest(test, tpcds40, 33);
         // sqlTest(
         // test,
@@ -560,24 +559,25 @@ public class InumTest2 {
     void pruneTest(DatabaseSystem db, String query) throws Exception {
         InumOptimizer optimizer = db == null ? null : (InumOptimizer) db
                 .getOptimizer();
-        Set<Index> indexes = new HashSet<Index>();
-        Rt.error("load index");
-        String[] names = Rt.readResourceAsLines(InumTest2.class,
-                "tpcds40index.txt");
-        for (String name : names) {
-            indexes.add(createIndex(db, name));
-        }
+        // Set<Index> indexes = new HashSet<Index>();
+//        Rt.error("load index");
+        // String[] names = Rt.readResourceAsLines(InumTest2.class,
+        // "tpcds40index.txt");
+        // for (String name : names) {
+        // indexes.add(createIndex(db, name));
+        // }
         // ExplainTables.showWarnings = true;
 
         Workload workload = new Workload("", new StringReader(query));
 
-        // CandidateGenerator candGen = new OptimizerCandidateGenerator(
-        // getBaseOptimizer(db.getOptimizer()));
-        // indexes = candGen.generate(workload);
-        // Rt.np("Generated Indexes:");
-        // for (Index index : indexes) {
-        // Rt.np(index);
-        // }
+        Set<Index> indexes = new HashSet<Index>();
+        CandidateGenerator candGen = new OptimizerCandidateGenerator(
+                getBaseOptimizer(db.getOptimizer()));
+        indexes = candGen.generate(workload);
+        Rt.np("Generated Indexes:");
+        for (Index index : indexes) {
+            Rt.np(index);
+        }
 
         Hashtable<String, Index> map = new Hashtable<String, Index>();
         for (Index index : indexes)
@@ -587,8 +587,9 @@ public class InumTest2 {
         int[] count2 = new int[3];
         int[] count3 = new int[3];
         for (int i = 0; i < workload.size(); i++) {
-            File file = new File("/home/wangrui/dbtune/inum/prune/" + i
+            File file = new File("/home/wangrui/dbtune/inum/prune/update/" + i
                     + ".xml");
+            file.getParentFile().mkdirs();
             if (!file.exists()) {
                 InumPreparedSQLStatement space = (InumPreparedSQLStatement) optimizer
                         .prepareExplain(workload.get(i));
@@ -601,7 +602,7 @@ public class InumTest2 {
             int[] is = InumSpacePrune.statistics(plans);
             for (int j = 0; j < 3; j++)
                 count[j] += is[j];
-            // plans = InumSpacePrune.prune1(plans, indexes);
+            plans = InumSpacePrune.prune1(plans, indexes);
             is = InumSpacePrune.statistics(plans);
             for (int j = 0; j < 3; j++)
                 count1[j] += is[j];
@@ -613,6 +614,11 @@ public class InumTest2 {
             is = InumSpacePrune.statistics(plans);
             for (int j = 0; j < 3; j++)
                 count3[j] += is[j];
+            Rt.np(i + " " + plans.length);
+            for (PrunableInumPlan plan : plans) {
+                plan.print();
+            }
+//            break;
             // HashSet<InumPlan> inumSpace = new HashSet<InumPlan>();
             // for (PrunableInumPlan p : plans)
             // inumSpace.add(p);
@@ -627,13 +633,17 @@ public class InumTest2 {
             // Rt.np("query=%d\tINUM(FTS)=%,.0f\tINUM(Index)=%,.0f", i, inumFts,
             // inumIndex);
         }
-        Rt.np("plans=%d\tslots=%,d\tindex=%,d", count[0], count[1], count[2]);
-        Rt.np("plans=%d\tslots=%,d\tindex=%,d\t%.0f%%", count1[0], count1[1],
-                count1[2], 100 - (double) count1[2] / count[2] * 100);
-        Rt.np("plans=%d\tslots=%,d\tindex=%,d\t%.0f%%", count2[0], count2[1],
-                count2[2], 100 - (double) count2[2] / count1[2] * 100);
-        Rt.np("plans=%d\tslots=%,d\tindex=%,d\t%.0f%%", count3[0], count3[1],
-                count3[2], 100 - (double) count3[2] / count2[2] * 100);
+        Rt.np("Without prune: plans=%d\tslots=%,d\tslot-index=%,d", count[0],
+                count[1], count[2]);
+        Rt.np("Best vs worst: plans=%d\tslots=%,d\tslot-index=%,d\t%.0f%%",
+                count1[0], count1[1], count1[2], 100 - (double) count1[2]
+                        / count[2] * 100);
+        Rt.np("Remove index : plans=%d\tslots=%,d\tslot-index=%,d\t%.0f%%",
+                count2[0], count2[1], count2[2], 100 - (double) count2[2]
+                        / count1[2] * 100);
+        Rt.np("Plan covering: plans=%d\tslots=%,d\tslot-index=%,d\t%.0f%%",
+                count3[0], count3[1], count3[2], 100 - (double) count3[2]
+                        / count2[2] * 100);
 
         System.exit(0);
     }
