@@ -13,6 +13,7 @@ import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_DIV;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_MOD;
@@ -86,6 +87,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     
     /**
      * Clear all the structures used
+     * Dereference to CPLEX object
      */
     public void clear()
     {   
@@ -716,6 +718,49 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                     break;
                 }
             }
+    }
+    
+    /**
+     * Compute the cost in optimizer unit without failure
+     * 
+     * @param conf      
+     *      The derived configuration
+     *       
+     * @return
+     *      The cost
+     * @throws Exception
+     */
+    public double computeOptimizerCostWithoutFailure(DivConfiguration conf)
+                throws Exception
+    {
+        QueryPlanDesc desc;
+        double costWithoutFailure;
+        double cost;
+        int counter;
+        int q;
+        
+        costWithoutFailure = 0.0;
+        counter = -1;
+        
+        // Compute cost with failure 
+        for (SQLStatement sql : workload) {
+            
+            counter++;
+            
+            if (sql.getSQLCategory().equals(NOT_SELECT))
+                continue;
+            
+            desc = queryPlanDescs.get(counter); 
+            q = desc.getStatementID();
+            for (int r : conf.getRoutingReplica(q)) {
+                cost = super.inumOptimizer.getDelegate().explain
+                        (sql, conf.indexesAtReplica(r)).getTotalCost();
+                cost = cost * getFactorStatement(desc);
+                costWithoutFailure += cost;
+            }
+        }
+        
+        return costWithoutFailure;
     }
     
     /**
