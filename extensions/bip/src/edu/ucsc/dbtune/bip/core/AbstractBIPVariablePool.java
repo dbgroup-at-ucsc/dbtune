@@ -17,6 +17,11 @@ public abstract class AbstractBIPVariablePool
         mapNameVar = new HashMap<String, BIPVariable>();
     }
     
+    public void clear()
+    {
+        listVar.clear();
+        mapNameVar.clear();
+    }
     
     /**
      * Add a variable into this pool

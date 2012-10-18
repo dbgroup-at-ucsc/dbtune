@@ -28,7 +28,6 @@ import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
 
-
 /**
  * This class abstracts the common methods shared by different BIP solvers
  * for different index tuning related problems.
@@ -76,6 +75,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     {
         try {
             cplex.clearModel();
+            
         } catch (IloException e) {
             e.printStackTrace();
         }
@@ -89,6 +89,10 @@ public abstract class AbstractBIPSolver implements BIPSolver
      */
     public void setQueryPlanDesc(List<QueryPlanDesc> descs)
     {
+        // explicitly garbage collection
+        if (queryPlanDescs != null)
+            queryPlanDescs.clear();
+        // -------------------------------------------
         this.queryPlanDescs = descs;
         this.isSetPlanDesc = true;
     }

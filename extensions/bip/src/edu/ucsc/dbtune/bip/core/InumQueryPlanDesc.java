@@ -132,6 +132,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
         preparedStmt = preparedStmts.get(stmt);
         if (preparedStmt == null) {
             preparedStmt = (InumPreparedSQLStatement) optimizer.prepareExplain(stmt);
+            preparedStmt.pruneInumSpace(candidates);
             preparedStmts.put(stmt, preparedStmt);
         }
         
@@ -151,7 +152,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
                     plans.add(planBIP);
             }
             
-            removeRedundantPlans();
+            //removeRedundantPlans();
         }
         
         // 4. Get the update costs if the statement is not SELECT statement
