@@ -78,6 +78,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             nReplicas = nDeploys;
     }
     
+    
     @Override
     protected void buildBIP()  
     {
@@ -112,6 +113,9 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             }           
         }
         catch (IloException e) {
+            e.printStackTrace();
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
     }

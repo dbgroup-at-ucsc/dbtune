@@ -130,7 +130,7 @@ public class RobustDivBIP extends DivBIP
             }
             
             // 7. failure Handler
-            failureHandler();
+            expectedCost();
         }
         catch (IloException e) {
             e.printStackTrace();
@@ -252,6 +252,10 @@ public class RobustDivBIP extends DivBIP
     {
         double alpha;
         alpha = (factor - 1) / (1 + (nReplicas - 1) * factor);
+        // If alpha is less 10% ---> adjust to 10%
+        // allow a bit more tight constraints
+        if (alpha < 0.1)
+            alpha = 0.1;
         
         upperReplicaCost = (1 + alpha) * optimalTotalCost / nReplicas;
         Rt.p("alpha value = " + alpha
@@ -270,7 +274,7 @@ public class RobustDivBIP extends DivBIP
      * 
      * @throws Exception
      */
-    protected void failureHandler() throws Exception
+    protected void expectedCost() throws Exception
     {   
         if (coefWithFailure > 0.0){
             // We take into consideration the case of failure
@@ -762,9 +766,9 @@ public class RobustDivBIP extends DivBIP
         DivConfiguration conf = (DivConfiguration) getOutput();
         double costWithoutFailure, costWithFailure;
         
-        costWithoutFailure = computeOptimizerCostWithoutFailure(conf);
+        costWithoutFailure = super.computeOptimizerCostWithoutFailure(conf);
         if (coefWithFailure > 0.0)
-            costWithFailure = computeOptimizerCostWithFailure(conf);
+            costWithFailure = computeTotalOptimizerCostWithFailure(conf);
         else
             costWithFailure = 0.0;
         
@@ -782,48 +786,6 @@ public class RobustDivBIP extends DivBIP
     
     
     /**
-     * Compute the cost in optimizer unit without failure
-     * 
-     * @param conf      
-     *      The derived configuration
-     *       
-     * @return
-     *      The cost
-     * @throws Exception
-     */
-    protected double computeOptimizerCostWithoutFailure(DivConfiguration conf)
-                throws Exception
-    {
-        QueryPlanDesc desc;
-        double costWithoutFailure;
-        double cost;
-        int counter;
-        int q;
-        
-        costWithoutFailure = 0.0;
-        counter = -1;
-        
-        // Compute cost with failure 
-        for (SQLStatement sql : workload) {
-            
-            counter++;
-            
-            if (sql.getSQLCategory().equals(NOT_SELECT))
-                continue;
-            desc = queryPlanDescs.get(counter); 
-            q = desc.getStatementID();
-            for (int r : conf.getRoutingReplica(q)) {
-                cost = super.inumOptimizer.getDelegate().explain
-                        (sql, conf.indexesAtReplica(r)).getTotalCost();
-                cost = cost * super.getFactorStatement(desc);
-                costWithoutFailure += cost;
-            }
-        }
-        
-        return costWithoutFailure;
-    }
-    
-    /**
      * Compute the cost in optimizer unit with failure
      * 
      * @param conf      
@@ -833,43 +795,63 @@ public class RobustDivBIP extends DivBIP
      *      The cost
      * @throws Exception
      */
-    protected double computeOptimizerCostWithFailure(DivConfiguration conf)
+    protected double computeTotalOptimizerCostWithFailure(DivConfiguration conf)
                 throws Exception
     {
-        double costWithFailure;
-        double cost;
-        int counter;
-        int q;
-
-        costWithFailure = 0.0;    
-        counter = -1;
-        QueryPlanDesc desc;
+        double costWithFailure = 0.0;
         
-        for (int failR = 0; failR < nReplicas; failR++){
-            
-            counter = -1;
-            
-            for (SQLStatement sql : workload) {
-                
-                counter++;
-                
-                if (sql.getSQLCategory().equals(NOT_SELECT))
-                    continue;
-                desc = queryPlanDescs.get(counter);
-                q = desc.getStatementID();
-                
-                for (int r : conf.getRoutingReplicaUnderFailure(q, failR)) {
-                    cost = super.inumOptimizer.getDelegate().explain
-                            (sql, conf.indexesAtReplica(r)).getTotalCost();
-                    cost = cost * this.getFactorStatementFailure(desc);
-                    costWithFailure += cost;
-                }
-                
-                q++;
-            }
-        }
+        for (int failR = 0; failR < nReplicas; failR++)
+            costWithFailure += 
+                    computeTotalOptimizerCostWithFailure (conf, failR);
         
         return costWithFailure;
+    }
+    
+    /**
+     * Cost of the system assuming that replica {@code failR} fails
+     * 
+     * @param conf
+     *      The divergent design
+     * @param failR
+     *      The failure 
+     * @return
+     *      Total cost of the system assumping the given replica fails
+     *      
+     * @throws Exception
+     */
+    protected double computeTotalOptimizerCostWithFailure(DivConfiguration conf, int failR)
+        throws Exception
+    {   
+        double cost;
+        int counter;
+        int q;        
+        double totalCost;
+        QueryPlanDesc desc;
+        
+        counter = -1;
+        totalCost = 0.0;
+        
+        for (SQLStatement sql : workload) {
+            
+            counter++;
+            
+            if (sql.getSQLCategory().equals(NOT_SELECT))
+                continue;
+            
+            desc = queryPlanDescs.get(counter);
+            q = desc.getStatementID();
+            
+            for (int r : conf.getRoutingReplicaUnderFailure(q, failR)) {
+                cost = super.inumOptimizer.getDelegate().explain
+                        (sql, conf.indexesAtReplica(r)).getTotalCost();
+                cost = cost * this.getFactorStatementFailure(desc);
+                totalCost += cost;
+            }
+            
+            q++;
+        }
+        
+        return totalCost;
     }
     
 
