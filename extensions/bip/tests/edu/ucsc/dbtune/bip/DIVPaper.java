@@ -110,17 +110,12 @@ public class DIVPaper extends DivTestSetting
         
         if (isFailure)
             drawFailure();
-        
-        if (isImbalance)
-            drawImbalance();
-        
+
         if (isOnline)
             drawOnline();
-        
 
         if (isElastic)
             drawElastic();
-        
         
         isLatex = isOnline || isEquivalent || isFailure
                     || isImbalance || isElastic;
@@ -480,54 +475,49 @@ public class DIVPaper extends DivTestSetting
         Rt.p(" time = " + time);
         plotName = dbName + "_" + wlName + "_failure";
         xname = "Prob. of failure";
-        
         yname = "TotalCost";
-        
+
         drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                 competitors, figsDir, points);
+        time /= 1000;
         
-        plots.add(new Plot("figs/" + plotName,  
-                " IMBALANCE/FAILURE, space = 0.5x, n = 3"
-                + "time BIP = " + time
-                + " AVG TIME = " + (time / numX), 0.5));
-        
-        Rt.p("Total time BIP = " + time);
-        Rt.p(" Averge = " + (time / numX));
+        plots.add(new Plot("figs/" + plotName, 
+                " Database = " + dbName + ", workload = " + wlName +
+                " Elasticity, initial configuration includes the first 200 queries"
+                + ". The running time to generate this graph = "
+                + time + " secs ", 0.5));
+               
     }
-
+    
     /***************************************************
-     * 
+     *
      * Draw imbalance and Failure
      * 
      * 
      ***************************************************/
     public static void drawImbalanceFailure() throws Exception
     {   
-        File fileExact, fileGreedy;
+        /*
+        File fileExact, fileGreedy, fileDesign;
         fileExact = new File(rawDataDir, wlName + "_" + FAILURE_IMBALANCE_EXACT_FILE);
         fileGreedy = new File(rawDataDir, wlName + "_" + FAILURE_IMBALANCE_GREEDY_FILE);
         
-        List<RobustPaperEntry> exactEntries = readFailureImbalanceResult(fileExact);
-        List<RobustPaperEntry> greedyEntries = readFailureImbalanceResult(fileGreedy);
-
-        Rt.p(" Number entries = " + exactEntries.size());
-        String[] competitors = {"1 - DIVBIP-exact/UNIF", "1 - DIVBIP-greedy/UNIF"};
-        
-        int numX = exactEntries.size();
+        // ---------------------------------------------
+        String[] competitors = {"UNIF", "DIVGDESIGN", "DIVBIP"};
+        int numX = entries.size();
 
         double[] xtics = new double[numX];
         String[] xaxis = new String[numX];
         List<Point> points = new ArrayList<Point>();
-        double ratio;
         RobustPaperEntry entry;
-        double timeExact = 0.0;
-        double timeGreedy = 0.0;
-        
+        double time = 0.0;
+        double alpha;
         for (int i = 0; i < numX; i++) {
-            entry = exactEntries.get(i);
-            
-            xaxis[i] = Double.toString(entry.nodeFactor);
+            entry = entries.get(i);
+            alpha = entry.failureFactor;
+            xaxis[i] = Double.toString(alpha);
             xtics[i] = i;
+
             Rt.p(" node factor = " + entry.nodeFactor);
             ratio = entry.getCostImprovement();
             timeExact += entry.timeDivg;
@@ -536,18 +526,17 @@ public class DIVPaper extends DivTestSetting
             ratio = ratio * 100;
             points.add(new Point(i, ratio));
             
-            entry = greedyEntries.get(i);
-            ratio = entry.getCostImprovement();
-            timeGreedy += entry.timeDivg;
-            if (ratio < 0)
-                ratio = 0.0;            
-            ratio = ratio * 100;
-            points.add(new Point(i, ratio));
+            points.add(new Point(i, entry.costUnif));
+            points.add(new Point(i, costDesignFailures.get(i)));
+            points.add(new Point(i, entry.costDivg));
+            time += entry.timeDivg;
         }
         
-        Rt.p(" timeExact = " + timeExact);
-        Rt.p(" timeGreedy = " + timeGreedy);
+        Rt.p(" time = " + time);
+        plotName = dbName + "_" + wlName + "_failure";
+        xname = "Prob. of failure";
         
+
         plotName = dbName + "_" + wlName + "_failure_imbalance";
         xname = "Imbalance factor";        
         yname = "TotalCost Improvement (%)";
@@ -556,12 +545,14 @@ public class DIVPaper extends DivTestSetting
                 competitors, figsDir, points);
         
         plots.add(new Plot("figs/" + plotName,  
+
                 " IMBALANCE and FAILURE, space = 0.5x, n = 3, failure=  0.2"
                 + "time EXACT = " + timeExact
                 + " avg EXACT TIME = " + (timeExact / numX)
                 + "time GREEDY = " + timeGreedy
                 + " avg GREEDY TIME = " + (timeGreedy / numX),
                 0.5));
+        */
     }
     
     protected static List<Double> costUnderFailure(List<Double> alphas, Map<DivPaperEntry, Double> mapVal)
@@ -620,10 +611,11 @@ public class DIVPaper extends DivTestSetting
         
         List<RobustPaperEntry> greedyEntries = readFailureImbalanceResult(fileGreedy);
         List<RobustPaperEntry> ifEntries = readFailureImbalanceResult(fileIF);
+
         
         Rt.p(" Number entries = " + greedyEntries.size());
         String[] competitors = {"UNIF", "DIVBIP, a = 0.1", "DIVBIP, a = 0"};
-        
+
         int numX = greedyEntries.size();
 
         double[] xtics = new double[numX];
@@ -847,7 +839,6 @@ public class DIVPaper extends DivTestSetting
      *      
      * @throws Exception
      */
-
     protected static void serializeElasticResult(ElasticPaperEntry elasticEntry, 
                                                 File file) throws Exception 
     {    

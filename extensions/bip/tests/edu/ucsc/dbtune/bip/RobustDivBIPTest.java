@@ -28,7 +28,6 @@ public class RobustDivBIPTest extends DIVPaper
         
         List<Double> imbalanceFactors = new ArrayList<Double>();
         List<Double> failureFactors = new ArrayList<Double>();
-        boolean isGreedy;
         
         // get the imbalance factors from inputs
         try {   
@@ -45,7 +44,6 @@ public class RobustDivBIPTest extends DIVPaper
             ;
         }
         
-
         if (imbalanceFactors.size() != failureFactors.size()){
             Rt.p(" List of imbalance factors must have the same size "
                     + " with list of failure factors");
@@ -54,7 +52,6 @@ public class RobustDivBIPTest extends DIVPaper
             
         // run the test
         testFailureImbalance(failureFactors, imbalanceFactors, true);
-
 
         // not to draw graph
         resetParameterNotDrawingGraph();
