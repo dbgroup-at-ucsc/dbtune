@@ -31,7 +31,9 @@ public class UtilConstraintBuilder
     
     /**
      * Compute coefficient for the total cost without failure,
-     * computed as {@code (1 - alpha)^N}
+     * computed as {@code (1 - alpha)^N}. Scale 
+     * by a factor (1 - alpha) (n - 1)
+     * 
      *  
      * @param alpha
      *      The failure factor
@@ -44,9 +46,14 @@ public class UtilConstraintBuilder
     public static double computeCoefCostWithoutFailure(double alpha, int N)
     {
         //return Math.pow(1 - alpha, N);
-        return (1 - alpha) * 10 * N;
+        return (1 - alpha);
     }
     
+    public static double scaleDownFactor(double alpha, int N)
+    {
+        //return Math.pow(1 - alpha, N - 1);
+        return 1;
+    }
     
     /**
      * Compute coefficient for the total cost with 
@@ -64,7 +71,7 @@ public class UtilConstraintBuilder
     public static double computeCoefCostWithFailure(double alpha, int N)
     {
         //return alpha * Math.pow(1 - alpha, N - 1);
-        return alpha * 10 * N;
+        return alpha;
     }
     
     /**
