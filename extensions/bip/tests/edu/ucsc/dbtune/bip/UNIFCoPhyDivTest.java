@@ -73,7 +73,7 @@ public class UNIFCoPhyDivTest extends DIVPaper
             for (int i = 0; i < listNumberReplicas.size(); i++){
                 budget = convertBudgetToMB(B1);
                 DivPaperEntry entry = new DivPaperEntry
-                (dbName, wlName, listNumberReplicas.get(i), budget);
+                (dbName, wlName, listNumberReplicas.get(i), budget, null);
                 
                 entries.put(entry, totalCosts.get(i));
             }

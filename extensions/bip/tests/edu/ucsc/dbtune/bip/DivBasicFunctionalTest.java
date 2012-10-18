@@ -46,7 +46,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
         if (file.exists())
             file.delete();
         
-        file = new File(folder + "/candidate-optimizer.bin");
+        file = new File(folder + "/candidates.bin");
         if (file.exists())
             file.delete();
         

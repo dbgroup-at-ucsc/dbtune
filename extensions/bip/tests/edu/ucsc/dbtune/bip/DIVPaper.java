@@ -18,6 +18,7 @@ import java.util.Map;
 import org.junit.Test;
 
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
+import edu.ucsc.dbtune.bip.div.UtilConstraintBuilder;
 import edu.ucsc.dbtune.bip.util.LatexGenerator;
 import edu.ucsc.dbtune.bip.util.LatexGenerator.Plot;
 import edu.ucsc.dbtune.util.GnuPlotLine;
@@ -43,7 +44,6 @@ public class DIVPaper extends DivTestSetting
     
     protected static DivConfiguration initialConf;
     protected static int nDeploys;
-    protected static boolean isCoPhyDesign = false;
     
     protected static Map<DivPaperEntry, Double> entries;
     
@@ -54,6 +54,7 @@ public class DIVPaper extends DivTestSetting
     protected static final String UNIF_COPHY_FILE = "unif_cophy.bin";
     
     protected static final String ONLINE_FILE = "online.bin";
+    protected static final String ELASTIC_FILE = "elastic.bin";
     protected static final String FAILURE_FILE = "failure.bin";
     protected static final String IMBALANCE_EXACT_FILE = "imbalance_exact.bin";
     protected static final String IMBALANCE_GREEDY_FILE = "imbalance_greedy.bin";
@@ -63,28 +64,34 @@ public class DIVPaper extends DivTestSetting
     
     protected static File unifFile;
     protected static File divFile;
+    protected static File divUnifFile;
     protected static File designFile;
     protected static File unifCoPhyFile;
     protected static File designCoPhyFile;
     protected static File onlineFile;
     
     protected static File failureFile;
+    protected static File elasticFile;
     protected static File imbalanceFile;
     protected static File failureImbalanceFile;
     
     protected static Map<DivPaperEntry, Double> mapUnif;
     protected static Map<DivPaperEntry, Double> mapDiv;
+    protected static Map<DivPaperEntry, Double> mapDivUnif;
     protected static Map<DivPaperEntry, Double> mapDesign;    
     protected static Map<DivPaperEntry, Double> mapDesignCoPhy;
     protected static Map<DivPaperEntry, Double> mapUnifCoPhy;
     
+    // robustness features
     protected static boolean isEquivalent = false;
-    protected static boolean isOnline = true;
-    protected static boolean isLatex = false;
-    protected static boolean isCophy = false;
     protected static boolean isFailure = false;
     protected static boolean isImbalance = false;
-    protected static boolean isFailureImbalance = false;
+    // online & elasticity
+    protected static boolean isOnline = true;
+    protected static boolean isElastic = false;
+    
+    // generate PDF file
+    protected static boolean isLatex = false;
     
     /**
      *
@@ -105,25 +112,22 @@ public class DIVPaper extends DivTestSetting
             drawGraphDIVEquivBIP(dbName, wlName, false);
         }
         
-        if (isCophy){
-            drawAllGraphDIVEquivBIP(dbName, wlName, true);
-            drawAllGraphDIVEquivBIP(dbName, wlName, false);
-        }
-        
-        if (isOnline)
-            drawOnline();
-        
         if (isFailure)
-            drawFailure(isFailure);
+            drawFailure();
         
         if (isImbalance)
             drawImbalance();
         
-        if (isFailureImbalance)
-            drawImbalanceFailure();
+        if (isOnline)
+            drawOnline();
         
-        isLatex = isOnline || isEquivalent || isCophy || isFailure
-                    || isImbalance || isFailureImbalance;
+        if (isElastic)
+            drawElastic();
+        
+        
+        isLatex = isOnline || isEquivalent || isFailure
+                    || isImbalance || isElastic;
+        
         if (isLatex)
             LatexGenerator.generateLatex(latexFile, outputDir, plots);
     }
@@ -133,9 +137,9 @@ public class DIVPaper extends DivTestSetting
         isEquivalent = false;
         isOnline = false;
         isLatex = false;
-        isCophy = false;
         isFailure = false;
         isImbalance = false;
+        isElastic = false;
     }
     /**
      * Initialize the locations that stored file
@@ -173,9 +177,8 @@ public class DIVPaper extends DivTestSetting
         // 2. Read the result from DIV file
         divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
         mapDiv = readDivResult(divFile);
-        Rt.p(" map div: " + mapDiv);
         
-        // 3. Read the result from Design file
+        // 4. Read the result from Design file
         designFile = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
         mapDesign = readDivResult(designFile);
         
@@ -183,53 +186,12 @@ public class DIVPaper extends DivTestSetting
         
         // 3. draw graphs
         if (drawRatio)
-            competitors = new String[] {"1 - DIVBIP/UNIF", " 1 - DIVGDESIGN/DIVBIP"};
+            competitors = new String[] {"1 - DIVBIP/UNIF", "1 - DIVBIP/DIVGDESIGN"};
         else 
             competitors = new String[] {"UNIF", "DIVGDESIGN", "DIVBIP"};
         int numX;
         double ratio; 
         long budget;
-        
-        // varying number of replicas
-        for (double B : listBudgets) {
-            budget = convertBudgetToMB (B);
-            int n;
-            numX = listNumberReplicas.size();
-            double[] xtics = new double[numX];
-            String[] xaxis = new String[numX];
-            List<Point> points = new ArrayList<Point>();
-            
-            for (int i = 0; i < numX; i++) {
-                n = listNumberReplicas.get(i);
-                xtics[i] = i;
-                xaxis[i] = Integer.toString(n);
-                entry = new DivPaperEntry(dbName, wlName, n, budget);
-                if (drawRatio)
-                    addPointRatioDIVEquivBIP(xtics[i], entry, points);
-                else 
-                    addPointDIVEquivBIP(xtics[i], entry, points);
-            }
-            
-            ratio = (double) B / Math.pow(2, 30) / 10;
-            plotName = dbName + "_" + wlName + "_space_" + Double.toString(ratio) + "x";
-            if (drawRatio)
-                plotName += "_ratio";
-            else
-                plotName += "_absolute";
-            xname = "# replicas";
-            if (drawRatio)
-                yname = "TotalCost improvement (%)";
-            else 
-                yname = "TotalCost";
-         
-            drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
-                    competitors, figsDir, points);
-            
-            plots.add(new Plot("figs/" + plotName, 
-                    " Database = " + dbName + " workload = " + wlName +
-                    " Varying \\# replicas, B = " + Double.toString(ratio) + "x", 0.5));
-        }
-        
         
         // varying space budget
         for (int n : listNumberReplicas) {
@@ -248,13 +210,12 @@ public class DIVPaper extends DivTestSetting
                     xaxis[i] = "INF";
                 else
                     xaxis[i] = Double.toString(ratio) + "x";
-                entry = new DivPaperEntry(dbName, wlName, n, budget);
+                entry = new DivPaperEntry(dbName, wlName, n, budget, null);
                 if (drawRatio)
                     addPointRatioDIVEquivBIP(xtics[i], entry, points);
                 else 
                     addPointDIVEquivBIP(xtics[i], entry, points);
             }
-            
             
             plotName = dbName + "_" + wlName + "_number_replica" + Integer.toString(n);
             if (drawRatio)
@@ -264,7 +225,7 @@ public class DIVPaper extends DivTestSetting
             
             xname = "Space budget";
             if (drawRatio)
-                yname = "TotalCost improvement (%)";
+                yname = "TotalCost Improvement (%)";
             else 
                 yname = "TotalCost";
             
@@ -286,11 +247,11 @@ public class DIVPaper extends DivTestSetting
      */
     protected static void addPointRatioDIVEquivBIP(double xcoordinate, DivPaperEntry entry, List<Point> points)
     {
-        double costDiv, costUnif, costDesign;
-        double ratioDesign, ratioDiv;
+        double costDiv, costUnif, costDesign, costDesignCoPhy;
+        double ratioDesign, ratioDiv, ratioDesignCoPhy;
         Rt.p("entry = " + entry);
         costDiv = mapDiv.get(entry);
-        costUnif = mapUnif.get(entry);
+        costUnif = mapUnif.get(entry);        
         costDesign = mapDesign.get(entry);
         
         Rt.p(" entry: " + entry);
@@ -384,8 +345,8 @@ public class DIVPaper extends DivTestSetting
         }
         
         plotName = dbName + "_" + wlName + "_online_windows_" + windowDuration;
-        xname = "#query ID";
-        yname = "Improvement";
+        xname = "Query";
+        yname = "Expected Cost Improvement (%)";
         
         drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                 competitors, figsDir, points);
@@ -411,64 +372,109 @@ public class DIVPaper extends DivTestSetting
     
     /***************************************************
      * 
+     * Draw elastic graph
+     * 
+     * 
+     ***************************************************/
+    public static void drawElastic() throws Exception
+    {   
+        int numX;
+        elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_FILE);
+        ElasticPaperEntry entry = readElasticResult(elasticFile);
+        
+        numX = entry.listReconfiguationCosts.size();
+        double[] xtics = new double[numX];
+        String[] xaxis = new String[numX];
+        List<Point> points = new ArrayList<Point>();
+        int round;
+        for (int i = 0; i < numX; i++){
+            xtics[i] = i;
+            round = (int)(entry.listReconfiguationCosts.get(i) / Math.pow(10, 6));
+            xaxis[i] = Integer.toString(round);
+        }
+        
+        String[] competitors = new String[entry.listNumberReplicas.size()
+                                          + 1];
+        for (int i = 0; i < entry.listNumberReplicas.size(); i++)
+            competitors[i] = "n = " + Integer.toString(
+                     entry.listNumberReplicas.get(i));
+        competitors[entry.listNumberReplicas.size()] = "CURRENT";
+        
+        int n;
+        for (int i = 0; i < numX; i++) {
+            
+            for (int j = 0; j < competitors.length - 1; j++) {
+                n = entry.listNumberReplicas.get(j);
+                points.add(new Point(xtics[i], entry.mapReplicaCosts.get(n).get(i)));
+            }
+             
+            points.add(new Point(xtics[i], entry.currentCost));
+        }
+       
+        plotName = dbName + "_" + wlName + "elastic";
+        xname = "Reconfiguration cost (x10^6)";
+        yname = "Expected cost";
+     
+        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                competitors, figsDir, points);
+        entry.totalTime /= 1000;
+        
+        plots.add(new Plot("figs/" + plotName, 
+                " Database = " + dbName + ", workload = " + wlName +
+                " Elasticity, initial configuration includes the first 200 queries"
+                + ". The running time to generate this graph = "
+                + entry.totalTime + " secs ", 0.5));
+               
+    }
+    
+    /***************************************************
+     * 
      * Draw failure graph
      * 
      * 
      ***************************************************/
-    public static void drawFailure(boolean isFailure) throws Exception
+    public static void drawFailure() throws Exception
     {   
         File file;
-        
-        if (isFailure)
-            file = new File(rawDataDir, wlName + "_" + FAILURE_FILE);
-        else 
-            file = new File(rawDataDir, wlName + "_" + IMBALANCE_EXACT_FILE);
-        Rt.p(" file = " + file.getName());
+        File fileDesign;
+        file = new File(rawDataDir, wlName + "_" + FAILURE_FILE);
         List<RobustPaperEntry> entries = readFailureImbalanceResult(file);
-        Rt.p(" Number entries = " + entries.size());
-        String[] competitors = {"1 - DIVBIP/UNIF"};
         
+        // read from DIVGDESGIN
+        List<Double> alphas = new ArrayList<Double>();
+        for (RobustPaperEntry entry : entries)
+            alphas.add(entry.failureFactor);
+        fileDesign = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
+        mapDesign = readDivResult(fileDesign);
+        List<Double> costDesignFailures = costUnderFailure(alphas, mapDesign);
+        
+        // ---------------------------------------------
+        String[] competitors = {"UNIF", "DIVGDESIGN", "DIVBIP"};
         int numX = entries.size();
 
         double[] xtics = new double[numX];
         String[] xaxis = new String[numX];
         List<Point> points = new ArrayList<Point>();
-        double ratio;
         RobustPaperEntry entry;
         double time = 0.0;
-            
+        double alpha;
         for (int i = 0; i < numX; i++) {
             entry = entries.get(i);
-            
-            if (isFailure)
-                xaxis[i] = Double.toString(entry.failureFactor);
-            else 
-                xaxis[i] = Double.toString(entry.nodeFactor);
-            
+            alpha = entry.failureFactor;
+            xaxis[i] = Double.toString(alpha);
             xtics[i] = i;
-            ratio = entry.getCostImprovement();
             
-            if (ratio < 0)
-                ratio = 0.0;
-            
-            ratio = ratio * 100;
-            points.add(new Point(i, ratio));
-            
+            points.add(new Point(i, entry.costUnif));
+            points.add(new Point(i, costDesignFailures.get(i)));
+            points.add(new Point(i, entry.costDivg));
             time += entry.timeDivg;
         }
         
         Rt.p(" time = " + time);
+        plotName = dbName + "_" + wlName + "_failure";
+        xname = "Prob. of failure";
         
-        if (isFailure) {
-            plotName = dbName + "_" + wlName + "_failure";
-            xname = "Failure factor";
-        }
-        else {
-            plotName = dbName + "_" + wlName + "_imbalance";
-            xname = "Imbalance factor";
-        }
-        
-        yname = "TotalCost Improvement (%)";
+        yname = "TotalCost";
         
         drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                 competitors, figsDir, points);
@@ -481,6 +487,48 @@ public class DIVPaper extends DivTestSetting
         Rt.p("Total time BIP = " + time);
         Rt.p(" Averge = " + (time / numX));
     }
+    
+    protected static List<Double> costUnderFailure(List<Double> alphas, Map<DivPaperEntry, Double> mapVal)
+                throws Exception
+    {
+        Rt.p(" nReplicas = " + nReplicas
+                + " space = " + B);
+        DivPaperEntry entry = new DivPaperEntry(dbName, wlName, nReplicas, 
+                convertBudgetToMB(B), null);
+        double costWithoutFailure = 0.0;
+        double costWithFailure = 0.0;
+        DivConfiguration configuration = null;
+        int n = -1;
+        double totalCost;
+        // traverse the map
+        for (Map.Entry<DivPaperEntry, Double> ele : mapVal.entrySet()) {
+            if (ele.getKey().equals(entry)) {
+                costWithoutFailure = ele.getValue();
+                configuration = ele.getKey().divConfiguration;
+                costWithFailure = DivBIPFunctionalTest.getTotalDB2QueryCostDivConfFailure
+                                (configuration);
+                n = configuration.getNumberReplicas();
+                costWithFailure =  costWithFailure / n; 
+                Rt.p(" cost with failure = " + costWithFailure);
+                break;
+            }
+        }
+        Rt.p("After for loop");
+        double scale;
+        
+        List<Double> results = new ArrayList<Double>();
+        for (double alpha : alphas){
+            scale = UtilConstraintBuilder.scaleDownFactor(alpha, n);
+            totalCost = scale * costWithoutFailure * 
+                UtilConstraintBuilder.computeCoefCostWithoutFailure(alpha, n);
+            totalCost += scale * costWithFailure * 
+                UtilConstraintBuilder.computeCoefCostWithFailure(alpha, n);
+            
+            results.add(totalCost);
+        }
+        
+        return results;
+    }
 
     /***************************************************
      * 
@@ -490,136 +538,69 @@ public class DIVPaper extends DivTestSetting
      ***************************************************/
     public static void drawImbalance() throws Exception
     {   
-        File fileExact, fileGreedy;
-        fileExact = new File(rawDataDir, wlName + "_" + IMBALANCE_EXACT_FILE);
+        File fileGreedy, fileIF;
         fileGreedy = new File(rawDataDir, wlName + "_" + IMBALANCE_GREEDY_FILE);
+        fileIF = new File(rawDataDir, wlName + "_" + FAILURE_IMBALANCE_GREEDY_FILE);
         
-        List<RobustPaperEntry> exactEntries = readFailureImbalanceResult(fileExact);
         List<RobustPaperEntry> greedyEntries = readFailureImbalanceResult(fileGreedy);
-
-        Rt.p(" Number entries = " + exactEntries.size());
-        String[] competitors = {"1 - DIVBIP-exact/UNIF", "1 - DIVBIP-greedy/UNIF"};
+        List<RobustPaperEntry> ifEntries = readFailureImbalanceResult(fileIF);
         
-        int numX = exactEntries.size();
+        Rt.p(" Number entries = " + greedyEntries.size());
+        String[] competitors = {"UNIF", "DIVBIP, a = 0.1", "DIVBIP, a = 0"};
+        
+        int numX = greedyEntries.size();
 
         double[] xtics = new double[numX];
         String[] xaxis = new String[numX];
         List<Point> points = new ArrayList<Point>();
-        double ratio;
         RobustPaperEntry entry;
-        double timeExact = 0.0;
-        double timeGreedy = 0.0;
+        double timeAlpha1 = 0.0;
+        double timeAlpha0 = 0.0;
         
         for (int i = 0; i < numX; i++) {
-            entry = exactEntries.get(i);
-            
+            entry = ifEntries.get(i);
+            timeAlpha1 += entry.timeDivg;
             xaxis[i] = Double.toString(entry.nodeFactor);
             xtics[i] = i;
-       
-            ratio = entry.getCostImprovement();
-            timeExact += entry.timeDivg;
-            if (ratio < 0)
-                ratio = 0.0;            
-            ratio = ratio * 100;
-            points.add(new Point(i, ratio));
+            points.add(new Point(i, entry.costUnif));
+            points.add(new Point(i, entry.costDivg));
             
             entry = greedyEntries.get(i);
-            ratio = entry.getCostImprovement();
-            timeGreedy += entry.timeDivg;
-            if (ratio < 0)
-                ratio = 0.0;            
-            ratio = ratio * 100;
-            points.add(new Point(i, ratio));
+            points.add(new Point(i, entry.costDivg));
+            timeAlpha0 += entry.timeDivg;
         }
-        
-        Rt.p(" timeExact = " + timeExact);
-        Rt.p(" timeGreedy = " + timeGreedy);
         
         plotName = dbName + "_" + wlName + "_imbalance";
-        xname = "Imbalance factor";        
-        yname = "TotalCost Improvement (%)";
+        xname = "Load-imbalance factor";        
+        yname = "TotalCost ";
         
         drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                 competitors, figsDir, points);
-        
+        /*
+        // 4. Read the result from Design file
+        // Get the imbalance of the DIVGDESIGN
+        designFile = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
+        mapDesign = readDivResult(designFile);
+        DivPaperEntry entryP = new DivPaperEntry(dbName, wlName, nReplicas, 
+                convertBudgetToMB(B), null);
+        double designImbalance = -1;
+        for (Map.Entry<DivPaperEntry, Double> ele : mapDesign.entrySet()) 
+            if (ele.getKey().equals(entryP)) {
+                designImbalance = computeLoadImbalance(ele.getKey().divConfiguration, workload);
+                break;
+            }
+        // ------------------------------------------------------
+        */    
+        timeAlpha0 = timeAlpha0 / numX / 1000;
+        timeAlpha1 = timeAlpha1 / numX / 1000;
         plots.add(new Plot("figs/" + plotName,  
                 " IMBALANCE/FAILURE, space = 0.5x, n = 3"
-                + "time EXACT = " + timeExact
-                + " avg EXACT TIME = " + (timeExact / numX)
-                + "time GREEDY = " + timeGreedy
-                + " avg GREEDY TIME = " + (timeGreedy / numX),
-                0.5));
+                + " avg  TIME for alpha = 0 is " + timeAlpha0 + " (secs)"
+                + " avg  TIME for alpha > 0 is " + timeAlpha1 + " (secs)"
+                , 0.5));
     }
 
-    /***************************************************
-     * 
-     * Draw imbalance and Failure
-     * 
-     * 
-     ***************************************************/
-    public static void drawImbalanceFailure() throws Exception
-    {   
-        File fileExact, fileGreedy;
-        fileExact = new File(rawDataDir, wlName + "_" + FAILURE_IMBALANCE_EXACT_FILE);
-        fileGreedy = new File(rawDataDir, wlName + "_" + FAILURE_IMBALANCE_GREEDY_FILE);
-        
-        List<RobustPaperEntry> exactEntries = readFailureImbalanceResult(fileExact);
-        List<RobustPaperEntry> greedyEntries = readFailureImbalanceResult(fileGreedy);
-
-        Rt.p(" Number entries = " + exactEntries.size());
-        String[] competitors = {"1 - DIVBIP-exact/UNIF", "1 - DIVBIP-greedy/UNIF"};
-        
-        int numX = exactEntries.size();
-
-        double[] xtics = new double[numX];
-        String[] xaxis = new String[numX];
-        List<Point> points = new ArrayList<Point>();
-        double ratio;
-        RobustPaperEntry entry;
-        double timeExact = 0.0;
-        double timeGreedy = 0.0;
-        
-        for (int i = 0; i < numX; i++) {
-            entry = exactEntries.get(i);
-            
-            xaxis[i] = Double.toString(entry.nodeFactor);
-            xtics[i] = i;
-            Rt.p(" node factor = " + entry.nodeFactor);
-            ratio = entry.getCostImprovement();
-            timeExact += entry.timeDivg;
-            if (ratio < 0)
-                ratio = 0.0;            
-            ratio = ratio * 100;
-            points.add(new Point(i, ratio));
-            
-            entry = greedyEntries.get(i);
-            ratio = entry.getCostImprovement();
-            timeGreedy += entry.timeDivg;
-            if (ratio < 0)
-                ratio = 0.0;            
-            ratio = ratio * 100;
-            points.add(new Point(i, ratio));
-        }
-        
-        Rt.p(" timeExact = " + timeExact);
-        Rt.p(" timeGreedy = " + timeGreedy);
-        
-        plotName = dbName + "_" + wlName + "_failure_imbalance";
-        xname = "Imbalance factor";        
-        yname = "TotalCost Improvement (%)";
-        
-        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
-                competitors, figsDir, points);
-        
-        plots.add(new Plot("figs/" + plotName,  
-                " IMBALANCE and FAILURE, space = 0.5x, n = 3, failure=  0.2"
-                + "time EXACT = " + timeExact
-                + " avg EXACT TIME = " + (timeExact / numX)
-                + "time GREEDY = " + timeGreedy
-                + " avg GREEDY TIME = " + (timeGreedy / numX),
-                0.5));
-    }
-    
+   
     /**
      * Write into a text file
      * @param fileName
@@ -790,6 +771,53 @@ public class DIVPaper extends DivTestSetting
      *      
      * @throws Exception
      */
+    protected static void serializeElasticResult(ElasticPaperEntry elasticEntry, 
+                                                File file) throws Exception 
+    {    
+        ObjectOutputStream write;
+        
+        try {
+            FileOutputStream fileOut = new FileOutputStream(file, false);
+            write = new ObjectOutputStream(fileOut);
+            write.writeObject(elasticEntry);
+            write.close();
+            fileOut.close();
+        } catch(IOException e) {
+            throw new SQLException(e);
+        }
+    }
+    
+    
+    protected static ElasticPaperEntry readElasticResult(File file) throws Exception
+    {
+        ObjectInputStream in;
+        ElasticPaperEntry result = null;
+        try {
+            FileInputStream fileIn = new FileInputStream(file);
+            in = new ObjectInputStream(fileIn);
+            result = (ElasticPaperEntry) in.readObject();
+
+            in.close();
+            fileIn.close();
+        } catch(IOException e) {
+            throw new SQLException(e);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException(e);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Store the maps of divergent results into binary object file
+     * 
+     * @param maps
+     *      The map that stores the result           
+     * @param file
+     *      The filename on which the data is written on
+     *      
+     * @throws Exception
+     */
     protected static void serializeFailureImbalanceResult(List<RobustPaperEntry> entries, File file) throws Exception 
     {    
         ObjectOutputStream write;
@@ -880,7 +908,7 @@ public class DIVPaper extends DivTestSetting
         mapDesignCoPhy = readDivResult(designCoPhyFile);
         
         String[] competitors;
-        
+        /*
         // 3. draw graphs
         if (drawRatio)
             competitors = new String[] {
@@ -979,6 +1007,7 @@ public class DIVPaper extends DivTestSetting
                     " Database = " + dbName + " workload = " + wlName +
                     " Varying \\# replicas, B = " + Double.toString(ratio) + "x", 0.5));
         }
+        */
     }
     
     
@@ -1069,19 +1098,22 @@ public class DIVPaper extends DivTestSetting
     public static class DivPaperEntry implements Serializable
     {
         private static final long serialVersionUID = 1L;
-        private String dbName;
-        private String wlName;
-        private int n;
-        private long B;
+        public String dbName;
+        public String wlName;
+        public int n;
+        public long B;
         private int fHashCode;
+        public DivConfiguration divConfiguration;
         // TODO: include the running time
         
-        public DivPaperEntry(String _db, String _wl, int _n, long _B)
+        public DivPaperEntry(String _db, String _wl, int _n, long _B,
+                            DivConfiguration _divConfiguration)
         {
             dbName = _db;
             wlName = _wl;
             n = _n;
             B = _B;
+            divConfiguration = _divConfiguration;
         }
 
         @Override
@@ -1222,15 +1254,17 @@ public class DIVPaper extends DivTestSetting
     {
         private static final long serialVersionUID = 1L;
    
-        double failureFactor;
-        double nodeFactor; // usually 0.0
-        double costDivg;
-        double costUnif;
-        double timeDivg;
+        public double failureFactor;
+        public double nodeFactor; // usually 0.0
+        public double costDivg;
+        public double costUnif;
+        public double timeDivg;
+        
+        public DivConfiguration divConf;
         
         public RobustPaperEntry(double failure, double node,
                                 double divg, double unif,
-                                 double time)
+                                double time)
         {
             this.failureFactor = failure;
             this.nodeFactor = node;
@@ -1243,5 +1277,29 @@ public class DIVPaper extends DivTestSetting
         {
             return 1 - (costDivg/ costUnif);
         }       
+    }
+    
+    /**
+     * Store the results of online features
+     * 
+     * @author Quoc Trung Tran
+     *
+     */
+    public static class ElasticPaperEntry implements Serializable
+    {
+        private static final long serialVersionUID = 1L;
+        public double totalTime;
+        public double currentCost;
+        public List<Integer> listNumberReplicas;
+        public List<Double> listReconfiguationCosts;
+        public Map<Integer, List<Double>> mapReplicaCosts;    
+        
+        public ElasticPaperEntry()
+        {
+            totalTime = 0.0;
+            listNumberReplicas = new ArrayList<Integer>();
+            listReconfiguationCosts = new ArrayList<Double>();
+            mapReplicaCosts = new HashMap<Integer, List<Double>>();
+        }
     }
 }

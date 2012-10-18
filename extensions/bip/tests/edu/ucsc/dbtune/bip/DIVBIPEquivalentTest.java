@@ -17,53 +17,53 @@ public class DIVBIPEquivalentTest extends DIVPaper
         // data structures
         initialize();
         
-        // experiment for DIV equivalent to BIP        
-        entries = new HashMap<DivPaperEntry, Double>();
-        runExpts();
+        // get parameters
+        getEnvironmentParameters();        
+        setParameters();
         
-        // 2. special data structures for this class
-        divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
-        divFile.delete();
-        divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
-        divFile.createNewFile();
+        // experiment for DIV equivalent to BIP    
+        runDivBIP();
         
-        // store in the serialize file
-        serializeDivResult(entries, divFile);
-        
-        // test the result
-        entries = readDivResult(divFile);
-        Rt.p(" result " + entries);
+        // not to draw graph
+        resetParameterNotDrawingGraph();
     }
     
     /**
      * Call DIVBIP for each pair of replicas and budgets 
      * 
-     * @param dbName
-     *      Database name
-     * @param wlName
-     *      Workload name
+     * 
      * @throws Exception
      */
-    public static void runExpts() throws Exception
-    {
-        // get parameters
-        getEnvironmentParameters();        
-        setParameters();
-        
+    public static void runDivBIP() throws Exception
+    {   
         // run algorithms
         double costBip;
         long budget;
         timeBIP = 0.0;
+        
+        boolean isOnTheFly = false;
+        
+        entries = new HashMap<DivPaperEntry, Double>();
         for (double B : listBudgets) 
             for (int n : listNumberReplicas) {
                 LogListener logger = LogListener.getInstance();
-                costBip = DivBIPFunctionalTest.testDivSimplify(n, B, false, logger);
+                costBip = DivBIPFunctionalTest.testDivSimplify(n, B, 
+                                    isOnTheFly, logger);
                 budget = convertBudgetToMB(B);
                 DivPaperEntry entry = new DivPaperEntry
-                        (dbName, wlName, n, budget);
+                        (dbName, wlName, n, budget, divConf);
                 
                 entries.put(entry, costBip);
                 timeBIP += logger.getTotalRunningTime();
+                
+                // 2. store in the file
+                divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
+                divFile.delete();
+                divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
+                divFile.createNewFile();
+                
+                // store in the serialize file
+                serializeDivResult(entries, divFile);
             }
         
         double averageBIP = timeBIP / (listBudgets.size()

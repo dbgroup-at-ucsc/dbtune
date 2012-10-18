@@ -76,19 +76,7 @@ public class AdaptiveDivBIPTest extends DIVPaper
         // empty INITIAL configuration
         if (endID == -1){
             Rt.p(" EMPTY INTIAL CONFIGURATION");
-            div = new DivBIP();
-            LogListener logger = LogListener.getInstance();
-            // Derive corresponding parameters
-            loadfactor = (int) Math.ceil( (double) nReplicas / 2);
-            
-            Optimizer io = db.getOptimizer();
-            div.setCandidateIndexes(candidates);
-            div.setWorkload(workload); 
-            div.setOptimizer((InumOptimizer) io);
-            div.setNumberReplicas(nReplicas);
-            div.setLoadBalanceFactor(loadfactor);
-            div.setSpaceBudget(B);
-            div.setLogListenter(logger);
+            initializeDivBIP();
             
             initialConf = new DivConfiguration(nReplicas, loadfactor);
             return;
@@ -105,6 +93,29 @@ public class AdaptiveDivBIPTest extends DIVPaper
         Rt.p("Initial configuration: " + workload.size());
         DivBIPFunctionalTest.testDiv(nReplicas, B, descs);
         initialConf = divConf;
+    }
+    
+    /**
+     * Initial DIVBIP object
+     * @throws Exception
+     */
+    protected static DivBIP initializeDivBIP() throws Exception
+    {
+        div = new DivBIP();
+        LogListener logger = LogListener.getInstance();
+        // Derive corresponding parameters
+        loadfactor = (int) Math.ceil( (double) nReplicas / 2);
+        
+        Optimizer io = db.getOptimizer();
+        div.setCandidateIndexes(candidates);
+        div.setWorkload(workload); 
+        div.setOptimizer((InumOptimizer) io);
+        div.setNumberReplicas(nReplicas);
+        div.setLoadBalanceFactor(loadfactor);
+        div.setSpaceBudget(B);
+        div.setLogListenter(logger);
+        
+        return div;
     }
     
 }

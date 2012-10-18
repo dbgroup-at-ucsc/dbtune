@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.bip;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +12,6 @@ import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.div.ElasticDivBIP;
 import edu.ucsc.dbtune.bip.util.LatexGenerator;
 import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.bip.util.LatexGenerator.Plot;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Rt;
@@ -53,14 +53,16 @@ public class ElasticDivBIPTest extends AdaptiveDivBIPTest
      */
     protected static void runElasticity() throws Exception
     {
+        ElasticPaperEntry entry = new ElasticPaperEntry();
+        
         // these can come from the list of ticks
         // from the online expt.
         // for now: they are hard-coded
         int endInvestigation = 211;
-        int startInvestigation = endInvestigation - en.getWindowDuration();
+        int startInvestigation = endInvestigation - en.getWindowDuration() + 1;
         
         // get initial configuration
-        // empty configuration
+        // the first phase, including 200 queries
         getInitialConfiguration(0, 199);
         
         // set up the new workload
@@ -69,9 +71,10 @@ public class ElasticDivBIPTest extends AdaptiveDivBIPTest
             sqls.add(wlOnline.get(i));
         workload = new Workload(sqls);
         // compute the cost of current configuration
-        double currentCost = onlineDiv.computeINUMCost(startInvestigation, endInvestigation,
+        
+        entry.currentCost = onlineDiv.computeINUMCost(startInvestigation, endInvestigation,
                                         initialConf);
-        Rt.p(" current cost = " + currentCost);
+        Rt.p(" current cost = " + entry.currentCost);
         List<QueryPlanDesc> descs = onlineDiv.getQueryPlanDescs(startInvestigation, endInvestigation);
         
         // 2. Get the total deployment cost
@@ -80,52 +83,26 @@ public class ElasticDivBIPTest extends AdaptiveDivBIPTest
         reConfigurationCost = divConf.transitionCost(initialConf, true);
         Rt.p("Reconfiguration costs: " + reConfigurationCost);
         
-        List<Double> costs = new ArrayList<Double>();
-        int startExpo = -4;
-        int endExpo = 0;
-        int numX;
-        numX = endExpo - startExpo + 1;
-        double[] xtics = new double[numX];
-        String[] xaxis = new String[numX];
-        List<Point> points = new ArrayList<Point>();
-        for (int i = startExpo; i <= endExpo; i++) {
-            costs.add(reConfigurationCost * Math.pow(2,  i));
-            xtics[i + numX - 1] = i + numX;
-            xaxis[i + numX - 1] = Double.toString(Math.pow(2,  i)) + "x";
-        }
+        // derive the reconfiguration costs
+        for (int i = -4; i <= 0; i++) 
+            entry.listReconfiguationCosts.add(reConfigurationCost 
+                    * Math.pow(2,  i));
         
-        String[] competitors = {"n = 2", "n = 3", "n = 4", "CURRENT"};
-        List< List<Double> > totalCostCompetitors = new ArrayList<List<Double>>();
-        double totalTime = 0.0;
-        for (nDeploys = 2; nDeploys <= 4; nDeploys++) {
+        for (nDeploys = nReplicas - 1; nDeploys <= nReplicas + 1; nDeploys++) {
             LogListener logger = LogListener.getInstance();
-            totalCostCompetitors.add(testElasticity
-                                 (initialConf, costs, nDeploys, logger, descs));
-            totalTime += logger.getTotalRunningTime();
-        }
-        
-        for (int i = 0; i < numX; i++) {
-            for (int j = 0; j < competitors.length - 1; j++) 
-                points.add(new Point(xtics[i], totalCostCompetitors.get(j).get(i)));
+            entry.listNumberReplicas.add(nDeploys);
+            entry.mapReplicaCosts.put(nDeploys, testElasticity
+                                 (initialConf, entry.listReconfiguationCosts
+                                         , nDeploys, logger, descs));
+            entry.totalTime += logger.getTotalRunningTime();
             
-            points.add(new Point(xtics[i], currentCost));
+            elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_FILE);
+            elasticFile.delete();
+            elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_FILE);
+            elasticFile.createNewFile();
+            // serialize result
+            serializeElasticResult(entry, elasticFile);
         }
-       
-        plotName = dbName + "_" + wlName + "elastic";
-        xname = "Reconfiguration cost, each unit is " 
-                    + Double.toString(reConfigurationCost);
-        yname = "Total cost";
-     
-        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
-                competitors, figsDir, points);
-        totalTime /= 1000;
-        
-        plots.add(new Plot("figs/" + plotName, 
-                " Database = " + dbName + ", workload = " + wlName +
-                " Elasticity, initial configuration includes the first 20 queries"
-                + ". The running time to generate this graph = "
-                + totalTime + " secs ", 0.5));
-               
     }
     
     /**

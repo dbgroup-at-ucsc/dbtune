@@ -217,7 +217,9 @@ public class DivBIPFunctionalTest extends DivTestSetting
      * Run the BIP with the parameters set by other functions
      * @throws Exception
      */
-    public static double testDivSimplify(int _n, double _B, boolean isOnTheFly, LogListener logger) 
+    public static double testDivSimplify(int _n, double _B, 
+                                        boolean isOnTheFly,
+                                        LogListener logger) 
             throws Exception
     {
         div = new DivBIP();
@@ -247,12 +249,10 @@ public class DivBIPFunctionalTest extends DivTestSetting
         
         if (output != null) {
             divConf = (DivConfiguration) output;
+            Rt.p(divConf.indexAtReplicaInfo());
             
-            if (isShowOptimizerCost){
-                double queryCost = getDB2QueryCostDivConf(divConf);
-                double updateCost =  div.getUpdateCostFromCplex();
-                totalCost = queryCost + updateCost;
-            }
+            if (isShowOptimizerCost)
+                totalCost = div.computeOptimizerCostWithoutFailure(divConf);
             else {
                 Rt.p("temporary NOT COMPUTE DB2 COST");
                 totalCost = div.getObjValue();
@@ -264,7 +264,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
             Rt.p(" cost in DB2 = " + totalCost);
             Rt.p(" RATIO = " + (totalCost / div.getObjValue()));
             Rt.p(" REPLICA IMBALANCE = " + div.getNodeImbalance());
-            
+            Rt.p(" ROUTING QUERIES = " + div.computeNumberQueriesSpecializeForReplica());
             return totalCost;
         }
         else {
@@ -402,6 +402,43 @@ public class DivBIPFunctionalTest extends DivTestSetting
                            );
         
         return (queryCostDB2);
+    }
+    
+    /**
+     * Compute TotalCost() of a divergent configuration 
+     * in terms of DB2 units
+     * 
+     */
+    public static double getTotalDB2QueryCostDivConfFailure(DivConfiguration divConf) throws Exception
+    {   
+        List<List<Double>> queryCostReplicas = new ArrayList<List<Double>>();
+        for (SQLStatement sql : workload)
+            queryCostReplicas.add(computeQueryCostsDB2(sql, divConf));
+        Rt.p(" query cost replicas size = " + queryCostReplicas.size());
+        double totalCost = 0.0;
+        double oneCaseCost;
+        
+        loadfactor = divConf.getLoadFactor();
+        Rt.p(" load factor = " + loadfactor);
+        
+        for (int failR = 0; failR < divConf.getNumberReplicas(); failR++){
+            oneCaseCost = 0.0;
+            
+            for (List<Double> costs : queryCostReplicas){
+                List<Double> costUnderFailure = new ArrayList<Double>();
+                for (int r = 0; r < divConf.getNumberReplicas(); r++){
+                    if (r != failR)
+                        costUnderFailure.add(costs.get(r));
+                }
+                Collections.sort(costUnderFailure);
+                for (int k = 0; k < loadfactor; k++)
+                    oneCaseCost += (costUnderFailure.get(k) / loadfactor);
+            }
+            
+            totalCost += oneCaseCost;
+        }
+        
+        return totalCost;
     }
     
     /**

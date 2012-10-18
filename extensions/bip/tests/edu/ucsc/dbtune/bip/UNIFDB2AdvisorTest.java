@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Rt;
 
@@ -22,27 +23,11 @@ public class UNIFDB2AdvisorTest extends DIVPaper
         // wl names
         initialize();
         
-        
         // 3. for each (dbname, wlname) derive 
         // the UNIF cost
-        entries = new HashMap<DivPaperEntry, Double>();
         testUNIFDB2();
         
-     // 2. special data structures for this class
-        
-        unifFile = new File(rawDataDir, wlName + "_" + UNIF_DB2_FILE);
-        unifFile.delete();
-        unifFile = new File(rawDataDir, wlName + "_" + UNIF_DB2_FILE);
-        unifFile.createNewFile();
-        
-        // store in the serialize file
-        serializeDivResult(entries, unifFile);
-        
-        // test the result
-        entries = readDivResult(unifFile);
-        Rt.p(" result " + entries);
-        
-     // not to draw graph
+        // not to draw graph
         resetParameterNotDrawingGraph();
     }
     
@@ -65,6 +50,8 @@ public class UNIFDB2AdvisorTest extends DIVPaper
         setParameters();        
         List<Double> totalCosts;
         long budget;
+        entries = new HashMap<DivPaperEntry, Double>();
+        
         for (double B1 : listBudgets) { 
             totalCosts = testUniformDB2Advis(listNumberReplicas, B1);
             Rt.p(" space budget = " + B1 + " " + totalCosts);
@@ -72,10 +59,18 @@ public class UNIFDB2AdvisorTest extends DIVPaper
             for (int i = 0; i < listNumberReplicas.size(); i++){
                 budget = convertBudgetToMB(B1);
                 DivPaperEntry entry = new DivPaperEntry
-                (dbName, wlName, listNumberReplicas.get(i), budget);
+                (dbName, wlName, listNumberReplicas.get(i), budget, divConf);
                 
                 entries.put(entry, totalCosts.get(i));
             }
+            
+            unifFile = new File(rawDataDir, wlName + "_" + UNIF_DB2_FILE);
+            unifFile.delete();
+            unifFile = new File(rawDataDir, wlName + "_" + UNIF_DB2_FILE);
+            unifFile.createNewFile();
+            
+            // store in the serialize file
+            serializeDivResult(entries, unifFile);
         }
     }
     
@@ -99,6 +94,12 @@ public class UNIFDB2AdvisorTest extends DIVPaper
         db2Advis.process(workload);
         int budget = (int) (B1 / Math.pow(2, 20));
         Set<Index> recommendation = db2Advis.getRecommendation(budget);
+        
+        // create a configuration
+        divConf = new DivConfiguration(1, 1);
+        for (Index index : recommendation)
+            divConf.addIndexReplica(0, index);
+        
         costs = computeCostsDB2(workload, recommendation);
         double queryCost = 0.0;
         double updateCost = 0.0;

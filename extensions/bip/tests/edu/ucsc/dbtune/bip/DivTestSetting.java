@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,6 +19,7 @@ import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
+import edu.ucsc.dbtune.bip.div.UtilConstraintBuilder;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
@@ -30,6 +32,7 @@ import edu.ucsc.dbtune.workload.Workload;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
+import edu.ucsc.dbtune.divgdesign.DivgDesign.QueryCostAtPartition;
 
 /**
  * The common setting parameters for DIVBIP test
@@ -248,6 +251,66 @@ public class DivTestSetting
         }
         
         return costs;
+    }
+    
+    /**
+     * Compute the load-imbalance factor for the given divergent configuration
+     * @param conf
+     * @param workload
+     * @return
+     */
+    public static double computeLoadImbalance(DivConfiguration conf, Workload workload)
+                throws Exception
+    {
+        List<Double> replicas = new ArrayList<Double>();
+        for (int r = 0; r < conf.getNumberReplicas(); r++)
+            replicas.add(0.0);
+        List<Double> costs;
+        double newCost;
+        // TODO: assume no update statement
+        for (SQLStatement sql: workload){
+            costs = computQueryCostReplica(sql, conf);
+            for (int r = 0; r < conf.getNumberReplicas(); r++) {
+                newCost = replicas.get(r) + costs.get(r);
+                replicas.set(r, newCost);
+            }   
+        }
+        
+        return UtilConstraintBuilder.maxRatioInList(replicas);
+    }
+    
+    /**
+     * Compute the query execution cost for statements in the given workload
+     * 
+     * @param conf
+     *      A configuration
+     *      
+     * @throws Exception
+     */
+    protected static List<Double> computQueryCostReplica(SQLStatement sql,
+                                                         DivConfiguration divConf) 
+                                                       throws Exception
+    {
+        double cost;
+        List<QueryCostAtPartition> costPartitions = new ArrayList<QueryCostAtPartition>();
+        int nReplicas = divConf.getNumberReplicas();
+        List<Double> results = new ArrayList<Double>();
+        
+        for (int r = 0; r < nReplicas; r++) {   
+            cost = io.getDelegate().explain(sql, divConf.indexesAtReplica(r)).getTotalCost();
+            costPartitions.add(new QueryCostAtPartition(r, cost));
+            results.add(0.0);
+        }
+        Collections.sort(costPartitions);
+        int id;
+        for (int k = 0; k < divConf.getLoadFactor(); k++){
+            id = costPartitions.get(k).getPartitionID();
+            cost = costPartitions.get(k).getCost() * sql.getStatementWeight() 
+                        / divConf.getLoadFactor();
+            results.set(id, cost);
+        }
+        
+        return results;
     }
     
     /**
