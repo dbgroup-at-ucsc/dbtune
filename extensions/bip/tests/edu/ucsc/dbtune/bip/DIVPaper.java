@@ -83,11 +83,11 @@ public class DIVPaper extends DivTestSetting
     protected static Map<DivPaperEntry, Double> mapUnifCoPhy;
     
     // robustness features
-    protected static boolean isEquivalent = false;
+    protected static boolean isEquivalent = true;
     protected static boolean isFailure = false;
     protected static boolean isImbalance = false;
     // online & elasticity
-    protected static boolean isOnline = true;
+    protected static boolean isOnline = false;
     protected static boolean isElastic = false;
     
     // generate PDF file
@@ -108,8 +108,9 @@ public class DIVPaper extends DivTestSetting
         
         // 2. draw graphs
         if (isEquivalent){
-            drawGraphDIVEquivBIP(dbName, wlName, true);
-            drawGraphDIVEquivBIP(dbName, wlName, false);
+            boolean isDesign = false;
+            drawEquivalent(dbName, wlName, true, isDesign);
+            drawEquivalent(dbName, wlName, false, isDesign);
         }
         
         if (isFailure)
@@ -165,7 +166,8 @@ public class DIVPaper extends DivTestSetting
     /**
      * Read the data from files and draw the graphs
      */
-    public static void drawGraphDIVEquivBIP(String dbName, String wlName, boolean drawRatio) 
+    public static void drawEquivalent(String dbName, String wlName, boolean drawRatio, 
+                    boolean isDesign) 
                 throws Exception
     {   
         DivPaperEntry entry;
@@ -178,17 +180,26 @@ public class DIVPaper extends DivTestSetting
         divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
         mapDiv = readDivResult(divFile);
         
-        // 4. Read the result from Design file
-        designFile = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
-        mapDesign = readDivResult(designFile);
+        // 3. Read the result from Design file
+        if (isDesign) {
+            designFile = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
+            mapDesign = readDivResult(designFile);
+        }
         
         String[] competitors;
         
         // 3. draw graphs
-        if (drawRatio)
-            competitors = new String[] {"1 - DIVBIP/UNIF", "1 - DIVBIP/DIVGDESIGN"};
-        else 
-            competitors = new String[] {"UNIF", "DIVGDESIGN", "DIVBIP"};
+        if (isDesign){
+            if (drawRatio)
+                competitors = new String[] {"1 - DIVBIP/UNIF", "1 - DIVBIP/DIVGDESIGN"};
+            else 
+                competitors = new String[] {"UNIF", "DIVGDESIGN", "DIVBIP"};
+        } else {
+            if (drawRatio)
+                competitors = new String[] {"1 - DIVBIP/UNIF"};
+            else 
+                competitors = new String[] {"UNIF", "DIVBIP"};
+        }
         int numX;
         double ratio; 
         long budget;
@@ -212,9 +223,9 @@ public class DIVPaper extends DivTestSetting
                     xaxis[i] = Double.toString(ratio) + "x";
                 entry = new DivPaperEntry(dbName, wlName, n, budget, null);
                 if (drawRatio)
-                    addPointRatioDIVEquivBIP(xtics[i], entry, points);
+                    addPointRatioDIVEquivBIP(xtics[i], entry, points, isDesign);
                 else 
-                    addPointDIVEquivBIP(xtics[i], entry, points);
+                    addPointDIVEquivBIP(xtics[i], entry, points, isDesign);
             }
             
             plotName = dbName + "_" + wlName + "_number_replica" + Integer.toString(n);
@@ -236,6 +247,49 @@ public class DIVPaper extends DivTestSetting
                     " Database = " + dbName + " workload = " + wlName +
                     " Varying space budgets, n = " + Integer.toString(n), 0.5));
         }
+        
+        // varying number of replicas
+        int n;
+        for (double  B : listBudgets) {
+           
+            numX = listNumberReplicas.size();
+            double[] xtics = new double[numX];
+            String[] xaxis = new String[numX];
+            List<Point> points = new ArrayList<Point>();
+            ratio = (double) B / Math.pow(2, 30) / 10;
+            budget = convertBudgetToMB (B);
+            
+            for (int i = 0; i < numX; i++) {
+                n = listNumberReplicas.get(i);
+                xtics[i] = i;
+                
+                xaxis[i] = Integer.toString(n);
+                entry = new DivPaperEntry(dbName, wlName, n, budget, null);
+                if (drawRatio)
+                    addPointRatioDIVEquivBIP(xtics[i], entry, points, isDesign);
+                else 
+                    addPointDIVEquivBIP(xtics[i], entry, points, isDesign);
+            }
+            
+            plotName = dbName + "_" + wlName + "_space_" + Double.toString(ratio); 
+            if (drawRatio)
+                plotName += "_ratio";
+            else
+                plotName += "_absolute";
+            
+            xname = "Number of replicas";
+            if (drawRatio)
+                yname = "TotalCost Improvement (%)";
+            else 
+                yname = "TotalCost";
+            
+            drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                    competitors, figsDir, points);
+            
+            plots.add(new Plot("figs/" + plotName, 
+                    " Database = " + dbName + " workload = " + wlName +
+                    " Varying number replicas, B = " + Double.toString(ratio), 0.5));
+        }
     }
     
     
@@ -245,38 +299,43 @@ public class DIVPaper extends DivTestSetting
      * @param entry
      * @param points
      */
-    protected static void addPointRatioDIVEquivBIP(double xcoordinate, DivPaperEntry entry, List<Point> points)
+    protected static void addPointRatioDIVEquivBIP(double xcoordinate, DivPaperEntry entry, List<Point> points,
+                            boolean isDesign)
     {
-        double costDiv, costUnif, costDesign, costDesignCoPhy;
-        double ratioDesign, ratioDiv, ratioDesignCoPhy;
+        double costDiv, costUnif, costDesign = 0.0;
+        double ratioDesign = 0.0, ratioDiv;
         Rt.p("entry = " + entry);
         costDiv = mapDiv.get(entry);
-        costUnif = mapUnif.get(entry);        
-        costDesign = mapDesign.get(entry);
+        costUnif = mapUnif.get(entry);    
+        if (isDesign)
+            costDesign = mapDesign.get(entry);
         
         Rt.p(" entry: " + entry);
         Rt.p(" cost UNIF = " + (costUnif / Math.pow(10, 6)));
         Rt.p(" cost DIV = " + (costDiv / Math.pow(10, 6)));
-        Rt.p(" cost DESIGN = " + (costDesign / Math.pow(10, 6)));
+        //Rt.p(" cost DESIGN = " + (costDesign / Math.pow(10, 6)));
         
         ratioDiv = 1 - (double) costDiv / costUnif;
-        ratioDesign = 1 - (double) costDiv / costDesign;
+        if (isDesign) {
+            ratioDesign = 1 - (double) costDiv / costDesign;
+            ratioDesign = ratioDesign * 100;
+            if (ratioDesign < 0.0){
+                Rt.p("watch out, entry = " + entry 
+                        + ", ratioDesign = " + ratioDesign);
+                ratioDesign = 0.05;
+            }
+        }
         ratioDiv = ratioDiv * 100;
-        ratioDesign = ratioDesign * 100;
+        
         if (ratioDiv < 0.0) {
             Rt.p(" watch out, entry = " + entry
                     + ", ratio DIV = " + ratioDiv);
             ratioDiv = 0.05;  
         }
         
-        if (ratioDesign < 0.0){
-            Rt.p("watch out, entry = " + entry 
-                    + ", ratioDesign = " + ratioDesign);
-            ratioDesign = 0.05;
-        }
-        
         points.add(new Point(xcoordinate, ratioDiv));
-        points.add(new Point(xcoordinate, ratioDesign));
+        if (isDesign)
+            points.add(new Point(xcoordinate, ratioDesign));
     }
     
     /**
@@ -285,16 +344,19 @@ public class DIVPaper extends DivTestSetting
      * @param entry
      * @param points
      */ 
-    protected static void addPointDIVEquivBIP(double xcoordinate, DivPaperEntry entry, List<Point> points)
+    protected static void addPointDIVEquivBIP(double xcoordinate, DivPaperEntry entry, 
+                            List<Point> points, boolean isDesign)
     {
-        double costDiv, costUnif, costDesign;
+        double costDiv, costUnif, costDesign = 0.0;
         Rt.p(" entry = " + entry); 
         costDiv = mapDiv.get(entry);
         costUnif = mapUnif.get(entry);
-        costDesign = mapDesign.get(entry);
+        if (isDesign)
+            costDesign = mapDesign.get(entry);
         
         points.add(new Point(xcoordinate, costUnif));
-        points.add(new Point(xcoordinate, costDesign));
+        if (isDesign)
+            points.add(new Point(xcoordinate, costDesign));
         points.add(new Point(xcoordinate, costDiv));
     }
     
