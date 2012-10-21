@@ -167,7 +167,7 @@ public interface QueryPlanDesc
      * @return
      *      The weight (or the frequency) of the statement
      */
-    public double getStatementWeight();
+    public int getStatementWeight();
     
     /**
      * Retrieve the full table scan indexes from this plan description

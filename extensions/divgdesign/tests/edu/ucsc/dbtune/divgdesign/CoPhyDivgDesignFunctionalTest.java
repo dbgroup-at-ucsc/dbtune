@@ -45,28 +45,9 @@ public class CoPhyDivgDesignFunctionalTest extends DIVPaper
         entries = new HashMap<DivPaperEntry, Double>();
         isCoPhyDesign = true;
         
-        long start = System.currentTimeMillis();
-        
         // Run algorithms
         testDivgDesignCoPhy();
         
-        designCoPhyFile = new File(rawDataDir, wlName + "_" + DESIGN_COPHY_FILE);
-        designCoPhyFile.delete();
-        designCoPhyFile = new File(rawDataDir, wlName + "_" + DESIGN_COPHY_FILE);
-        designCoPhyFile.createNewFile();
-        
-        long end = System.currentTimeMillis();
-        long totalTimes= (end - start) / 1000; // in secs
-        Rt.p(" Total running time" + totalTimes
-                + " avg: " + totalTimes / (listBudgets.size() * listNumberReplicas.size()));
-        // store in the serialize file
-        serializeDivResult(entries, designCoPhyFile);
-        
-        // test the result
-        entries = readDivResult(designCoPhyFile);
-        Rt.p(" result " + entries);
-        
-     // not to draw graph
         resetParameterNotDrawingGraph();
     }
     
@@ -95,9 +76,17 @@ public class CoPhyDivgDesignFunctionalTest extends DIVPaper
                 costDiv = testDivgDesign(n, B);
                 budget = convertBudgetToMB(B);
                 DivPaperEntry entry = new DivPaperEntry
-                        (dbName, wlName, n, budget);
+                        (dbName, wlName, n, budget, divConf);
                 
                 entries.put(entry, costDiv);
+                
+                designCoPhyFile = new File(rawDataDir, wlName + "_" + DESIGN_COPHY_FILE);
+                designCoPhyFile.delete();
+                designCoPhyFile = new File(rawDataDir, wlName + "_" + DESIGN_COPHY_FILE);
+                designCoPhyFile.createNewFile();
+                
+                // store in the serialize file
+                serializeDivResult(entries, designCoPhyFile);
             }
     }
     
@@ -123,18 +112,17 @@ public class CoPhyDivgDesignFunctionalTest extends DIVPaper
         int minPosition = -1;
         double minCost = -1;
         double avgReplicaImbalance = 0.0;
-        double costDivgDB2;
         
         for (int iter = 0; iter < maxIters; iter++) {
             logger = LogListener.getInstance();
             divg = new CoPhyDivgDesign(db, (InumOptimizer) io, logger, descs);
             divg.recommend(workload, nReplicas, loadfactor, B);
             divgs.add(divg);
-            costDivgDB2 = convertToDB2Cost(divg);
+            //costDivgDB2 = convertToDB2Cost(divg);
             
-            if (iter == 0 || minCost > costDivgDB2) {
+            if (iter == 0 || minCost > divg.getTotalCost()) {
                 minPosition = iter;
-                minCost = costDivgDB2;
+                minCost = divg.getTotalCost();
             } 
             
             avgReplicaImbalance += divg.getImbalanceReplica();
@@ -157,14 +145,15 @@ public class CoPhyDivgDesignFunctionalTest extends DIVPaper
         }
         
         divg = divgs.get(minPosition);
+        divConf = divg.getRecommendation();
+        // compute minCost in terms of DB2 cost
+        minCost = convertToDB2Cost(divg);
         
         Rt.p("CoPhy Divergent Design \n"
                             + " INUM time: " + timeInum + "\n"
                             + " ANALYSIS time: " + timeAnalysis + "\n"
                             + " TOTAL running time: " + (timeInum + timeAnalysis) + "\n"
                             + " The objective value: " + minCost + "\n"
-                            + "      QUERY INUM cost:    " + divg.getQueryCost()  + "\n"
-                            + "      UPDATE INUM cost:   " + divg.getUpdateCost() + "\n"
                             + " REPLICA IMBALANCE: " + avgReplicaImbalance + "\n"
                              );
         

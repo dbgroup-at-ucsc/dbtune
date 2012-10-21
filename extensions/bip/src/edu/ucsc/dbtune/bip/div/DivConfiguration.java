@@ -64,7 +64,7 @@ public class DivConfiguration extends IndexTuningOutput
      * @return
      */
     public Set<Integer> getRoutingReplica(int q)
-    {
+    {   
         return mappingWithoutFailure.getRoutingReplica(q);
     }
     

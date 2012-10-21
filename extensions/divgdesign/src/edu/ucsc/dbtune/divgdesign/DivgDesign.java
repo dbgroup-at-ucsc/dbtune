@@ -318,7 +318,8 @@ public abstract class DivgDesign
               throws Exception;
     
     
-    class QueryCostAtPartition implements Comparable<QueryCostAtPartition>
+    
+    public static class QueryCostAtPartition implements Comparable<QueryCostAtPartition>
     {
         private int id;
         private double cost;

@@ -107,7 +107,7 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
     }
     
     @Override
-    public double getStatementWeight()
+    public int getStatementWeight()
     {
         return stmt.getStatementWeight();
     }

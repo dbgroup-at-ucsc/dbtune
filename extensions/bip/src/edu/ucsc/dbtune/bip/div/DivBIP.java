@@ -4,7 +4,9 @@ import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.BIPVariable;
@@ -94,7 +96,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         super.clear();
         this.poolVariables.clear();
     }   
-
+    
    
     @Override
     protected void buildBIP() 
@@ -492,7 +494,10 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     }
     
     /**
+     * Load-balance factor constraint for the given query
      * 
+     * @param desc
+     *      The query plan description of a query in the workload
      * 
      */
     protected void loadBalanceFactorConstraints(QueryPlanDesc desc) throws IloException
@@ -517,7 +522,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     }
     
     /**
-     * Impose space constraint on the materialized indexes at all window times.
+     * Impose space constraint on the materialized indexes.
      * 
      * @throws IloException
      *      If there is error in formulating the expression in CPLEX. 
@@ -530,7 +535,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     }
     
     /**
-     * Impose space constraint on the materialized indexes at the given window.
+     * Impose space constraint on the materialized indexes at the given relica
      * 
      * @throws IloException
      *      If there is error in formulating the expression in CPLEX. 
@@ -641,21 +646,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     protected IndexTuningOutput getOutput() throws Exception 
     {
         DivConfiguration conf = new DivConfiguration(nReplicas, loadfactor);
-        
-        // Iterate over variables s^r_{i,w}
-        /*
-        for (IloNumVar cVar : cplexVar) {
-            if (cplex.getValue(cVar) > 0) {
-                DivVariable var = (DivVariable) poolVariables.get(cVar.getName());
-                if (var.getType() == VAR_S) {
-                    Index index = mapVarSToIndex.get(var.getName());
-                    if (!(index instanceof FullTableScanIndex))
-                        conf.addIndexReplica(var.getReplica(), index);
-                }
-            }
-        }  
-        */
-        
+                
         for (int r = 0; r < nReplicas; r++) 
             findRecommendedIndexes (r, conf);
         
@@ -734,33 +725,46 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                 throws Exception
     {
         QueryPlanDesc desc;
-        double costWithoutFailure;
         double cost;
         int counter;
         int q;
         
-        costWithoutFailure = 0.0;
         counter = -1;
+        Set<Integer> all = new HashSet<Integer>();
+        for (int r = 0; r < nReplicas; r++)
+            all.add(r);
+        Set<Integer> partitions;
+        double queryCost = 0.0;
+        double updateCost = 0.0;
         
-        // Compute cost with failure 
+        // Compute cost without failure 
         for (SQLStatement sql : workload) {
-            
             counter++;
-            
-            if (sql.getSQLCategory().equals(NOT_SELECT))
-                continue;
-            
             desc = queryPlanDescs.get(counter); 
             q = desc.getStatementID();
-            for (int r : conf.getRoutingReplica(q)) {
+            
+            if (desc.getSQLCategory().isSame(NOT_SELECT)) 
+                partitions = all;
+            else
+                partitions = conf.getRoutingReplica(q);
+            
+            for (int r : partitions) {
                 cost = super.inumOptimizer.getDelegate().explain
                         (sql, conf.indexesAtReplica(r)).getTotalCost();
+                 
+                cost = cost * desc.getStatementWeight();
                 cost = cost * getFactorStatement(desc);
-                costWithoutFailure += cost;
+                
+                if (desc.getSQLCategory().isSame(NOT_SELECT))
+                    updateCost += cost;
+                else
+                    queryCost += cost;
             }
         }
         
-        return costWithoutFailure;
+        Rt.p(" query cost = " + queryCost);
+        Rt.p(" update cost = " + updateCost);
+        return (updateCost + queryCost);
     }
     
     /**
@@ -788,7 +792,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      * Compute number of queries specialize at each replica
      *  
      * @return
-     *  todo
+     *      Number of queries that are specialized for each replica
      * @throws Exception
      */
     public List<Integer> computeNumberQueriesSpecializeForReplica() throws Exception
@@ -858,7 +862,9 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     /**
      * Use for debugging purpose
      * @param r
+     *      The replica ID      
      * @param q
+     *      The query ID
      * @throws Exception
      */
     public void showStepComputeQuery(int r, int q) throws Exception

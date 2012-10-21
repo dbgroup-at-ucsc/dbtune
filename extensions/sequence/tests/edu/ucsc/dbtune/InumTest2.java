@@ -520,15 +520,15 @@ public class InumTest2 {
 
     public InumTest2() throws Exception {
         Environment en = Environment.getInstance();
-        en.setProperty("username", "db2inst1");
+        en.setProperty("username", "db2inst2");
         en.setProperty("password", "db2inst1admin");
         en.setProperty("workloads.dir", "resources/workloads/db2");
         DatabaseSystem test = null, tpch10g = null;
         String dbName = "test";
-        en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
+        en.setProperty("jdbc.url", "jdbc:db2://localhost:50001/" + dbName);
         test = newDatabaseSystem(en);
         dbName = "tpch10g";
-        en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
+        en.setProperty("jdbc.url", "jdbc:db2://localhost:50001/" + dbName);
         // tpch10g = newDatabaseSystem(en);
 
         String tpch = Rt.readFile(new File(
@@ -597,6 +597,7 @@ public class InumTest2 {
         int[] count2 = new int[3];
         int[] count3 = new int[3];
         for (int i = 0; i < workload.size(); i++) {
+
             File file = new File("/home/wangrui/dbtune/inum/prune/update/" + i
                     + ".xml");
             file.getParentFile().mkdirs();

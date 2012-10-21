@@ -37,7 +37,7 @@ public class DB2Advisor extends Advisor
      * @param dbms
      *      system connected representing a DB2 instance
      * @throws SQLException
-     *      if the underlaying DBMS is not a DB2 instance
+     *      if the underlying DBMS is not a DB2 instance
      */
     public DB2Advisor(DatabaseSystem dbms)
         throws SQLException

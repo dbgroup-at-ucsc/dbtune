@@ -15,8 +15,10 @@ import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.List;
+import java.util.Set;
 
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
@@ -51,9 +53,10 @@ public class RobustDivBIP extends DivBIP
     
     
     /**
-     * Retrieve failure factor
+     * Retrieve probability of failure
      * 
      * @return
+     *      The prob. of failure
      */
     public double getFailureFactor()
     {
@@ -61,9 +64,10 @@ public class RobustDivBIP extends DivBIP
     }
     
     /**
-     * Retrieve node factor
+     * Retrieve load imbalance factor
      * 
      * @return
+     *      The load imbalance factor
      */
     public double getNodeFactor()
     {
@@ -71,11 +75,12 @@ public class RobustDivBIP extends DivBIP
     }
     
     /**
-     * Constructor of a DIVBIP with node-failure and imbalance constraint
+     * Constructor of a DIVBIP with probability of failure,
+     * and the load imbalance factor 
      * 
      * @param optCost
-     *      The optimal cost to be used for approximation of node-imbalance constraint
-     *      If this value is -1, it means that we use the exact solution
+     *      The optimal cost to be used for greedy solution of load imbalance constraint
+     *      If this value is -1, it means that we utilize the exact solution
      * @param nodeFactor
      *      The node-imbalance factor           
      * @param failureFactor
@@ -139,7 +144,6 @@ public class RobustDivBIP extends DivBIP
             e.printStackTrace();
         }
     }
-    
     
     /*********************************************************
      * 
@@ -219,8 +223,11 @@ public class RobustDivBIP extends DivBIP
     }
     
     /**
-     * todo
+     * The greedy solution to solve imbalance constraint
+     * 
      * @param factor
+     *      Load imbalance factor
+     *      
      * @throws Exception
      */
     protected void imbalanceReplicaGreedy(double factor) throws Exception
@@ -229,12 +236,14 @@ public class RobustDivBIP extends DivBIP
         
         for (int r = 0; r < nReplicas; r++)
             upperReplicaConstraint(r);
-        
     } 
     
     /**
-     * Set replica constraints
+     * Derive an upper bound on the all of each replica
+     * (in the greedy solution)
+     * 
      * @param r
+     *      The replica ID
      * @throws IloException
      */
     protected void upperReplicaConstraint(int r) throws IloException
@@ -486,8 +495,14 @@ public class RobustDivBIP extends DivBIP
     }
     
     /**
+     * Impose the routing-multiplicity constraint for the failure
+     * component of the expected cost
      * 
-     * 
+     * @param desc
+     *      The query description
+     * @param failR
+     *      The failed replica     
+     *      
      */
     protected void loadFactorFailure(QueryPlanDesc desc, int failR) throws IloException
     {   
@@ -517,7 +532,7 @@ public class RobustDivBIP extends DivBIP
     
     /**
      * Construct the total cost assuming replica {@code failR} fails,
-     * assuming the same divergent design and load-balance factor m - 1
+     * with the same divergent design and load-balance factor m - 1
      * 
      * @param failR
      *      The failure
@@ -831,17 +846,25 @@ public class RobustDivBIP extends DivBIP
         counter = -1;
         totalCost = 0.0;
         
+        Set<Integer> all = new HashSet<Integer>();
+        for (int r = 0; r < nReplicas; r++) {
+            if (r != failR)
+                all.add(r);
+        }
+        Set<Integer> partitions;
+        
         for (SQLStatement sql : workload) {
             
             counter++;
-            
-            if (sql.getSQLCategory().equals(NOT_SELECT))
-                continue;
-            
             desc = queryPlanDescs.get(counter);
             q = desc.getStatementID();
             
-            for (int r : conf.getRoutingReplicaUnderFailure(q, failR)) {
+            if (sql.getSQLCategory().equals(NOT_SELECT)) 
+                partitions = all;
+            else
+                partitions = conf.getRoutingReplicaUnderFailure(q, failR); 
+            
+            for (int r : partitions) {
                 cost = super.inumOptimizer.getDelegate().explain
                         (sql, conf.indexesAtReplica(r)).getTotalCost();
                 cost = cost * this.getFactorStatementFailure(desc);
