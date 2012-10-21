@@ -729,28 +729,42 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         int counter;
         int q;
         
-        costWithoutFailure = 0.0;
         counter = -1;
+        Set<Integer> all = new HashSet<Integer>();
+        for (int r = 0; r < nReplicas; r++)
+            all.add(r);
+        Set<Integer> partitions;
+        double queryCost = 0.0;
+        double updateCost = 0.0;
         
-        // Compute cost with failure 
+        // Compute cost without failure 
         for (SQLStatement sql : workload) {
-            
             counter++;
-            
-            if (sql.getSQLCategory().equals(NOT_SELECT))
-                continue;
-            
             desc = queryPlanDescs.get(counter); 
             q = desc.getStatementID();
-            for (int r : conf.getRoutingReplica(q)) {
+            
+            if (desc.getSQLCategory().isSame(NOT_SELECT)) 
+                partitions = all;
+            else
+                partitions = conf.getRoutingReplica(q);
+            
+            for (int r : partitions) {
                 cost = super.inumOptimizer.getDelegate().explain
                         (sql, conf.indexesAtReplica(r)).getTotalCost();
+                 
+                cost = cost * desc.getStatementWeight();
                 cost = cost * getFactorStatement(desc);
-                costWithoutFailure += cost;
+                
+                if (desc.getSQLCategory().isSame(NOT_SELECT))
+                    updateCost += cost;
+                else
+                    queryCost += cost;
             }
         }
         
-        return costWithoutFailure;
+        Rt.p(" query cost = " + queryCost);
+        Rt.p(" update cost = " + updateCost);
+        return (updateCost + queryCost);
     }
     
     /**

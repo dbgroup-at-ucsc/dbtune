@@ -845,17 +845,25 @@ public class RobustDivBIP extends DivBIP
         counter = -1;
         totalCost = 0.0;
         
+        Set<Integer> all = new HashSet<Integer>();
+        for (int r = 0; r < nReplicas; r++) {
+            if (r != failR)
+                all.add(r);
+        }
+        Set<Integer> partitions;
+        
         for (SQLStatement sql : workload) {
             
             counter++;
-            
-            if (sql.getSQLCategory().equals(NOT_SELECT))
-                continue;
-            
             desc = queryPlanDescs.get(counter);
             q = desc.getStatementID();
             
-            for (int r : conf.getRoutingReplicaUnderFailure(q, failR)) {
+            if (sql.getSQLCategory().equals(NOT_SELECT)) 
+                partitions = all;
+            else
+                partitions = conf.getRoutingReplicaUnderFailure(q, failR); 
+            
+            for (int r : partitions) {
                 cost = super.inumOptimizer.getDelegate().explain
                         (sql, conf.indexesAtReplica(r)).getTotalCost();
                 cost = cost * this.getFactorStatementFailure(desc);
