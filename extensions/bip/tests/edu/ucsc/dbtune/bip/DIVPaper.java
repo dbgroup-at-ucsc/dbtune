@@ -50,24 +50,17 @@ public class DIVPaper extends DivTestSetting
     protected static final String DIV_DB2_FILE = "div_db2.bin";
     protected static final String UNIF_DB2_FILE = "unif_db2.bin";
     protected static final String DESIGN_DB2_FILE = "design_db2.bin";
-    protected static final String DESIGN_COPHY_FILE = "design_cophy.bin";
-    protected static final String UNIF_COPHY_FILE = "unif_cophy.bin";
     
     protected static final String ONLINE_FILE = "online.bin";
     protected static final String ELASTIC_FILE = "elastic.bin";
     protected static final String FAILURE_FILE = "failure.bin";
-    protected static final String IMBALANCE_EXACT_FILE = "imbalance_exact.bin";
     protected static final String IMBALANCE_GREEDY_FILE = "imbalance_greedy.bin";
-
-    protected static final String FAILURE_IMBALANCE_EXACT_FILE = "failure_imbalance_exact.bin";
+    
     protected static final String FAILURE_IMBALANCE_GREEDY_FILE = "failure_imbalance_greedy.bin";
     
     protected static File unifFile;
     protected static File divFile;
-    protected static File divUnifFile;
     protected static File designFile;
-    protected static File unifCoPhyFile;
-    protected static File designCoPhyFile;
     protected static File onlineFile;
     
     protected static File failureFile;
@@ -77,12 +70,9 @@ public class DIVPaper extends DivTestSetting
     
     protected static Map<DivPaperEntry, Double> mapUnif;
     protected static Map<DivPaperEntry, Double> mapDiv;
-    protected static Map<DivPaperEntry, Double> mapDivUnif;
     protected static Map<DivPaperEntry, Double> mapDesign;    
-    protected static Map<DivPaperEntry, Double> mapDesignCoPhy;
-    protected static Map<DivPaperEntry, Double> mapUnifCoPhy;
     
-    // robustness features
+
     protected static boolean isEquivalent = true;
     protected static boolean isFailure = false;
     protected static boolean isImbalance = false;
@@ -945,210 +935,8 @@ public class DIVPaper extends DivTestSetting
         //return (long) (B / Math.pow(2, 20));
     }
     
-    /**
-     * Read the data from files and draw the graphs
-     */
-    public static void drawAllGraphDIVEquivBIP(String dbName, String wlName, boolean drawRatio) 
-            throws Exception
-    {   
-        DivPaperEntry entry;
-        
-        // 1. Read the result from UNIF file
-        unifFile = new File(rawDataDir, wlName + "_" + UNIF_DB2_FILE);
-        mapUnif = readDivResult(unifFile);
-        
-        // 2. Read the result from DIV file
-        divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
-        mapDiv = readDivResult(divFile);
-        
-        // 3. Read the result from UNIF-COPHY file
-        unifCoPhyFile = new File(rawDataDir, wlName + "_" + UNIF_COPHY_FILE);
-        mapUnifCoPhy = readDivResult(unifCoPhyFile);
-        
-        // 4. DIVGDESIGN-COPHY
-        designCoPhyFile = new File(rawDataDir, wlName + "_" + DESIGN_COPHY_FILE);
-        mapDesignCoPhy = readDivResult(designCoPhyFile);
-        
-        String[] competitors;
-        /*
-        // 3. draw graphs
-        if (drawRatio)
-            competitors = new String[] {
-                "1 - DIV-BIP/DESIGN-COPHY",
-                "1 - DIV-BIP/UNIF-COPHY",
-                "1 - DIV-BIP/UNIF-DB2"};
-            //competitors = new String[] {"1 - DIV-BIP/UNIF-COPHY"};
-        else 
-            competitors = new String[] {
-                                        "DIV-BIP", 
-                                        "DESIGN-COPHY",
-                                        "UNIF-COPHY", 
-                                        "UNIF-DB2"
-                                        };
-            //competitors = new String[] {"DIV-BIP", "UNIF-COPHY"};
-        int numX;
-        double ratio; 
-        long budget;
-        
-        // varying space budget
-        for (int n : listNumberReplicas) {
-            double B;
-            numX = listBudgets.size();
-            double[] xtics = new double[numX];
-            String[] xaxis = new String[numX];
-            List<Point> points = new ArrayList<Point>();
-            
-            for (int i = 0; i < numX; i++) {
-                B = listBudgets.get(i);
-                budget = convertBudgetToMB (B);
-                xtics[i] = i;
-                ratio = (double) B / Math.pow(2, 30) / 10;
-                xaxis[i] = Double.toString(ratio) + "x";
-                entry = new DivPaperEntry(dbName, wlName, n, budget);
-                if (drawRatio)
-                    addAllPointRatioDIVEquivBIP(xtics[i], entry, points);
-                else 
-                    addAllPointDIVEquivBIP(xtics[i], entry, points);
-            }
-            
-            plotName = dbName + "_" + wlName + "_full_number_replica" + Integer.toString(n);
-            if (drawRatio)
-                plotName += "_ratio";
-            else
-                plotName += "_absolute";
-            xname = "Space budget";
-            if (drawRatio)
-                yname = "TotalCost improvement (%)";
-            else 
-                yname = "TotalCost";
-            
-            drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
-                    competitors, figsDir, points);
-            
-            plots.add(new Plot("figs/" + plotName, 
-                    " Database = " + dbName + " workload = " + wlName +
-                    " Varying space budgets, n = " + Integer.toString(n), 0.5));
-        }
-        
-        // varying number of replicas
-        for (double B : listBudgets) {
-            budget = convertBudgetToMB (B);
-            int n;
-            numX = listNumberReplicas.size();
-            double[] xtics = new double[numX];
-            String[] xaxis = new String[numX];
-            List<Point> points = new ArrayList<Point>();
-            
-            for (int i = 0; i < numX; i++) {
-                n = listNumberReplicas.get(i);
-                xtics[i] = i;
-                xaxis[i] = Integer.toString(n);
-                entry = new DivPaperEntry(dbName, wlName, n, budget);
-                if (drawRatio)
-                    addAllPointRatioDIVEquivBIP(xtics[i], entry, points);
-                else 
-                    addAllPointDIVEquivBIP(xtics[i], entry, points);
-            }
-            
-            ratio = (double) B / Math.pow(2, 30) / 10;
-            plotName = dbName + "_" + wlName + "full_space_" + Double.toString(ratio) + "x";
-            if (drawRatio)
-                plotName += "_ratio";
-            else
-                plotName += "_absolute";
-            xname = "# replicas";
-            if (drawRatio)
-                yname = "TotalCost improvement (%)";
-            else 
-                yname = "TotalCost";
-         
-            drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
-                    competitors, figsDir, points);
-            
-            plots.add(new Plot("figs/" + plotName, 
-                    " Database = " + dbName + " workload = " + wlName +
-                    " Varying \\# replicas, B = " + Double.toString(ratio) + "x", 0.5));
-        }
-        */
-    }
-    
-    
-    /**
-     * Add corresponding points into the list of points, which are 
-     * displayed in GnuPlot
-     * @param entry
-     * @param points
-     */
-    protected static void addAllPointRatioDIVEquivBIP(double xcoordinate, DivPaperEntry entry, List<Point> points)
-    {
-        double costDiv, costUnif, costUnifCoPhy, costDesignCoPhy;
-        double ratioCoPhy, ratioDiv, ratioDesign;
-        
-        costDiv = mapDiv.get(entry);
-        costUnif = mapUnif.get(entry);
-        costUnifCoPhy = mapUnifCoPhy.get(entry);
-        costDesignCoPhy = mapDesignCoPhy.get(entry);
-        
-        Rt.p(" entry: " + entry);
-        Rt.p(" cost UNIF = " + (costUnif / Math.pow(10, 6)));
-        Rt.p(" cost DIV = " + (costDiv / Math.pow(10, 6)));
-        Rt.p(" cost UNIF-COPHY = " + (costUnifCoPhy / Math.pow(10, 6)));
-        
-        ratioDiv = 1 - (double) costDiv / costUnif;
-        ratioCoPhy = 1 - (double) costDiv / costUnifCoPhy;
-        ratioDesign = 1 - (double) costDiv / costDesignCoPhy;
-        
-        ratioDiv = ratioDiv * 100;
-        ratioCoPhy = ratioCoPhy * 100;
-        ratioDesign = ratioDesign * 100;
-        
-        if (ratioDiv < 0.0) {
-            Rt.p(" watch out, entry = " + entry
-                    + ", ratio DIV = " + ratioDiv);
-            ratioDiv = 0.05;  
-        }
-        
-        if (ratioCoPhy < 0.0){
-            Rt.p("watch out, entry = " + entry 
-                    + ", ratioCoPhy = " + ratioCoPhy);
-            ratioCoPhy = 0.05;
-        }
-        
-        if (ratioDesign < 0.0){
-            Rt.p("watch out, entry = " + entry 
-                    + ", ratioDesign = " + ratioDesign);
-            ratioDesign = 0.05;
-        }
-        
-        points.add(new Point(xcoordinate, ratioDesign));
-        points.add(new Point(xcoordinate, ratioCoPhy));
-        points.add(new Point(xcoordinate, ratioDiv));
-        
-    }
-    
-    /**
-     * Add corresponding points into the list of points, which are 
-     * displayed in GnuPlot
-     * @param entry
-     * @param points
-     */
-    protected static void addAllPointDIVEquivBIP(double xcoordinate, DivPaperEntry entry, List<Point> points)
-    {
-        double costDiv, costUnif, costUnifCoPhy, costDesignCoPhy;
-        
-        costDiv = mapDiv.get(entry);
-        costUnifCoPhy = mapUnifCoPhy.get(entry);
-        costUnif = mapUnif.get(entry);
-        costDesignCoPhy = mapDesignCoPhy.get(entry);
-        
-        points.add(new Point(xcoordinate, costDiv));
-        points.add(new Point(xcoordinate, costDesignCoPhy));
-        points.add(new Point(xcoordinate, costUnifCoPhy));
-        points.add(new Point(xcoordinate, costUnif));
-    }
-    
-    /**
-     * This class stores the total cost of 
+
+     /* This class stores the total cost of 
      * each method (UNIF, DIVBIP, DIVGDESIN)
      * on a particular instance of the divergent 
      * problem: database name, workload name,
