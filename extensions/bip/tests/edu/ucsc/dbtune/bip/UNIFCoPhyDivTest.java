@@ -15,6 +15,7 @@ import edu.ucsc.dbtune.util.Rt;
  */
 public class UNIFCoPhyDivTest extends DIVPaper
 {
+    /*
     @Test
     public void main() throws Exception
     {
@@ -44,7 +45,7 @@ public class UNIFCoPhyDivTest extends DIVPaper
      // not to draw graph
         resetParameterNotDrawingGraph();
     }
-    
+    */
     
     
     /**
@@ -56,6 +57,7 @@ public class UNIFCoPhyDivTest extends DIVPaper
      *      Workload
      * @throws Exception
      */
+    /*
     public static void testUNIFCoPhy() throws Exception
     {   
         // 1. Parameter
@@ -79,4 +81,5 @@ public class UNIFCoPhyDivTest extends DIVPaper
             }
         }
     }
+    */
 }

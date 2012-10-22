@@ -74,7 +74,7 @@ public class DIVPaper extends DivTestSetting
 
     protected static boolean isEquivalent = false;
 
-    protected static boolean isFailure = false;
+    protected static boolean isFailure = true;
     protected static boolean isImbalance = false;
     // online & elasticity
     protected static boolean isOnline = false;
@@ -98,7 +98,7 @@ public class DIVPaper extends DivTestSetting
         
         // 2. draw graphs
         if (isEquivalent){
-            boolean isDesign = false;
+            boolean isDesign = true;
             drawEquivalent(dbName, wlName, true, isDesign);
             drawEquivalent(dbName, wlName, false, isDesign);
         }
@@ -197,11 +197,10 @@ public class DIVPaper extends DivTestSetting
             double[] xtics = new double[numX];
             String[] xaxis = new String[numX];
             List<Point> points = new ArrayList<Point>();
-            ratio = (double) B / Math.pow(2, 30) / 10;
-            budget = convertBudgetToMB (B);
             
             for (int i = 0; i < numX; i++) {
-                n = listNumberReplicas.get(i);
+                B = listBudgets.get(i);
+                budget = convertBudgetToMB(B);
                 xtics[i] = i;
                 ratio = (double) B / Math.pow(2, 30) / 10;
                 if (ratio > 1.0)
@@ -232,7 +231,7 @@ public class DIVPaper extends DivTestSetting
             
             plots.add(new Plot("figs/" + plotName, 
                     " Database = " + dbName + " workload = " + wlName +
-                    " Varying number replicas, B = " + Double.toString(ratio), 0.5));
+                    " Varying space budget, n = " + n, 0.5));
         }
         
         // varying number of replicas

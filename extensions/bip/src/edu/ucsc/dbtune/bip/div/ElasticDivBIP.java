@@ -99,7 +99,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             super.usedIndexConstraints();
             
             // 5. Top-m best cost 
-            super.loadBalanceFactorConstraints();    
+            super.routingMultiplicityConstraints();    
         
             // 6. space constraints
             super.spaceConstraints();

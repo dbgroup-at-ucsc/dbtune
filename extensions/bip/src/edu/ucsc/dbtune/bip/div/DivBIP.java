@@ -14,6 +14,7 @@ import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.inum.FullTableScanIndex;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -120,7 +121,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             usedIndexConstraints();
             
             // 5. Top-m best cost 
-            loadBalanceFactorConstraints();
+            routingMultiplicityConstraints();
             
             // 6. Space constraints
             spaceConstraints();    
@@ -484,12 +485,12 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      *      If there is error in formulating the expression in CPLEX. 
      * 
      */
-    protected void loadBalanceFactorConstraints() throws IloException
+    protected void routingMultiplicityConstraints() throws IloException
     {
         for (QueryPlanDesc desc : queryPlanDescs) {
             if (desc.getSQLCategory().isSame(INSERT) || desc.getSQLCategory().isSame(DELETE))
                 continue;
-            loadBalanceFactorConstraints(desc);
+            routingMultiplicityConstraints(desc);
         }
     }
     
@@ -500,7 +501,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      *      The query plan description of a query in the workload
      * 
      */
-    protected void loadBalanceFactorConstraints(QueryPlanDesc desc) throws IloException
+    protected void routingMultiplicityConstraints(QueryPlanDesc desc) throws IloException
     {   
         IloLinearNumExpr expr; 
         int idY;        
@@ -517,7 +518,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             }
             
         rhs = (desc.getSQLCategory().isSame(UPDATE)) ? nReplicas : loadfactor;
-        cplex.addEq(expr, rhs, "top_m_query_" + q);            
+        cplex.addEq(expr, rhs, "routing_multiplicity_" + q);            
         numConstraints++;
     }
     
@@ -737,6 +738,8 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         double queryCost = 0.0;
         double updateCost = 0.0;
         
+        DB2Optimizer db2Optimizer = (DB2Optimizer) super.inumOptimizer.getDelegate();
+        
         // Compute cost without failure 
         for (SQLStatement sql : workload) {
             counter++;
@@ -749,14 +752,24 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
                 partitions = conf.getRoutingReplica(q);
             
             for (int r : partitions) {
-                cost = super.inumOptimizer.getDelegate().explain
-                        (sql, conf.indexesAtReplica(r)).getTotalCost();
-                 
+                cost = db2Optimizer.explain(sql, conf.indexesAtReplica(r))
+                                  .getTotalCost();
+                if (desc.getSQLCategory().isSame(NOT_SELECT)) {
+                    Rt.p(" index = " + conf.indexesAtReplica(r));
+                    Rt.p(" UPDATE COST = " + cost);
+                    Rt.p(" sql = " + sql.getSQL());
+                    Rt.p(" base table cost = "
+                            + db2Optimizer.explain(sql, conf.indexesAtReplica(r)).getBaseTableUpdateCost());
+                }
+                
                 cost = cost * desc.getStatementWeight();
                 cost = cost * getFactorStatement(desc);
                 
-                if (desc.getSQLCategory().isSame(NOT_SELECT))
+                if (desc.getSQLCategory().isSame(NOT_SELECT)) {
                     updateCost += cost;
+                    Rt.p(" index = " + conf.indexesAtReplica(r));
+                    Rt.p(" UPDATE COST = " + cost);
+                }
                 else
                     queryCost += cost;
             }

@@ -121,7 +121,7 @@ public class RobustDivBIP extends DivBIP
             super.usedIndexConstraints();
             
             // 4. Top-m best cost 
-            super.loadBalanceFactorConstraints();
+            super.routingMultiplicityConstraints();
             
             // 5. Space constraints
             super.spaceConstraints();
@@ -290,7 +290,7 @@ public class RobustDivBIP extends DivBIP
             
             // load factor failure
             for (int r = 0; r < nReplicas; r++)
-                loadFactorFailure(r);
+                routingMultiplicityFailure(r);
             
             // atomic constraint
             for (int r = 0; r < nReplicas; r++)
@@ -485,12 +485,12 @@ public class RobustDivBIP extends DivBIP
      *      If there is error in formulating the expression in CPLEX. 
      * 
      */
-    protected void loadFactorFailure(int failR) throws IloException
+    protected void routingMultiplicityFailure(int failR) throws IloException
     {
         for (QueryPlanDesc desc : queryPlanDescs) {
             if (desc.getSQLCategory().isSame(INSERT) || desc.getSQLCategory().isSame(DELETE))
                 continue;
-            loadFactorFailure(desc, failR);
+            routingMultiplicityFailure(desc, failR);
         }
     }
     
@@ -504,7 +504,7 @@ public class RobustDivBIP extends DivBIP
      *      The failed replica     
      *      
      */
-    protected void loadFactorFailure(QueryPlanDesc desc, int failR) throws IloException
+    protected void routingMultiplicityFailure(QueryPlanDesc desc, int failR) throws IloException
     {   
         IloLinearNumExpr expr; 
         int idY;        
@@ -523,9 +523,9 @@ public class RobustDivBIP extends DivBIP
                 expr.addTerm(1, cplexVar.get(idY));
             }
         }
-            
-        rhs = (desc.getSQLCategory().isSame(UPDATE)) ? nReplicas : newLoadFactor;
-        cplex.addEq(expr, rhs, "load_factor_" + q);            
+        // Recall that one replica is unavailable
+        rhs = (desc.getSQLCategory().isSame(UPDATE)) ? nReplicas - 1: newLoadFactor;
+        cplex.addEq(expr, rhs, "routing_multiplicity_" + q);            
         numConstraints++;
     }
     

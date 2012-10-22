@@ -85,7 +85,7 @@ public class ConstraintDivBIP extends DivBIP
             super.usedIndexConstraints();
             
             // 5. Top-m best cost 
-            super.loadBalanceFactorConstraints();
+            super.routingMultiplicityConstraints();
             
             // 6. Space constraints
             super.spaceConstraints();

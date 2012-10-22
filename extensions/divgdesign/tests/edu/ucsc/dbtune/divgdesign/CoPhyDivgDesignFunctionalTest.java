@@ -63,6 +63,7 @@ public class CoPhyDivgDesignFunctionalTest extends DIVPaper
      */
     public static void testDivgDesignCoPhy() throws Exception
     {   
+        /*
         // 1. Read common parameter
         getEnvironmentParameters();
         setParameters();
@@ -88,6 +89,7 @@ public class CoPhyDivgDesignFunctionalTest extends DIVPaper
                 // store in the serialize file
                 serializeDivResult(entries, designCoPhyFile);
             }
+            */
     }
     
     
