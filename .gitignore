@@ -16,6 +16,7 @@ resources/*/*/*/*.txt
 resources/*/*/*/*.lp
 resources/*/*/*.lp
 *.sw*
+*.bin
 .bin
 .checkstyle
 .classpath
