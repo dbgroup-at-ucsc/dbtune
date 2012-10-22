@@ -252,22 +252,29 @@ public class InumTest2 {
         double inumFtsAll = 0;
         Workload workload = new Workload("", new StringReader(query));
 
-        Rt.error("load index");
-        Set<Index> indexes = new HashSet<Index>();
-        String[] names = Rt.readResourceAsLines(InumTest2.class,
-                "tpcds40index.txt");
-        for (String name2 : names) {
-            indexes.add(createIndex(db, name2));
-        }
+        Statement st=db.getConnection().createStatement();
+        Rt.np("creating index");
+//        st.execute("drop index r1");
+//        st.execute("drop index r2");
+//        st.execute("create index r1 on TPCH.ORDERS (O_ORDERKEY)");
+//        st.execute("create index r2 on TPCH.LINEITEM (L_ORDERKEY)");
+        Rt.np("finished index");
+        // Rt.error("load index");
+        // Set<Index> indexes = new HashSet<Index>();
+        // String[] names = Rt.readResourceAsLines(InumTest2.class,
+        // "tpcds40index.txt");
+        // for (String name2 : names) {
+        // indexes.add(createIndex(db, name2));
+        // }
 
         // workload = new Workload("", new
         // StringReader(workload.get(2).getSQL()+";"));
-        // CandidateGenerator candGen = new OptimizerCandidateGenerator(
-        // getBaseOptimizer(db.getOptimizer()));
-        // Set<Index> indexes = candGen.generate(workload);
-        // for (Index index : indexes) {
-        // Rt.np(index);
-        // }
+        CandidateGenerator candGen = new OptimizerCandidateGenerator(
+                getBaseOptimizer(db.getOptimizer()));
+        Set<Index> indexes = candGen.generate(workload);
+        for (Index index : indexes) {
+            Rt.np(index);
+        }
 
         // AbstractSpaceComputation.setInumSpacePopulateIndexSet(indexes);
 
@@ -531,12 +538,12 @@ public class InumTest2 {
         String tpcds40 = Rt.readFile(new File(
                 "resources/workloads/db2/deployAware/tpcds_40.sql"));
         String update = Rt.readFile(new File(
-                "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
+                "resources/workloads/db2/tpcds/update.sql"));
         String otab = Rt.readFile(new File(
                 "resources/workloads/db2/online-benchmark-100/workload.sql"));
         // sqlTest(tpch10g, tpch, 1);
-        // sqlTest(test, otab, 95);
-        pruneTest(test, update);
+//         sqlTest(test, update, 0);
+        // pruneTest(test, update);
         // sqlTest(test, tpcds40, 33);
         // sqlTest(
         // test,
@@ -549,18 +556,21 @@ public class InumTest2 {
         // compareWorkload(test, tpch, "tpch");
         // compareInterestingOrders(test, tpch);
         // compareWorkload(tpch10g, tpch, "tpch10g");
-        compareWorkload(test, tpcds40, "tpcds40");
+        // compareWorkload(test, tpcds40, "tpcds40");
+        compareWorkload(test, update, "update");
         // compareWorkload(test, tpcds, "tpcds");
         // compareWorkload(test, update, "update");
-        test.getConnection().close();
-        tpch10g.getConnection().close();
+        if (test != null)
+            test.getConnection().close();
+        if (tpch10g != null)
+            tpch10g.getConnection().close();
     }
 
     void pruneTest(DatabaseSystem db, String query) throws Exception {
         InumOptimizer optimizer = db == null ? null : (InumOptimizer) db
                 .getOptimizer();
         // Set<Index> indexes = new HashSet<Index>();
-//        Rt.error("load index");
+        // Rt.error("load index");
         // String[] names = Rt.readResourceAsLines(InumTest2.class,
         // "tpcds40index.txt");
         // for (String name : names) {
@@ -618,7 +628,7 @@ public class InumTest2 {
             for (PrunableInumPlan plan : plans) {
                 plan.print();
             }
-//            break;
+            // break;
             // HashSet<InumPlan> inumSpace = new HashSet<InumPlan>();
             // for (PrunableInumPlan p : plans)
             // inumSpace.add(p);

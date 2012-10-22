@@ -142,6 +142,7 @@ public class InumPlan extends SQLStatementPlan
 //        this.internalPlanCost = explainedStatement.getSelectCost() - leafsCost;
 //        calculateCoefficient(this, this.getRootElement(), 1);
         this.internalPlanCost =calculateInternalCost(this.getRootElement());
+        this.internalPlanCost-= baseTableUpdateCost;
         qidToOperator=new Hashtable<String, Operator>();
         slots = new HashMap<Table, TableAccessSlot>();
         slotsById=new Hashtable<Integer, TableAccessSlot>();
