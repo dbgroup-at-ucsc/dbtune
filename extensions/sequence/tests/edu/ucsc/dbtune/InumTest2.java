@@ -46,6 +46,8 @@ import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
+import edu.ucsc.dbtune.seq.utils.RTimer;
+import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.InumUtils;
 import edu.ucsc.dbtune.util.ResultTable;
@@ -252,13 +254,13 @@ public class InumTest2 {
         double inumFtsAll = 0;
         Workload workload = new Workload("", new StringReader(query));
 
-        Statement st=db.getConnection().createStatement();
-        Rt.np("creating index");
-//        st.execute("drop index r1");
-//        st.execute("drop index r2");
-//        st.execute("create index r1 on TPCH.ORDERS (O_ORDERKEY)");
-//        st.execute("create index r2 on TPCH.LINEITEM (L_ORDERKEY)");
-        Rt.np("finished index");
+        // Statement st=db.getConnection().createStatement();
+        // Rt.np("creating index");
+        // st.execute("drop index r1");
+        // st.execute("drop index r2");
+        // st.execute("create index r1 on TPCH.ORDERS (O_ORDERKEY)");
+        // st.execute("create index r2 on TPCH.LINEITEM (L_ORDERKEY)");
+        // Rt.np("finished index");
         // Rt.error("load index");
         // Set<Index> indexes = new HashSet<Index>();
         // String[] names = Rt.readResourceAsLines(InumTest2.class,
@@ -520,16 +522,16 @@ public class InumTest2 {
 
     public InumTest2() throws Exception {
         Environment en = Environment.getInstance();
-        en.setProperty("username", "db2inst2");
+        en.setProperty("username", "db2inst1");
         en.setProperty("password", "db2inst1admin");
         en.setProperty("workloads.dir", "resources/workloads/db2");
         DatabaseSystem test = null, tpch10g = null;
         String dbName = "test";
-        en.setProperty("jdbc.url", "jdbc:db2://localhost:50001/" + dbName);
+        en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
         test = newDatabaseSystem(en);
         dbName = "tpch10g";
-        en.setProperty("jdbc.url", "jdbc:db2://localhost:50001/" + dbName);
-        // tpch10g = newDatabaseSystem(en);
+        en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
+        tpch10g = newDatabaseSystem(en);
 
         String tpch = Rt.readFile(new File(
                 "resources/workloads/db2/tpch/complete.sql"));
@@ -539,10 +541,12 @@ public class InumTest2 {
                 "resources/workloads/db2/deployAware/tpcds_40.sql"));
         String update = Rt.readFile(new File(
                 "resources/workloads/db2/tpcds/update.sql"));
+        String updateT = Rt.readFile(new File(
+                "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
         String otab = Rt.readFile(new File(
                 "resources/workloads/db2/online-benchmark-100/workload.sql"));
         // sqlTest(tpch10g, tpch, 1);
-//         sqlTest(test, update, 0);
+        sqlTest(test, update, 0);
         // pruneTest(test, update);
         // sqlTest(test, tpcds40, 33);
         // sqlTest(
@@ -557,7 +561,8 @@ public class InumTest2 {
         // compareInterestingOrders(test, tpch);
         // compareWorkload(tpch10g, tpch, "tpch10g");
         // compareWorkload(test, tpcds40, "tpcds40");
-        compareWorkload(test, update, "update");
+        // compareWorkload(test, updateT, "update");
+        compareWorkload(tpch10g, updateT, "update");
         // compareWorkload(test, tpcds, "tpcds");
         // compareWorkload(test, update, "update");
         if (test != null)
@@ -659,7 +664,66 @@ public class InumTest2 {
         System.exit(0);
     }
 
+    void indexTest(DatabaseSystem db) throws Exception {
+        Statement st = db.getConnection().createStatement();
+        st
+                .execute("delete from tpcds.customer_address where CA_ADDRESS_SK=25000001");
+
+        RTimerN timer = new RTimerN();
+        st.execute("INSERT INTO tpcds.customer_address \n" + "(\n"
+                + "    CA_ADDRESS_SK,\n" + "    CA_ADDRESS_ID,\n"
+                + "    CA_STREET_NUMBER,\n" + "    CA_STREET_NAME,\n"
+                + "    CA_STREET_TYPE,\n" + "    CA_SUITE_NUMBER,\n"
+                + "    CA_CITY,\n" + "    CA_COUNTY,\n" + "    CA_STATE,\n"
+                + "    CA_ZIP,\n" + "    CA_COUNTRY,\n"
+                + "    CA_GMT_OFFSET,\n" + "    CA_LOCATION_TYPE\n"
+                + ") values (\n" + "    25000001,\n"
+                + "    'AAAAAAAACLAJAAAA',\n" + "    '326       ',\n"
+                + "    'Chestnut Main',\n" + "    'Ln             ',\n"
+                + "    'Suite I   ',\n" + "    'Spring Hill',\n"
+                + "    'Leflore County',\n" + "    'MS',\n"
+                + "    '56787     ',\n" + "    'United States',\n"
+                + "    -6.00,\n" + "    'apartment           '\n" + ")");
+        double time1 = timer.getSecondElapse();
+        Rt.p(time1);
+        st
+                .execute("delete from tpcds.customer_address where CA_ADDRESS_SK=25000001");
+        timer.reset();
+        st
+                .execute("create index tpcds.indexr1 on tpcds.customer_address (CA_ADDRESS_SK)");
+        st
+                .execute("create index tpcds.indexr2 on tpcds.customer_address (CA_ADDRESS_ID)");
+        st
+                .execute("create index tpcds.indexr3 on tpcds.customer_address (CA_STREET_NUMBER)");
+        time1 = timer.getSecondElapse();
+        Rt.p(time1);
+        timer.reset();
+        st.execute("INSERT INTO tpcds.customer_address \n" + "(\n"
+                + "    CA_ADDRESS_SK,\n" + "    CA_ADDRESS_ID,\n"
+                + "    CA_STREET_NUMBER,\n" + "    CA_STREET_NAME,\n"
+                + "    CA_STREET_TYPE,\n" + "    CA_SUITE_NUMBER,\n"
+                + "    CA_CITY,\n" + "    CA_COUNTY,\n" + "    CA_STATE,\n"
+                + "    CA_ZIP,\n" + "    CA_COUNTRY,\n"
+                + "    CA_GMT_OFFSET,\n" + "    CA_LOCATION_TYPE\n"
+                + ") values (\n" + "    25000001,\n"
+                + "    'AAAAAAAACLAJAAAA',\n" + "    '326       ',\n"
+                + "    'Chestnut Main',\n" + "    'Ln             ',\n"
+                + "    'Suite I   ',\n" + "    'Spring Hill',\n"
+                + "    'Leflore County',\n" + "    'MS',\n"
+                + "    '56787     ',\n" + "    'United States',\n"
+                + "    -6.00,\n" + "    'apartment           '\n" + ")");
+        time1 = timer.getSecondElapse();
+        Rt.p(time1);
+        st
+                .execute("delete from tpcds.customer_address where CA_ADDRESS_SK=25000001");
+        st.execute("drop index tpcds.indexr1");
+        st.execute("drop index tpcds.indexr2");
+        st.execute("drop index tpcds.indexr3");
+        System.exit(0);
+    }
+
     void sqlTest(DatabaseSystem db, String query, int queryId) throws Exception {
+        // indexTest(db);
         InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
         DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
         Set<Index> indexes = new HashSet<Index>();
@@ -670,6 +734,23 @@ public class InumTest2 {
         // indexes.add(createIndex(db, name));
         // }
         // ExplainTables.showWarnings = true;
+
+        // db.getCatalog().findByQualifiedName("TPCDS.INDEXR1");
+        Statement st = db.getConnection().createStatement();
+        Rt.np("creating index");
+//        st
+//                .execute("create index tpcds.indexr1 on tpcds.customer_address (CA_ADDRESS_SK)");
+//        st
+//                .execute("create index tpcds.indexr2 on tpcds.customer_address (CA_ADDRESS_ID)");
+//        st
+//                .execute("create index tpcds.indexr3 on tpcds.customer_address (CA_STREET_NUMBER)");
+
+        // st.execute("drop index tpcds.indexr1");
+
+        // st.execute("drop index r2");
+        // st.execute("create index tpcds.indexr1 on TPCDS.STORE_SALES (SS_SOLD_DATE_SK)");
+        // st.execute("create index r2 on TPCH.LINEITEM (L_ORDERKEY)");
+        Rt.np("finished index");
 
         Workload workload = new Workload("", new StringReader(query));
 
@@ -707,8 +788,10 @@ public class InumTest2 {
         for (Index index : indexes) {
             Rt.np(index);
         }
+        indexes.add(createIndex(db,"[+TPCDS.CUSTOMER_ADDRESS.CA_STREET_NAME(A)]"));
 
         // ExplainTables.dumpPlanId=211;
+        ExplainTables.dump=true;
         ExplainedSQLStatement db2plan = db2optimizer.explain(sql, indexes);
         Rt.np("DB2 plan:");
         Rt.p(db2plan.getPlan());
@@ -716,6 +799,8 @@ public class InumTest2 {
         Rt.np("Index used by DB2 plan:");
         for (Index index2 : db2plan.getUsedConfiguration())
             Rt.np(index2);
+        
+        System.exit(0);
 
         InumPreparedSQLStatement space;
         // space = (InumPreparedSQLStatement) optimizer
@@ -737,6 +822,11 @@ public class InumTest2 {
         Rt.np("Index used by INUM:");
         for (Index index2 : inumPlan.getUsedConfiguration())
             Rt.np(index2);
+
+        for (Index index2 : indexes)
+            Rt
+                    .np("%,.0f\t%s", db2plan.getUpdateCost(index2), index2
+                            .toString());
 
         Rt.p("DB2: %,.0f", db2plan.getTotalCost());
         Rt.p("INUM: %,.0f", inumPlan.getTotalCost());

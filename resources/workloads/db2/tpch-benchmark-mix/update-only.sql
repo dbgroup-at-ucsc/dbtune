@@ -1,482 +1,67 @@
-DELETE FROM TPCH.ORDERS WHERE O_ORDERKEY = 197;
-DELETE FROM TPCH.LINEITEM WHERE L_ORDERKEY = 197;
-INSERT INTO tpch.lineitem VALUES(9,127857,5394,1,45,84818.25,0.09,0.05,'N','O','1998-10-20','1998-09-10','1998-11-15','COLLECT COD','SHIP','es haggle blithely above the silent ac');
-INSERT INTO tpch.orders VALUES(10,38197,'O',130153.51,'1996-09-10','1-URGENT','Clerk#000000145',0,'ironic, even requests');
+ INSERT INTO tpch.lineitem VALUES(9,127857,5394,1,45,84818.25,0.09,0.05,'N','O','1998-10-20','1998-09-10','1998-11-15','COLLECT COD','SHIP','es haggle blithely above the silent ac');
+ INSERT INTO tpch.lineitem VALUES(9,92115,9643,2,47,52034.17,0.08,0.02,'N','O','1998-09-08','1998-08-31','1998-09-15','COLLECT COD','AIR','counts. furio');
+ INSERT INTO tpch.lineitem VALUES(10,183288,843,1,13,17826.64,0.01,0.07,'N','O','1996-10-29','1996-11-29','1996-10-31','DELIVER IN PERSON','AIR','ackages haggle slyly. bold, exp');
+ INSERT INTO tpch.lineitem VALUES(10,117623,135,2,39,63984.18,0.03,0.02,'N','O','1997-01-06','1996-11-26','1997-02-03','TAKE BACK RETURN','TRUCK',' final platel');
+ INSERT INTO tpch.lineitem VALUES(10,83486,1011,3,34,49962.32,0.04,0.00,'N','O','1996-10-13','1996-11-14','1996-11-04','COLLECT COD','REG AIR','ar instructio');
+ INSERT INTO tpch.lineitem VALUES(11,82555,5064,1,21,32288.55,0.04,0.08,'A','F','1993-06-26','1993-08-23','1993-07-07','NONE','RAIL','cajole slyly ironic deposits. fluffil');
+ INSERT INTO tpch.lineitem VALUES(11,87018,9527,2,30,30150.30,0.01,0.03,'A','F','1993-10-08','1993-08-28','1993-10-28','COLLECT COD','TRUCK','have to cajole furiously: special, fina');
+ INSERT INTO tpch.lineitem VALUES(11,101742,6763,3,46,80212.04,0.09,0.08,'R','F','1993-09-20','1993-08-30','1993-09-26','NONE','AIR','g packages');
+ INSERT INTO tpch.lineitem VALUES(11,169644,2161,4,32,54836.48,0.04,0.03,'R','F','1993-08-07','1993-08-28','1993-08-11','COLLECT COD','FOB','ven excuses cajole ideas');
+ INSERT INTO tpch.lineitem VALUES(11,198586,1106,5,23,38745.34,0.10,0.04,'A','F','1993-10-09','1993-07-15','1993-11-08','COLLECT COD','SHIP',' express pinto b');
+ DELETE FROM TPCH.ORDERS WHERE O_ORDERKEY = 1;
+ DELETE FROM TPCH.ORDERS WHERE O_ORDERKEY = 2;
+ DELETE FROM TPCH.ORDERS WHERE O_ORDERKEY = 3;
+ DELETE FROM TPCH.ORDERS WHERE O_ORDERKEY = 4;
+ DELETE FROM TPCH.ORDERS WHERE O_ORDERKEY = 5;
+ DELETE FROM TPCH.ORDERS WHERE O_ORDERKEY = 6;
+ DELETE FROM TPCH.ORDERS WHERE O_ORDERKEY = 7;
+ DELETE FROM TPCH.ORDERS WHERE O_ORDERKEY = 32;
+ DELETE FROM TPCH.ORDERS WHERE O_ORDERKEY = 33;
+ DELETE FROM TPCH.ORDERS WHERE O_ORDERKEY = 34;
+ UPDATE tpch.lineitem
+   SET l_tax = l_tax - 0.000001
+ WHERE tpch.lineitem.l_extendedprice BETWEEN
+       65522.37840623342 AND 66256.94369066914;
+UPDATE tpch.lineitem
+   SET l_extendedprice = l_extendedprice - 0.000001
+ WHERE tpch.lineitem.l_shipdate BETWEEN 'Fri Aug 18 23:48:58 PDT 1995' AND
+                                        'Tue Sep 05 23:48:58 PDT 1995';
 
--- update customer address
-INSERT INTO tpcds.customer_address 
-(
-	CA_ADDRESS_SK,
-	CA_ADDRESS_ID,
-	CA_STREET_NUMBER,
-	CA_STREET_NAME,
-	CA_STREET_TYPE,
-	CA_SUITE_NUMBER,
-	CA_CITY,
-	CA_COUNTY,
-	CA_STATE,
-	CA_ZIP,
-	CA_COUNTRY,
-	CA_GMT_OFFSET,
-	CA_LOCATION_TYPE
-) values (
-	250001,
-	'AAAAAAAACLAJAAAA',
-	'326       ',
-	'Chestnut Main',
-	'Ln             ',
-	'Suite I   ',
-	'Spring Hill',
-	'Leflore County',
-	'MS',
-	'56787     ',
-	'United States',
-	-6.00,
-	'apartment           '
-);
+UPDATE tpch.lineitem
+   SET l_tax = l_tax - 0.000001
+ WHERE tpch.lineitem.l_commitdate BETWEEN 'Tue Jun 30 22:07:36 PDT 1992' AND
+                                          'Fri Jul 17 22:07:36 PDT 1992';
 
-update tpcds.customer
-set  C_CURRENT_ADDR_SK=250001
-where C_CUSTOMER_SK=1;
+UPDATE tpch.orders
+   SET o_shippriority = o_shippriority - 1
+ WHERE tpch.orders.o_orderdate BETWEEN 'Thu Apr 07 05:46:45 PDT 1994' AND
+                                       'Thu Apr 14 05:46:45 PDT 1994';
 
--- insert new date record
-INSERT INTO tpcds.date_dim
-(
-	D_DATE_SK,
-	D_DATE_ID,
-	D_DATE,
-	D_MONTH_SEQ,
-	D_WEEK_SEQ,
-	D_QUARTER_SEQ,
-	D_YEAR,
-	D_DOW,
-	D_MOY,
-	D_DOM,
-	D_QOY,
-	D_FY_YEAR,
-	D_FY_QUARTER_SEQ,
-	D_FY_WEEK_SEQ,
-	D_DAY_NAME,
-	D_QUARTER_NAME,
-	D_HOLIDAY,
-	D_WEEKEND,
-	D_FOLLOWING_HOLIDAY,
-	D_FIRST_DOM,
-	D_LAST_DOM,
-	D_SAME_DAY_LY,
-	D_SAME_DAY_LQ,
-	D_CURRENT_DAY,
-	D_CURRENT_WEEK,
-	D_CURRENT_MONTH,
-	D_CURRENT_QUARTER,
-	D_CURRENT_YEAR
-) values (
-	2500001,
-	'AAAAAAAAOKJNECAB',
-	'2012-12-21',
-	0,
-	1,
-	1,
-	2012,
-	1,
-	12,
-	21,
-	1,
-	2012,
-	1,
-	1,
-	'Monday   ',
-	'2012Q4',
-	'N',
-	'N',
-	'Y',
-	2415021,
-	2415020,
-	2414657,
-	2414930,
-	'N',
-	'N',
-	'N',
-	'N',
-	'N'
-);
+UPDATE tpch.lineitem
+   SET l_quantity = l_quantity - 0.000001
+ WHERE tpch.lineitem.l_receiptdate BETWEEN
+       'Fri Oct 25 19:36:34 PDT 1996' AND 'Mon Oct 28 18:36:34 PST 1996';
 
--- new store sales
-insert into tpcds.store_sales
-(
-	SS_SOLD_DATE_SK,
-	SS_SOLD_TIME_SK,
-	SS_ITEM_SK,
-	SS_CUSTOMER_SK,
-	SS_CDEMO_SK,
-	SS_HDEMO_SK,
-	SS_ADDR_SK,
-	SS_STORE_SK,
-	SS_PROMO_SK,
-	SS_TICKET_NUMBER,
-	SS_QUANTITY,
-	SS_WHOLESALE_COST,
-	SS_LIST_PRICE,
-	SS_SALES_PRICE,
-	SS_EXT_DISCOUNT_AMT,
-	SS_EXT_SALES_PRICE,
-	SS_EXT_WHOLESALE_COST,
-	SS_EXT_LIST_PRICE,
-	SS_EXT_TAX,
-	SS_COUPON_AMT,
-	SS_NET_PAID,
-	SS_NET_PAID_INC_TAX,
-	SS_NET_PROFIT
-) values (
-	2500001,
-	44911,
-	97607,
-	292215,
-	1517913,
-	1564,
-	147662,
-	16,
-	40,
-	2400001,
-	29,
-	87.52,
-	134.78,
-	52.56,
-	0.00,
-	1524.24,
-	2538.08,
-	3908.62,
-	15.24,
-	0.00,
-	1524.24,
-	1539.48,
-	-1013.84
-);
+UPDATE tpch.partsupp
+   SET ps_supplycost = ps_supplycost - 0.000001
+ WHERE tpch.partsupp.ps_availqty BETWEEN 1425 AND 1464;
 
--- new store return
-insert into tpcds.store_returns
-(
-	SR_RETURNED_DATE_SK,
-	SR_RETURN_TIME_SK,
-	SR_ITEM_SK,
-	SR_CUSTOMER_SK,
-	SR_CDEMO_SK,
-	SR_HDEMO_SK,
-	SR_ADDR_SK,
-	SR_STORE_SK,
-	SR_REASON_SK,
-	SR_TICKET_NUMBER,
-	SR_RETURN_QUANTITY,
-	SR_RETURN_AMT,
-	SR_RETURN_TAX,
-	SR_RETURN_AMT_INC_TAX,
-	SR_FEE,
-	SR_RETURN_SHIP_COST,
-	SR_REFUNDED_CASH,
-	SR_REVERSED_CHARGE,
-	SR_STORE_CREDIT,
-	SR_NET_LOSS
-) values (
-	2500001,
-	48457,
-	89115,
-	292215,
-	275732,
-	5766,
-	97353,
-	58,
-	11,
-	2400001,
-	12,
-	3.96,
-	0.00,
-	3.96,
-	24.57,
-	198.60,
-	3.44,
-	0.43,
-	0.09,
-	223.17
-);
+UPDATE tpch.lineitem
+   SET l_extendedprice = l_extendedprice - 0.000001
+ WHERE tpch.lineitem.l_commitdate BETWEEN 'Tue May 24 21:09:40 PDT 1994' AND
+                                          'Fri Jun 17 21:09:40 PDT 1994';
 
--- new catalog sales
-insert into tpcds.catalog_sales
-(
-	CS_SOLD_DATE_SK,
-	CS_SOLD_TIME_SK,
-	CS_SHIP_DATE_SK,
-	CS_BILL_CUSTOMER_SK,
-	CS_BILL_CDEMO_SK,
-	CS_BILL_HDEMO_SK,
-	CS_BILL_ADDR_SK,
-	CS_SHIP_CUSTOMER_SK,
-	CS_SHIP_CDEMO_SK,
-	CS_SHIP_HDEMO_SK,
-	CS_SHIP_ADDR_SK,
-	CS_CALL_CENTER_SK,
-	CS_CATALOG_PAGE_SK,
-	CS_SHIP_MODE_SK,
-	CS_WAREHOUSE_SK,
-	CS_ITEM_SK,
-	CS_PROMO_SK,
-	CS_ORDER_NUMBER,
-	CS_QUANTITY,
-	CS_WHOLESALE_COST,
-	CS_LIST_PRICE,
-	CS_SALES_PRICE,
-	CS_EXT_DISCOUNT_AMT,
-	CS_EXT_SALES_PRICE,
-	CS_EXT_WHOLESALE_COST,
-	CS_EXT_LIST_PRICE,
-	CS_EXT_TAX,
-	CS_COUPON_AMT,
-	CS_EXT_SHIP_COST,
-	CS_NET_PAID,
-	CS_NET_PAID_INC_TAX,
-	CS_NET_PAID_INC_SHIP,
-	CS_NET_PAID_INC_SHIP_TAX,
-	CS_NET_PROFIT
-) values (
-	2452653,
-	12032,
-	2452712,
-	378549,
-	1208754,
-	3312,
-	189117,
-	378549,
-	1208754,
-	3312,
-	189117,
-	7,
-	10084,
-	16,
-	8,
-	50503,
-	469,
-	1600001,
-	20,
-	72.97,
-	77.34,
-	26.29,
-	1021.00,
-	525.80,
-	1459.40,
-	1546.80,
-	0.00,
-	0.00,
-	665.00,
-	525.80,
-	525.80,
-	1190.80,
-	1190.80,
-	-933.60
-);
+UPDATE tpch.partsupp
+   SET ps_supplycost = ps_supplycost - 0.000001
+ WHERE tpch.partsupp.ps_availqty BETWEEN 6777 AND 6844;
 
---new catalog return
-insert into tpcds.catalog_returns
-(
-	CR_RETURNED_DATE_SK,
-	CR_RETURNED_TIME_SK,
-	CR_ITEM_SK,
-	CR_REFUNDED_CUSTOMER_SK,
-	CR_REFUNDED_CDEMO_SK,
-	CR_REFUNDED_HDEMO_SK,
-	CR_REFUNDED_ADDR_SK,
-	CR_RETURNING_CUSTOMER_SK,
-	CR_RETURNING_CDEMO_SK,
-	CR_RETURNING_HDEMO_SK,
-	CR_RETURNING_ADDR_SK,
-	CR_CALL_CENTER_SK,
-	CR_CATALOG_PAGE_SK,
-	CR_SHIP_MODE_SK,
-	CR_WAREHOUSE_SK,
-	CR_REASON_SK,
-	CR_ORDER_NUMBER,
-	CR_RETURN_QUANTITY,
-	CR_RETURN_AMOUNT,
-	CR_RETURN_TAX,
-	CR_RETURN_AMT_INC_TAX,
-	CR_FEE,
-	CR_RETURN_SHIP_COST,
-	CR_REFUNDED_CASH,
-	CR_REVERSED_CHARGE,
-	CR_STORE_CREDIT,
-	CR_NET_LOSS
-) values (
-	2452857,
-	35897,
-	86055,
-	14358,
-	1439035,
-	5312,
-	53989,
-	14358,
-	1439035,
-	1903,
-	53989,
-	3,
-	10032,
-	20,
-	9,
-	35,
-	1599999,
-	48,
-	5242.56,
-	0.00,
-	5242.56,
-	31.59,
-	245.28,
-	3827.06,
-	1415.50,
-	0.00,
-	276.87
-);
+UPDATE tpch.lineitem
+   SET l_extendedprice = l_extendedprice - 0.000001
+ WHERE tpch.lineitem.l_commitdate BETWEEN 'Mon Jul 27 04:39:49 PDT 1998' AND
+                                          'Sat Aug 08 04:39:49 PDT 1998';
 
-insert into tpcds.web_sales
-(
-	WS_SOLD_DATE_SK,
-	WS_SOLD_TIME_SK,
-	WS_SHIP_DATE_SK,
-	WS_ITEM_SK,
-	WS_BILL_CUSTOMER_SK,
-	WS_BILL_CDEMO_SK,
-	WS_BILL_HDEMO_SK,
-	WS_BILL_ADDR_SK,
-	WS_SHIP_CUSTOMER_SK,
-	WS_SHIP_CDEMO_SK,
-	WS_SHIP_HDEMO_SK,
-	WS_SHIP_ADDR_SK,
-	WS_WEB_PAGE_SK,
-	WS_WEB_SITE_SK,
-	WS_SHIP_MODE_SK,
-	WS_WAREHOUSE_SK,
-	WS_PROMO_SK,
-	WS_ORDER_NUMBER,
-	WS_QUANTITY,
-	WS_WHOLESALE_COST,
-	WS_LIST_PRICE,
-	WS_SALES_PRICE,
-	WS_EXT_DISCOUNT_AMT,
-	WS_EXT_SALES_PRICE,
-	WS_EXT_WHOLESALE_COST,
-	WS_EXT_LIST_PRICE,
-	WS_EXT_TAX,
-	WS_COUPON_AMT,
-	WS_EXT_SHIP_COST,
-	WS_NET_PAID,
-	WS_NET_PAID_INC_TAX,
-	WS_NET_PAID_INC_SHIP,
-	WS_NET_PAID_INC_SHIP_TAX,
-	WS_NET_PROFIT
-) values (
-	2451041,
-	45542,
-	2451066,
-	53618,
-	320172,
-	1441008,
-	2644,
-	237927,
-	154410,
-	893289,
-	482,
-	133718,
-	160,
-	20,
-	7,
-	2,
-	324,
-	600001,
-	83,
-	9.78,
-	28.45,
-	13.37,
-	1251.64,
-	1109.71,
-	811.74,
-	2361.35,
-	23.85,
-	632.53,
-	731.23,
-	477.18,
-	501.03,
-	1208.41,
-	1232.26,
-	-334.56
-);
+UPDATE tpch.lineitem
+   SET l_quantity = l_quantity - 0.000001
+ WHERE tpch.lineitem.l_receiptdate BETWEEN
+       'Mon Oct 06 10:20:41 PDT 1997' AND 'Mon Oct 27 09:20:41 PST 1997';
 
-
-insert into tpcds.web_returns
-(
-	WR_RETURNED_DATE_SK,
-	WR_RETURNED_TIME_SK,
-	WR_ITEM_SK,
-	WR_REFUNDED_CUSTOMER_SK,
-	WR_REFUNDED_CDEMO_SK,
-	WR_REFUNDED_HDEMO_SK,
-	WR_REFUNDED_ADDR_SK,
-	WR_RETURNING_CUSTOMER_SK,
-	WR_RETURNING_CDEMO_SK,
-	WR_RETURNING_HDEMO_SK,
-	WR_RETURNING_ADDR_SK,
-	WR_WEB_PAGE_SK,
-	WR_REASON_SK,
-	WR_ORDER_NUMBER,
-	WR_RETURN_QUANTITY,
-	WR_RETURN_AMT,
-	WR_RETURN_TAX,
-	WR_RETURN_AMT_INC_TAX,
-	WR_FEE,
-	WR_RETURN_SHIP_COST,
-	WR_REFUNDED_CASH,
-	WR_REVERSED_CHARGE,
-	WR_ACCOUNT_CREDIT,
-	WR_NET_LOSS
-) values (
-	2451337,
-	58039,
-	28573,
-	100963,
-	671148,
-	1780,
-	139165,
-	100963,
-	671148,
-	1780,
-	139165,
-	169,
-	41,
-	600001,
-	11,
-	546.04,
-	21.84,
-	567.88,
-	58.84,
-	95.70,
-	92.82,
-	203.94,
-	249.28,
-	176.38
-);
-
--- remove old records
-delete from tpcds.store_sales where
-	SS_SOLD_DATE_SK in (select d_date_sk from tpcds.date_dim where
-	 d_year<1995);
-delete from tpcds.store_returns where
-	sr_returned_date_sk in (select d_date_sk from tpcds.date_dim where
-	 d_year<1995);
-delete from tpcds.catalog_sales where
-	CS_SOLD_DATE_SK in (select d_date_sk from tpcds.date_dim where
-	 d_year<1995);
-delete from tpcds.catalog_returns where
-	CR_RETURNED_DATE_SK in (select d_date_sk from tpcds.date_dim where
-	 d_year<1995);
-delete from tpcds.web_sales where
-	WS_SOLD_DATE_SK in (select d_date_sk from tpcds.date_dim where
-	 d_year<1995);
-delete from tpcds.web_returns where
-	WR_RETURNED_DATE_SK in (select d_date_sk from tpcds.date_dim where
-	 d_year<1995);
-	 

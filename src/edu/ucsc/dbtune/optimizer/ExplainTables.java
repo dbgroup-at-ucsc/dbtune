@@ -99,15 +99,15 @@ public class ExplainTables {
         dumpTable(connection, "systools.advise_index",
                 "TBNAME,COLNAMES,COLCOUNT");
 
-        // dumpTable(connection, "systools.EXPLAIN_DIAGNOSTIC");
-        // dumpTable(connection, "systools.EXPLAIN_DIAGNOSTIC_DATA");
-        // dumpTable(connection, "systools.OBJECT_METRICS");
-        // dumpTable(connection, "systools.ADVISE_INSTANCE");
-        // dumpTable(connection, "systools.ADVISE_INDEX");
-        // dumpTable(connection, "systools.ADVISE_WORKLOAD");
-        // dumpTable(connection, "systools.ADVISE_MQT");
-        // dumpTable(connection, "systools.ADVISE_PARTITION");
-        // dumpTable(connection, "systools.ADVISE_TABLE");
+        // dumpTable(connection, "systools.EXPLAIN_DIAGNOSTIC", "*");
+        // dumpTable(connection, "systools.EXPLAIN_DIAGNOSTIC_DATA", "*");
+        // dumpTable(connection, "systools.OBJECT_METRICS", "*");
+        // dumpTable(connection, "systools.ADVISE_INSTANCE", "*");
+        // dumpTable(connection, "systools.ADVISE_INDEX", "*");
+        // dumpTable(connection, "systools.ADVISE_WORKLOAD", "*");
+        // dumpTable(connection, "systools.ADVISE_MQT", "*");
+        // dumpTable(connection, "systools.ADVISE_PARTITION", "*");
+        // dumpTable(connection, "systools.ADVISE_TABLE", "*");
     }
 
     public ExplainTables() {
