@@ -23,8 +23,11 @@ import java.util.Vector;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
+import edu.ucsc.dbtune.advisor.candidategeneration.DB2AdvisorCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
 import edu.ucsc.dbtune.advisor.candidategeneration.PowerSetOptimalCandidateGenerator;
+import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
+import edu.ucsc.dbtune.advisor.db2.DB2IndexInfo;
 import edu.ucsc.dbtune.inum.AbstractSpaceComputation;
 import edu.ucsc.dbtune.inum.DerbyInterestingOrdersExtractor;
 import edu.ucsc.dbtune.inum.IBGSpaceComputation;
@@ -44,6 +47,7 @@ import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
+import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
 import edu.ucsc.dbtune.seq.utils.RTimer;
@@ -271,12 +275,16 @@ public class InumTest2 {
 
         // workload = new Workload("", new
         // StringReader(workload.get(2).getSQL()+";"));
-        CandidateGenerator candGen = new OptimizerCandidateGenerator(
-                getBaseOptimizer(db.getOptimizer()));
-        Set<Index> indexes = candGen.generate(workload);
-        for (Index index : indexes) {
-            Rt.np(index);
-        }
+        // CandidateGenerator candGen = new OptimizerCandidateGenerator(
+        // getBaseOptimizer(db.getOptimizer()));
+        // Set<Index> indexes = candGen.generate(workload);
+        // for (Index index : indexes) {
+        // Rt.np(index);
+        // }
+
+        DB2Advisor db2Advis = new DB2Advisor(db);
+        db2Advis.process(workload);
+        Set<Index> indexes = db2Advis.getRecommendation(100000);
 
         // AbstractSpaceComputation.setInumSpacePopulateIndexSet(indexes);
 
@@ -546,7 +554,8 @@ public class InumTest2 {
         String otab = Rt.readFile(new File(
                 "resources/workloads/db2/online-benchmark-100/workload.sql"));
         // sqlTest(tpch10g, tpch, 1);
-        sqlTest(test, update, 0);
+//        sqlTest(test, update, 0);
+        sqlTest(test, update, 15);
         // pruneTest(test, update);
         // sqlTest(test, tpcds40, 33);
         // sqlTest(
@@ -561,8 +570,8 @@ public class InumTest2 {
         // compareInterestingOrders(test, tpch);
         // compareWorkload(tpch10g, tpch, "tpch10g");
         // compareWorkload(test, tpcds40, "tpcds40");
-        // compareWorkload(test, updateT, "update");
-        compareWorkload(tpch10g, updateT, "update");
+        compareWorkload(test, update, "update");
+        // compareWorkload(tpch10g, updateT, "update");
         // compareWorkload(test, tpcds, "tpcds");
         // compareWorkload(test, update, "update");
         if (test != null)
@@ -666,6 +675,8 @@ public class InumTest2 {
 
     void indexTest(DatabaseSystem db) throws Exception {
         Statement st = db.getConnection().createStatement();
+        st.execute("select max() from ");
+        
         st
                 .execute("delete from tpcds.customer_address where CA_ADDRESS_SK=25000001");
 
@@ -723,9 +734,9 @@ public class InumTest2 {
     }
 
     void sqlTest(DatabaseSystem db, String query, int queryId) throws Exception {
-        // indexTest(db);
         InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
         DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
+        // indexTest(db);
         Set<Index> indexes = new HashSet<Index>();
         // Rt.error("load index");
         // String[] names = Rt.readResourceAsLines(InumTest2.class,
@@ -738,12 +749,12 @@ public class InumTest2 {
         // db.getCatalog().findByQualifiedName("TPCDS.INDEXR1");
         Statement st = db.getConnection().createStatement();
         Rt.np("creating index");
-//        st
-//                .execute("create index tpcds.indexr1 on tpcds.customer_address (CA_ADDRESS_SK)");
-//        st
-//                .execute("create index tpcds.indexr2 on tpcds.customer_address (CA_ADDRESS_ID)");
-//        st
-//                .execute("create index tpcds.indexr3 on tpcds.customer_address (CA_STREET_NUMBER)");
+        // st
+        // .execute("create index tpcds.indexr1 on tpcds.customer_address (CA_ADDRESS_SK)");
+        // st
+        // .execute("create index tpcds.indexr2 on tpcds.customer_address (CA_ADDRESS_ID)");
+        // st
+        // .execute("create index tpcds.indexr3 on tpcds.customer_address (CA_STREET_NUMBER)");
 
         // st.execute("drop index tpcds.indexr1");
 
@@ -753,7 +764,7 @@ public class InumTest2 {
         Rt.np("finished index");
 
         Workload workload = new Workload("", new StringReader(query));
-
+        workload.get(0).setStatementWeight(1000000);
         // indexes = new HashSet<Index>();
         // Set<InumInterestingOrder> orders = AbstractSpaceComputation
         // .extractInterestingOrderFromDB(workload.get(queryId), db2optimizer);
@@ -781,17 +792,23 @@ public class InumTest2 {
         // }
         // System.exit(0);
 
-        CandidateGenerator candGen = new OptimizerCandidateGenerator(
-                getBaseOptimizer(db.getOptimizer()));
-        indexes = candGen.generate(workload);
+        // CandidateGenerator candGen = new OptimizerCandidateGenerator(
+        // getBaseOptimizer(db.getOptimizer()));
+        // indexes = candGen.generate(workload);
+
+        DB2Advisor db2Advis = new DB2Advisor(db);
+        db2Advis.process(workload);
+        indexes = db2Advis.getRecommendation(100000);
+
         Rt.np("Generated Indexes:");
         for (Index index : indexes) {
             Rt.np(index);
         }
-        indexes.add(createIndex(db,"[+TPCDS.CUSTOMER_ADDRESS.CA_STREET_NAME(A)]"));
+//        indexes.add(createIndex(db,
+//                "[+TPCDS.CUSTOMER_ADDRESS.CA_STREET_NAME(A)]"));
 
         // ExplainTables.dumpPlanId=211;
-        ExplainTables.dump=true;
+        ExplainTables.dump = true;
         ExplainedSQLStatement db2plan = db2optimizer.explain(sql, indexes);
         Rt.np("DB2 plan:");
         Rt.p(db2plan.getPlan());
@@ -799,7 +816,7 @@ public class InumTest2 {
         Rt.np("Index used by DB2 plan:");
         for (Index index2 : db2plan.getUsedConfiguration())
             Rt.np(index2);
-        
+
         System.exit(0);
 
         InumPreparedSQLStatement space;

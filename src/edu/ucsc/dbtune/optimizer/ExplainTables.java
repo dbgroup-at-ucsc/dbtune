@@ -98,6 +98,8 @@ public class ExplainTables {
                 "SOURCE_ID,TARGET_ID,STREAM_COUNT,COLUMN_COUNT,COLUMN_NAMES,object_schema,object_name");
         dumpTable(connection, "systools.advise_index",
                 "TBNAME,COLNAMES,COLCOUNT");
+        dumpTable(connection, "systools.EXPLAIN_OBJECT", 
+                "OBJECT_SCHEMA,OBJECT_NAME,OBJECT_TYPE,COLUMN_COUNT,ROW_COUNT,WIDTH,PAGES,OVERHEAD");
 
         // dumpTable(connection, "systools.EXPLAIN_DIAGNOSTIC", "*");
         // dumpTable(connection, "systools.EXPLAIN_DIAGNOSTIC_DATA", "*");

@@ -1,3 +1,34 @@
+INSERT INTO tpcds.customer_address 
+(
+	CA_ADDRESS_SK,
+	CA_ADDRESS_ID,
+	CA_STREET_NUMBER,
+	CA_STREET_NAME,
+	CA_STREET_TYPE,
+	CA_SUITE_NUMBER,
+	CA_CITY,
+	CA_COUNTY,
+	CA_STATE,
+	CA_ZIP,
+	CA_COUNTRY,
+	CA_GMT_OFFSET,
+	CA_LOCATION_TYPE
+) values (
+	(select max(CA_ADDRESS_SK) from tpcds.customer_address  where CA_GMT_OFFSET>0),
+	'AAAAAAAACLAJAAAA',
+	'326       ',
+	'Chestnut Main',
+	'Ln             ',
+	'Suite I   ',
+	'Spring Hill',
+	'Leflore County',
+	'MS',
+	'56787     ',
+	'United States',
+	-6.00,
+	'apartment           '
+);
+
 -- update customer address
 INSERT INTO tpcds.customer_address 
 (
