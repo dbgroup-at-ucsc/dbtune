@@ -4,9 +4,7 @@ import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.BIPVariable;
@@ -227,9 +225,11 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         IloLinearNumExpr expr = cplex.linearNumExpr();
         
         // query component
-        // only applicable for SELECT and UPDATE statements
+        // only applicable for SELECT and UPDATE, DELETE statements
         for (QueryPlanDesc desc : queryPlanDescs) 
-            if (desc.getSQLCategory().isSame(SELECT) || desc.getSQLCategory().isSame(UPDATE))
+            if (desc.getSQLCategory().isSame(SELECT) 
+                    || desc.getSQLCategory().isSame(UPDATE)
+                    || desc.getSQLCategory().isSame(DELETE))
                 expr.add(modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
                                    getFactorStatement(desc) * desc.getStatementWeight()
                                    ));
@@ -725,20 +725,34 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
     public double computeOptimizerCostWithoutFailure(DivConfiguration conf)
                 throws Exception
     {
+        return (computeOptimizerQueryCost(conf)
+                + computeOptimizerUpdateCost(conf));
+    }
+    
+    /**
+     * Compute the cost in optimizer unit without failure
+     * 
+     * @param conf      
+     *      The derived configuration
+     *       
+     * @return
+     *      The cost
+     * @throws Exception
+     */
+    public double computeOptimizerQueryCost(DivConfiguration conf)
+                throws Exception
+    {
         QueryPlanDesc desc;
         double cost;
         int counter;
         int q;
+        double queryCost;
+        DB2Optimizer db2Optimizer;
         
         counter = -1;
-        Set<Integer> all = new HashSet<Integer>();
-        for (int r = 0; r < nReplicas; r++)
-            all.add(r);
-        Set<Integer> partitions;
-        double queryCost = 0.0;
-        double updateCost = 0.0;
-        
-        DB2Optimizer db2Optimizer = (DB2Optimizer) super.inumOptimizer.getDelegate();
+        queryCost = 0.0;
+        db2Optimizer = (DB2Optimizer) super.inumOptimizer
+                                            .getDelegate();
         
         // Compute cost without failure 
         for (SQLStatement sql : workload) {
@@ -747,37 +761,68 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             q = desc.getStatementID();
             
             if (desc.getSQLCategory().isSame(NOT_SELECT)) 
-                partitions = all;
-            else
-                partitions = conf.getRoutingReplica(q);
+                continue;
             
-            for (int r : partitions) {
+            for (int r : conf.getRoutingReplica(q)) {
+                 
                 cost = db2Optimizer.explain(sql, conf.indexesAtReplica(r))
-                                  .getTotalCost();
-                if (desc.getSQLCategory().isSame(NOT_SELECT)) {
-                    Rt.p(" index = " + conf.indexesAtReplica(r));
-                    Rt.p(" UPDATE COST = " + cost);
-                    Rt.p(" sql = " + sql.getSQL());
-                    Rt.p(" base table cost = "
-                            + db2Optimizer.explain(sql, conf.indexesAtReplica(r)).getBaseTableUpdateCost());
-                }
+                                    .getTotalCost(); 
                 
                 cost = cost * desc.getStatementWeight();
                 cost = cost * getFactorStatement(desc);
                 
-                if (desc.getSQLCategory().isSame(NOT_SELECT)) {
-                    updateCost += cost;
-                    Rt.p(" index = " + conf.indexesAtReplica(r));
-                    Rt.p(" UPDATE COST = " + cost);
-                }
-                else
-                    queryCost += cost;
+                queryCost += cost;
             }
         }
         
-        Rt.p(" query cost = " + queryCost);
-        Rt.p(" update cost = " + updateCost);
-        return (updateCost + queryCost);
+        
+        return queryCost;
+    }
+    
+    /**
+     * Compute the cost in optimizer unit without failure
+     * 
+     * @param conf      
+     *      The derived configuration
+     *       
+     * @return
+     *      The cost
+     * @throws Exception
+     */
+    public double computeOptimizerUpdateCost(DivConfiguration conf)
+                throws Exception
+    {
+        QueryPlanDesc desc;
+        double cost;
+        int counter;
+        double updateCost;
+        DB2Optimizer db2Optimizer;
+        
+        counter = -1;
+        updateCost = 0.0;
+        db2Optimizer = (DB2Optimizer) super.inumOptimizer
+                                            .getDelegate();
+        
+        // Compute cost without failure 
+        for (SQLStatement sql : workload) {
+            counter++;
+            desc = queryPlanDescs.get(counter);
+            
+            if (desc.getSQLCategory().isSame(SELECT)) 
+                continue;
+            
+            for (int r = 0; r < nReplicas; r++){                 
+                cost = db2Optimizer.explain(sql, conf.indexesAtReplica(r))
+                                    .getTotalCost();
+                cost = cost * desc.getStatementWeight();
+                cost = cost * getFactorStatement(desc);
+                
+                updateCost += cost;
+            }
+        }
+        
+        
+        return updateCost;
     }
     
     /**
