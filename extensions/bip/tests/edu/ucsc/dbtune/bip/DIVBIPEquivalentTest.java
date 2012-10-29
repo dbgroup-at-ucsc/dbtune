@@ -7,9 +7,15 @@ import org.junit.Test;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.util.Rt;
 
-
+/**
+ * Test basic DIT
+ * @author Quoc Trung Tran
+ *
+ */
 public class DIVBIPEquivalentTest extends DIVPaper 
 {   
+    public static String fileName;
+    
     @Test
     public void main() throws Exception
     {
@@ -20,6 +26,7 @@ public class DIVBIPEquivalentTest extends DIVPaper
         // get parameters
         getEnvironmentParameters();        
         setParameters();
+        fileName = wlName + "_" + DIV_DETAIL_DB2_FILE;
         
         // experiment for DIV equivalent to BIP    
         runDivBIP();
@@ -36,34 +43,34 @@ public class DIVBIPEquivalentTest extends DIVPaper
      */
     public static void runDivBIP() throws Exception
     {   
-        // run algorithms
-        double costBip;
         long budget;
         timeBIP = 0.0;
         
         boolean isOnTheFly = false;
-        
-        entries = new HashMap<DivPaperEntry, Double>();
+        WorkloadCostDetail wc;
+        detailEntries = new HashMap<DivPaperEntryDetail, Double>();
         for (double B : listBudgets) 
             for (int n : listNumberReplicas) {
                 LogListener logger = LogListener.getInstance();
-                costBip = DivBIPFunctionalTest.testDivSimplify(n, B, 
+                wc = DivBIPFunctionalTest.testDivSimplify(n, B, 
                                     isOnTheFly, logger);
                 budget = convertBudgetToMB(B);
-                DivPaperEntry entry = new DivPaperEntry
+                DivPaperEntryDetail entry = new DivPaperEntryDetail
                         (dbName, wlName, n, budget, divConf);
+                entry.queryCost = wc.queryCost;
+                entry.updateCost = wc.updateCost;
                 
-                entries.put(entry, costBip);
+                detailEntries.put(entry, wc.totalCost);
                 timeBIP += logger.getTotalRunningTime();
                 
                 // 2. store in the file
-                divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
+                divFile = new File(rawDataDir, fileName);
                 divFile.delete();
-                divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
+                divFile = new File(rawDataDir, fileName);
                 divFile.createNewFile();
                 
                 // store in the serialize file
-                serializeDivResult(entries, divFile);
+                serializeDivResultDetail(detailEntries, divFile);
             }
         
         double averageBIP = timeBIP / (listBudgets.size()
