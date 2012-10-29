@@ -3,9 +3,6 @@ package edu.ucsc.dbtune.bip;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 
-import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
-import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -21,6 +18,8 @@ import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.div.UtilConstraintBuilder;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
@@ -62,9 +61,10 @@ public class DivTestSetting
     protected static DivConfiguration divConf;
     
     protected static Set<Index> candidates;
-    protected static int fQuery;    
-    protected static int fUpdate;
-    protected static int fInsert;
+        
+    // update weight = 10^{updateRatio} * size_of_relation
+    // default value
+    protected static double updateRatio = Math.pow(10, -3);
     protected static String folder;
     
     protected static DB2Advisor db2Advis;
@@ -126,10 +126,7 @@ public class DivTestSetting
             Rt.p(" Total size = " + (totalSize / Math.pow(2, 20)));
         } 
         
-        fUpdate = 1;
-        fQuery = 1;
-        fInsert = 15000;
-        
+        /*
         for (SQLStatement sql : workload)
             if (sql.getSQLCategory().isSame(INSERT)
                     || sql.getSQLCategory().isSame(DELETE)) {
@@ -143,6 +140,22 @@ public class DivTestSetting
                 sql.setStatementWeight(fQuery);
             else if (sql.getSQLCategory().isSame(UPDATE))
                 sql.setStatementWeight(fUpdate);
+        */
+        // TODO: add weight into the workload declaration
+        for (SQLStatement sql : workload)                   
+            if (sql.getSQLCategory().isSame(SELECT))
+                sql.setStatementWeight(1);
+            else {
+                // Set Statement weight = |relation size| * updateRatio
+                InumPreparedSQLStatement preparedStmt
+                        = (InumPreparedSQLStatement) io.prepareExplain(sql);
+                ExplainedSQLStatement inumExplain = preparedStmt.explain(new HashSet<Index>());
+                Table tbl = inumExplain.getUpdatedTable();
+                int fUpdate = (int) (updateRatio * tbl.getCardinality());
+                sql.setStatementWeight(fUpdate);
+                Rt.p(" fupdate = " + fUpdate);
+            }
+       
         
         div = new DivBIP();
         
@@ -160,27 +173,9 @@ public class DivTestSetting
      * @throws Exception
      */
     public static void setParameters() throws Exception
-    {  
-        fUpdate = 1;
-        fQuery = 1;
-        fInsert = 15000 * 4;
-        
-        for (SQLStatement sql : workload)
-            if (sql.getSQLCategory().isSame(INSERT)
-                    || sql.getSQLCategory().isSame(DELETE)) {
-                // for TPCH workload
-                if (sql.getSQL().contains("orders")) 
-                    sql.setStatementWeight(fInsert);
-                else if (sql.getSQL().contains("lineitem"))
-                    sql.setStatementWeight((int) (fInsert * 4));
-            }           
-            else if (sql.getSQLCategory().isSame(SELECT))
-                sql.setStatementWeight(fQuery);
-            else if (sql.getSQLCategory().isSame(UPDATE))
-                sql.setStatementWeight(fUpdate);
-        
+    {   
         // debugging purpose
-        isExportToFile = true;
+        isExportToFile = false;
         isTestCost = false;
         isShowRecommendation = false;        
         isGetAverage = false;
@@ -461,6 +456,7 @@ public class DivTestSetting
         Rt.p(" INUM plan: " + inumPrepared.explain(conf)
                 + " cost: " + inumPrepared.explain(conf).getTotalCost());
     }
+    
     
 }
  
