@@ -869,7 +869,7 @@ RETURN(cost=1470.4276123046875 rows=0 id=1 object=NONE alias= rawColumns=null ra
         sb.append("SELECT ");
 
         for (Column c : slot.getColumnsFetched().columns())
-            sb.append(c.getName()).append(", ");
+            sb.append(c.getFullyQualifiedName()).append(", ");
 
         sb.delete(sb.length() - 2, sb.length() - 1);
 
