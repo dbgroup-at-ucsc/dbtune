@@ -65,7 +65,8 @@ public class ImbalanceDivBIPTest extends DIVPaper
             imbalanceFile.createNewFile();
             
             RobustDivBIPTest.runFullDDT(robustDiv, true, entries);
-            
+            Rt.p(" The divergent design is the divConf object");
+            Rt.p(" Details = " + divConf);
             // ----------------------------------
             // store to file (since it takes time)
             serializeFailureImbalanceResult(entries, imbalanceFile);

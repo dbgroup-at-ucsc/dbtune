@@ -550,10 +550,6 @@ cntrycode;
 
 
 
-
-DELETE FROM tpch.orders WHERE o_orderkey = 197;
- 
-DELETE FROM tpch.lineitem WHERE l_orderkey = 197;
  
 INSERT INTO tpch.lineitem VALUES(9,127857,5394,1,45,84818.25,0.09,0.05,'N','O','1998-10-20','1998-09-10','1998-11-15','COLLECT COD','SHIP','es haggle blithely above the silent ac');
  

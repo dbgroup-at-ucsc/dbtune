@@ -15,7 +15,9 @@ import edu.ucsc.dbtune.util.Rt;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
 public class UNIFDB2AdvisorTest extends DIVPaper 
-{   
+{
+    public static String fileName;
+    
     @Test
     public void main() throws Exception
     {
@@ -25,6 +27,9 @@ public class UNIFDB2AdvisorTest extends DIVPaper
         
         // 3. for each (dbname, wlname) derive 
         // the UNIF cost
+        getEnvironmentParameters();
+        setParameters();
+        fileName = wlName + "_" + UNIF_DETAIL_DB2_FILE;
         testUNIFDB2();
         
         // not to draw graph
@@ -42,36 +47,37 @@ public class UNIFDB2AdvisorTest extends DIVPaper
      * @throws Exception
      */
     public static void testUNIFDB2() throws Exception
-    {   
-        // 1. Read common parameter
-        getEnvironmentParameters();
-                
-        // 2. set parameter for DivBIP()
-        setParameters();        
-        List<Double> totalCosts;
+    {         
+        List<WorkloadCostDetail> wcs;
         long budget;
-        entries = new HashMap<DivPaperEntry, Double>();
+        detailEntries = new HashMap<DivPaperEntryDetail, Double>();
         
         for (double B1 : listBudgets) { 
-            totalCosts = testUniformDB2Advis(listNumberReplicas, B1);
-            Rt.p(" space budget = " + B1 + " " + totalCosts);
+            wcs = testUniformDB2Advis(listNumberReplicas, B1);
+            Rt.p(" space budget = " + B1 + " " + wcs);
             
             for (int i = 0; i < listNumberReplicas.size(); i++){
                 budget = convertBudgetToMB(B1);
-                DivPaperEntry entry = new DivPaperEntry
+                DivPaperEntryDetail entry = new DivPaperEntryDetail
                 (dbName, wlName, listNumberReplicas.get(i), budget, divConf);
+                entry.queryCost = wcs.get(i).queryCost;
+                entry.updateCost = wcs.get(i).updateCost;
                 
-                entries.put(entry, totalCosts.get(i));
+                detailEntries.put(entry, wcs.get(i).totalCost);
             }
             
-            unifFile = new File(rawDataDir, wlName + "_" + UNIF_DB2_FILE);
+            Rt.p(" store in file name = " + fileName);
+            unifFile = new File(rawDataDir, fileName);
             unifFile.delete();
-            unifFile = new File(rawDataDir, wlName + "_" + UNIF_DB2_FILE);
+            unifFile = new File(rawDataDir, fileName);
             unifFile.createNewFile();
             
             // store in the serialize file
-            serializeDivResult(entries, unifFile);
+            serializeDivResultDetail(detailEntries, unifFile);
         }
+        
+        Rt.p(" The design is in object divConf ");
+        Rt.p("Detail = " + divConf);
     }
     
     /**
@@ -86,11 +92,9 @@ public class UNIFDB2AdvisorTest extends DIVPaper
      *      List of total cost for each replica
      * @throws Exception
      */
-    public static List<Double> testUniformDB2Advis(List<Integer> listNReplicas, double B1)
+    public static List<WorkloadCostDetail> testUniformDB2Advis(List<Integer> listNReplicas, double B1)
             throws Exception
-    {
-        List<Double> costs;
-        double totalCost = 0.0;
+    {   
         db2Advis.process(workload);
         int budget = (int) (B1 / Math.pow(2, 20));
         Set<Index> recommendation = db2Advis.getRecommendation(budget);
@@ -100,28 +104,28 @@ public class UNIFDB2AdvisorTest extends DIVPaper
         for (Index index : recommendation)
             divConf.addIndexReplica(0, index);
         
-        costs = computeCostsDB2(workload, recommendation);
+        List<Double> costs = computeCostsDB2(workload, recommendation);
         double queryCost = 0.0;
         double updateCost = 0.0;
         
-        for (int i = 0; i < workload.size(); i++) {
-            if (workload.get(i).getSQLCategory().equals(SELECT))
+        for (int i = 0; i < workload.size(); i++)
+            if (workload.get(i).getSQLCategory().isSame(SELECT))
                 queryCost += costs.get(i) * workload.get(i).getStatementWeight();
-            else 
+            else
                 updateCost += costs.get(i) * workload.get(i).getStatementWeight();
+        
+         
+        List<WorkloadCostDetail> wcs = new
+                ArrayList<WorkloadCostDetail>();
+        WorkloadCostDetail wc;
+        for (int i=0; i < listNReplicas.size(); i++) {
+            wc = new WorkloadCostDetail();
+            wc.queryCost = queryCost;
+            wc.updateCost = listNReplicas.get(i) * updateCost;
+            wc.totalCost = wc.queryCost + wc.updateCost;
+            wcs.add(wc);
         }
         
-        Rt.p("DB2-UNIF, space = " + B1
-                + " query cost = " + queryCost
-                + " updat cost = " + updateCost);
-         
-        costs = new ArrayList<Double>();
-        for (int i=0; i < listNReplicas.size(); i++) {
-            totalCost = queryCost + listNReplicas.get(i) * updateCost;
-            costs.add(totalCost);
-        }
-        Rt.p("UNIF uing DB2Advis, space budget = " + B1
-                + " UNIF = " + costs);
-        return costs;
+        return wcs;
     }
 }

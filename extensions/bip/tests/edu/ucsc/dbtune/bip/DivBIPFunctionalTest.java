@@ -6,6 +6,7 @@ import java.util.List;
 import org.junit.Test;
 
 
+import edu.ucsc.dbtune.bip.DIVPaper.WorkloadCostDetail;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.div.DivBIP;
@@ -217,7 +218,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
      * Run the BIP with the parameters set by other functions
      * @throws Exception
      */
-    public static double testDivSimplify(int _n, double _B, 
+    public static WorkloadCostDetail testDivSimplify(int _n, double _B, 
                                         boolean isOnTheFly,
                                         LogListener logger) 
             throws Exception
@@ -245,34 +246,40 @@ public class DivBIPFunctionalTest extends DivTestSetting
         if (isExportToFile)
             div.exportCplexToFile(en.getWorkloadsFoldername() + "/test.lp");
         
-        double totalCost;
+        double updateCost;
+        double queryCost;
         
         if (output != null) {
             divConf = (DivConfiguration) output;
             Rt.p(divConf.indexAtReplicaInfo());
             
-            if (isShowOptimizerCost)
-                totalCost = div.computeOptimizerCostWithoutFailure(divConf);
+            WorkloadCostDetail wc;
+            if (isShowOptimizerCost) {
+                queryCost = div.computeOptimizerQueryCost(divConf);
+                updateCost = div.computeOptimizerUpdateCost(divConf);
+                wc = new WorkloadCostDetail(queryCost, updateCost, 
+                                            queryCost + updateCost);    
+            }
             else {
+                // TODO: derive query cost and update cost
                 Rt.p("temporary NOT COMPUTE DB2 COST");
-                totalCost = div.getObjValue();
+                wc = new WorkloadCostDetail(-1, -1, div.getObjValue());
             }
             
             Rt.p(" n = " + _n + " B = " + _B
                     + " cost in INUM = "
                     + div.getObjValue());
-            Rt.p(" cost in DB2 = " + totalCost);
-            Rt.p(" RATIO = " + (totalCost / div.getObjValue()));
+            Rt.p(" cost in DB2 = " + wc.totalCost);
+            Rt.p(" RATIO = " + (wc.totalCost / div.getObjValue()));
             Rt.p(" REPLICA IMBALANCE = " + div.getNodeImbalance());
             Rt.p(" ROUTING QUERIES = " + div.computeNumberQueriesSpecializeForReplica());
-            return totalCost;
+            return wc;
         }
         else {
             Rt.p(" NO SOLUTION ");
-            return -1;
+            return null;
         }
     }
-    
     
     /**
      * Call UNIF
@@ -285,7 +292,7 @@ public class DivBIPFunctionalTest extends DivTestSetting
         loadfactor = 1;
         double queryCost, updateCost;
         LogListener logger = LogListener.getInstance();
-        double totalCost = testDivSimplify(1, B, false, logger);
+        double totalCost = testDivSimplify(1, B, false, logger).totalCost;
         updateCost = div.getUpdateCostFromCplex();
         queryCost = totalCost - updateCost;
         

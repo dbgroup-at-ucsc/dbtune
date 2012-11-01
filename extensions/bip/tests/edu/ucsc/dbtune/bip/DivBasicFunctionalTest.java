@@ -12,8 +12,11 @@ import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.DB2Optimizer;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
@@ -37,6 +40,27 @@ public class DivBasicFunctionalTest extends DivTestSetting
         
         // 2. set parameter for DivBIP()
         setParameters();
+        
+        // to be remove
+        DB2Optimizer db2Optimizer = (DB2Optimizer) db.getOptimizer()
+                        .getDelegate();
+        Rt.p(" to be removed");
+        for (SQLStatement sql : workload){
+            if (sql.getSQLCategory().isSame(NOT_SELECT)) {
+                ExplainedSQLStatement explain = 
+                            db2Optimizer.explain(sql, candidates);
+                Rt.p("BASE table update cost "
+                        + explain.getBaseTableUpdateCost());
+                Rt.p("----------");
+                for (Index index : candidates)
+                    Rt.p(" index defined on relation "
+                            + index.getTable().getName()
+                            + " update cost = "
+                            + explain.getUpdateCost(index));
+                System.exit(1);
+            }
+        }
+        Rt.p(" end to be removed");
         
         if (!(io instanceof InumOptimizer))
             return;

@@ -141,7 +141,8 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
         // only for SELECT and UPDATE statements
         plans = new ArrayList<PlanInBIP>();
         if (stmt.getSQLCategory().isSame(SELECT) 
-                  || stmt.getSQLCategory().isSame(UPDATE)) {
+                  || stmt.getSQLCategory().isSame(UPDATE)
+                  || stmt.getSQLCategory().isSame(DELETE)) {
             
             for (InumPlan plan : templatePlans) {
                 
@@ -204,10 +205,9 @@ public class InumQueryPlanDesc implements QueryPlanDesc, Serializable
 	    
 	    double cost;
 	    
-	    // since we don't have slot in INSERT/DELETE statement,
+	    // since we don't have slot in INSERT statement,
 	    // we will get indexes from the given set of candidate indexes
-	    if (stmt.getSQLCategory().isSame(INSERT) || 
-	            stmt.getSQLCategory().isSame(DELETE)) {
+	    if (stmt.getSQLCategory().isSame(INSERT)) {
 	        
 	        for (Index index : candidates) {
 	            cost = inumExplain.getUpdateCost(index);

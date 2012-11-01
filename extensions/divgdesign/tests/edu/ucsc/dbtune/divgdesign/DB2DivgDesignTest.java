@@ -25,7 +25,7 @@ public class DB2DivgDesignTest extends DIVPaper
         long start = System.currentTimeMillis();
         
         // 3. 
-        entries = new HashMap<DivPaperEntry, Double>();
+        detailEntries = new HashMap<DivPaperEntryDetail, Double>();
         testDivgDesignDB2();
         
         long end = System.currentTimeMillis();
@@ -39,13 +39,13 @@ public class DB2DivgDesignTest extends DIVPaper
     
     protected static void storeResult() throws Exception
     {
-        designFile = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
+        designFile = new File(rawDataDir, wlName + "_" + DESIGN_DETAIL_DB2_FILE);
         designFile.delete();
-        designFile = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
+        designFile = new File(rawDataDir, wlName + "_" + DESIGN_DETAIL_DB2_FILE);
         designFile.createNewFile();
         
         // store in the serialize file
-        serializeDivResult(entries, designFile);
+        serializeDivResultDetail(detailEntries, designFile);
     }
     
 
@@ -75,10 +75,12 @@ public class DB2DivgDesignTest extends DIVPaper
             for (int n : listNumberReplicas) {
                 costDiv = testDivgDesign(n, B);
                 budget = convertBudgetToMB(B);
-                DivPaperEntry entry = new DivPaperEntry
+                DivPaperEntryDetail entry = new DivPaperEntryDetail
                         (dbName, wlName, n, budget, divConf);
-
-                entries.put(entry, costDiv);
+                entry.queryCost = design.getQueryCost();
+                entry.updateCost = design.getUpdateCost();
+                
+                detailEntries.put(entry, costDiv);
                 // since it is expensive
                 // store after one result is obtained
                 storeResult();
@@ -111,6 +113,8 @@ public class DB2DivgDesignTest extends DIVPaper
         divConf = design.getRecommendation();
         Rt.p("DESIGN cost: n = " + n + " B = " + B
                 + " average cost = " + (totalCost / numIters));
+        Rt.p(" Number of indexes in each replica = "
+                + divConf.indexAtReplicaInfo());
         return totalCost / numIters;
     }
 }

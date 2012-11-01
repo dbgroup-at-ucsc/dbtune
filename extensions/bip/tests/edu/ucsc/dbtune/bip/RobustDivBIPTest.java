@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import org.junit.Test;
 
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
+import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.div.RobustDivBIP;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
@@ -124,6 +125,8 @@ public class RobustDivBIPTest extends DIVPaper
         double time = logger.getTotalRunningTime();
         
         if (output != null) {
+            divConf = (DivConfiguration) output;
+            
             double costUnifUnderFailure = computeCostUNIFUnderFailure (robustDiv.getFailureFactor(), 
                     nReplicas);
             totalCostBIP = robustDiv.computeOptimizerCost(); 
