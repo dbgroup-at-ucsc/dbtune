@@ -258,6 +258,24 @@ public class InumTest2 {
         double inumFtsAll = 0;
         Workload workload = new Workload("", new StringReader(query));
 
+        if (false) {
+            // test sql
+            CandidateGenerator candGen = new OptimizerCandidateGenerator(
+                    getBaseOptimizer(db.getOptimizer()));
+            for (int i = 512; i < workload.size(); i++) {
+                Workload workload2 = new Workload("", new StringReader(workload
+                        .get(i).getSQL()
+                        + ";"));
+                Rt.np(i);
+                Rt.np(workload2.get(0).getSQL());
+                Set<Index> indexes = candGen.generate(workload2);
+                for (Index index : indexes) {
+                    Rt.np(index);
+                }
+            }
+            System.exit(0);
+        }
+
         // Statement st=db.getConnection().createStatement();
         // Rt.np("creating index");
         // st.execute("drop index r1");
@@ -265,13 +283,12 @@ public class InumTest2 {
         // st.execute("create index r1 on TPCH.ORDERS (O_ORDERKEY)");
         // st.execute("create index r2 on TPCH.LINEITEM (L_ORDERKEY)");
         // Rt.np("finished index");
-        // Rt.error("load index");
-        // Set<Index> indexes = new HashSet<Index>();
-        // String[] names = Rt.readResourceAsLines(InumTest2.class,
-        // "tpcds40index.txt");
-        // for (String name2 : names) {
-        // indexes.add(createIndex(db, name2));
-        // }
+        Rt.error("load index");
+        Set<Index> indexes = new HashSet<Index>();
+        String[] names = Rt.readResourceAsLines(InumTest2.class, "iplant.txt");
+        for (String name2 : names) {
+            indexes.add(createIndex(db, name2));
+        }
 
         // workload = new Workload("", new
         // StringReader(workload.get(2).getSQL()+";"));
@@ -282,9 +299,9 @@ public class InumTest2 {
         // Rt.np(index);
         // }
 
-        DB2Advisor db2Advis = new DB2Advisor(db);
-        db2Advis.process(workload);
-        Set<Index> indexes = db2Advis.getRecommendation(100000);
+        // DB2Advisor db2Advis = new DB2Advisor(db);
+        // db2Advis.process(workload);
+        // Set<Index> indexes = db2Advis.getRecommendation(100000);
 
         // AbstractSpaceComputation.setInumSpacePopulateIndexSet(indexes);
 
@@ -533,13 +550,16 @@ public class InumTest2 {
         en.setProperty("username", "db2inst1");
         en.setProperty("password", "db2inst1admin");
         en.setProperty("workloads.dir", "resources/workloads/db2");
-        DatabaseSystem test = null, tpch10g = null;
+        DatabaseSystem test = null, tpch10g = null, iplant = null;
         String dbName = "test";
         en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
-        test = newDatabaseSystem(en);
+        // test = newDatabaseSystem(en);
         dbName = "tpch10g";
         en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
-        tpch10g = newDatabaseSystem(en);
+        // tpch10g = newDatabaseSystem(en);
+        dbName = "iplant";
+        en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
+        iplant = newDatabaseSystem(en);
 
         String tpch = Rt.readFile(new File(
                 "resources/workloads/db2/tpch/complete.sql"));
@@ -553,9 +573,11 @@ public class InumTest2 {
                 "resources/workloads/db2/tpch-benchmark-mix/update-only.sql"));
         String otab = Rt.readFile(new File(
                 "resources/workloads/db2/online-benchmark-100/workload.sql"));
+        String iplantWorkload = Rt.readFile(new File(
+                "resources/workloads/db2/iplant/workload.sql"));
         // sqlTest(tpch10g, tpch, 1);
-//        sqlTest(test, update, 0);
-        sqlTest(test, update, 15);
+        // sqlTest(test, update, 0);
+        // sqlTest(test, update, 15);
         // pruneTest(test, update);
         // sqlTest(test, tpcds40, 33);
         // sqlTest(
@@ -570,7 +592,8 @@ public class InumTest2 {
         // compareInterestingOrders(test, tpch);
         // compareWorkload(tpch10g, tpch, "tpch10g");
         // compareWorkload(test, tpcds40, "tpcds40");
-        compareWorkload(test, update, "update");
+        // compareWorkload(test, update, "update");
+        compareWorkload(iplant, iplantWorkload, "iplantWorkload");
         // compareWorkload(tpch10g, updateT, "update");
         // compareWorkload(test, tpcds, "tpcds");
         // compareWorkload(test, update, "update");
@@ -578,6 +601,8 @@ public class InumTest2 {
             test.getConnection().close();
         if (tpch10g != null)
             tpch10g.getConnection().close();
+        if (iplant != null)
+            iplant.getConnection().close();
     }
 
     void pruneTest(DatabaseSystem db, String query) throws Exception {
@@ -676,7 +701,7 @@ public class InumTest2 {
     void indexTest(DatabaseSystem db) throws Exception {
         Statement st = db.getConnection().createStatement();
         st.execute("select max() from ");
-        
+
         st
                 .execute("delete from tpcds.customer_address where CA_ADDRESS_SK=25000001");
 
@@ -804,8 +829,8 @@ public class InumTest2 {
         for (Index index : indexes) {
             Rt.np(index);
         }
-//        indexes.add(createIndex(db,
-//                "[+TPCDS.CUSTOMER_ADDRESS.CA_STREET_NAME(A)]"));
+        // indexes.add(createIndex(db,
+        // "[+TPCDS.CUSTOMER_ADDRESS.CA_STREET_NAME(A)]"));
 
         // ExplainTables.dumpPlanId=211;
         ExplainTables.dump = true;
