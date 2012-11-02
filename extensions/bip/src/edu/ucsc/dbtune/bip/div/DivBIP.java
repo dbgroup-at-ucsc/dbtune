@@ -15,6 +15,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_DIV;
 import static edu.ucsc.dbtune.bip.div.DivVariablePool.VAR_MOD;
@@ -739,7 +740,9 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
      *      The cost
      * @throws Exception
      */
-    public double computeOptimizerQueryCost(DivConfiguration conf)
+    public double computeOptimizerQueryCost(Workload workload,
+                                        List<QueryPlanDesc> queryPlanDescs,
+                                        DivConfiguration conf)
                 throws Exception
     {
         QueryPlanDesc desc;
@@ -751,8 +754,7 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
         
         counter = -1;
         queryCost = 0.0;
-        db2Optimizer = (DB2Optimizer) super.inumOptimizer
-                                            .getDelegate();
+        db2Optimizer = (DB2Optimizer) super.inumOptimizer.getDelegate();
         
         // Compute cost without failure 
         for (SQLStatement sql : workload) {
@@ -775,9 +777,25 @@ public class DivBIP extends AbstractBIPSolver implements Divergent
             }
         }
         
-        
         return queryCost;
     }
+    
+    /**
+     * Compute the cost in optimizer unit without failure
+     * 
+     * @param conf      
+     *      The derived configuration
+     *       
+     * @return
+     *      The cost
+     * @throws Exception
+     */
+    public double computeOptimizerQueryCost(DivConfiguration conf)
+                throws Exception
+    {
+        return computeOptimizerQueryCost(workload, queryPlanDescs, conf);
+    }
+    
     
     /**
      * Compute the cost in optimizer unit without failure
