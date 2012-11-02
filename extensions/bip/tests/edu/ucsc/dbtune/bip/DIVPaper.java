@@ -96,7 +96,7 @@ public class DIVPaper extends DivTestSetting
     protected static double[] constraintUpdateRatios = new double[] 
                                     {0.4, 0.6, 0.8, 1.0};
     
-    protected static boolean isEquivalent = false;
+    protected static boolean isEquivalent = true;
     
     // draw figures
     protected static boolean isFailure = false;
@@ -115,7 +115,7 @@ public class DIVPaper extends DivTestSetting
     protected static boolean isUpdateConstraint = false;
     
     // draw unseen queries
-    protected static boolean isUnseeQueries = true;
+    protected static boolean isUnseeQueries = false;
     
     /**
      *
@@ -132,6 +132,11 @@ public class DIVPaper extends DivTestSetting
         
         // 2. draw graphs
         if (isEquivalent){
+            // ratio
+            drawEquivalent(dbName, wlName, true, true);
+            // absolute value
+            drawEquivalent(dbName, wlName, false, true);
+            /*
             boolean isDesign = false;
             // draw ratio with design
             drawEquivalentDetail(dbName, wlName, true, true);            
@@ -141,6 +146,7 @@ public class DIVPaper extends DivTestSetting
             drawEquivalentDetail(dbName, wlName, false, false);
             drawEquivalentDetailChangeUpdateWeight
                     (dbName, wlName, isDesign);
+                    */
         }
         
         if (isUpdateConstraint)
@@ -214,18 +220,18 @@ public class DIVPaper extends DivTestSetting
         DivPaperEntry entry;
         
         // 1. Read the result from UNIF file
-        unifFile = new File(rawDataDir, wlName + "_" + UNIF_DB2_FILE);
-        mapUnif = readDivResult(unifFile);
+        unifFile = new File(rawDataDir, wlName + "_" + UNIF_DETAIL_DB2_FILE);
+        mapUnifDetail = readDivResultDetail(unifFile);
         Rt.p(" read from file = " + unifFile.getAbsolutePath());
         
         // 2. Read the result from DIV file
-        divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
-        mapDiv = readDivResult(divFile);
+        divFile = new File(rawDataDir, wlName + "_" + DIV_DETAIL_DB2_FILE);
+        mapDivDetail = readDivResultDetail(divFile);
         
         // 3. Read the result from Design file
         if (isDesign) {
-            designFile = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
-            mapDesign = readDivResult(designFile);
+            designFile = new File(rawDataDir, wlName + "_" + DESIGN_DETAIL_DB2_FILE);
+            mapDesignDetail = readDivResultDetail(designFile);
         }
         
         String[] competitors;
@@ -233,14 +239,14 @@ public class DIVPaper extends DivTestSetting
         // 3. draw graphs
         if (isDesign){
             if (drawRatio)
-                competitors = new String[] {"1 - DIVBIP/UNIF", "1 - DIVBIP/DIVGDESIGN"};
+                competitors = new String[] {"1 - RITA/UNIF", "1 - RITA/DIVGDESIGN"};
             else 
-                competitors = new String[] {"UNIF", "DIVGDESIGN", "DIVBIP"};
+                competitors = new String[] {"UNIF", "DIVGDESIGN", "RITA"};
         } else {
             if (drawRatio)
-                competitors = new String[] {"1 - DIVBIP/UNIF"};
+                competitors = new String[] {"1 - RITA/UNIF"};
             else 
-                competitors = new String[] {"UNIF", "DIVBIP"};
+                competitors = new String[] {"UNIF", "RITA"};
         }
         int numX;
         double ratio; 
@@ -443,10 +449,10 @@ public class DIVPaper extends DivTestSetting
         double costDiv, costUnif, costDesign = 0.0;
         double ratioDesign = 0.0, ratioDiv;
         Rt.p("entry = " + entry);
-        costDiv = mapDiv.get(entry);
-        costUnif = mapUnif.get(entry);    
+        costDiv = mapDivDetail.get(entry);
+        costUnif = mapUnifDetail.get(entry);    
         if (isDesign)
-            costDesign = mapDesign.get(entry);
+            costDesign = mapDesignDetail.get(entry);
         
         Rt.p(" entry: " + entry);
         Rt.p(" cost UNIF = " + (costUnif / Math.pow(10, 6)));
@@ -487,10 +493,10 @@ public class DIVPaper extends DivTestSetting
     {
         double costDiv, costUnif, costDesign = 0.0;
         Rt.p(" entry = " + entry); 
-        costDiv = mapDiv.get(entry);
-        costUnif = mapUnif.get(entry);
+        costDiv = mapDivDetail.get(entry);
+        costUnif = mapUnifDetail.get(entry);
         if (isDesign)
-            costDesign = mapDesign.get(entry);
+            costDesign = mapDesignDetail.get(entry);
         
         points.add(new Point(xcoordinate, costUnif));
         if (isDesign)
