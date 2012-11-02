@@ -151,7 +151,8 @@ public class DivTestSetting
                         = (InumPreparedSQLStatement) io.prepareExplain(sql);
                 ExplainedSQLStatement inumExplain = preparedStmt.explain(new HashSet<Index>());
                 Table tbl = inumExplain.getUpdatedTable();
-                int fUpdate = (int) (updateRatio * tbl.getCardinality());
+                //int fUpdate = (int) (updateRatio * tbl.getCardinality());
+                int fUpdate = 1; 
                 sql.setStatementWeight(fUpdate);
                 Rt.p(" fupdate = " + fUpdate);
             }
