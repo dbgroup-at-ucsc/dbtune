@@ -86,6 +86,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     /**
      * Set the list of query plan descs
      * @param descs
+     *      The set of query plan descriptions
      */
     public void setQueryPlanDesc(List<QueryPlanDesc> descs)
     {
@@ -95,6 +96,17 @@ public abstract class AbstractBIPSolver implements BIPSolver
         // -------------------------------------------
         this.queryPlanDescs = descs;
         this.isSetPlanDesc = true;
+    }
+    
+    /**
+     * Retrieve the list of query plan descriptions stored in this object
+     * 
+     * @return
+     *      List of query plan descriptions
+     */
+    public List<QueryPlanDesc> getQueryPlanDescs()
+    {
+        return queryPlanDescs;
     }
     
     @Override    
