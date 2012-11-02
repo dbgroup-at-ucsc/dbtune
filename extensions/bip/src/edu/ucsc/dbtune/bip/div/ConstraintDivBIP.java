@@ -54,6 +54,149 @@ public class ConstraintDivBIP extends DivBIP
     protected double upperNewLoad;
     protected double optimalTotalCost;
     
+    protected double upperUpdateCost;
+    
+    public ConstraintDivBIP()
+    {
+        
+    }
+    
+    /**
+     * Set upper update cost
+     * 
+     * @param cost
+     *      The upper cost
+     */
+    public void setUpperUpdateCost(double cost)
+    {
+        this.upperUpdateCost = cost;
+    }
+    
+    @Override
+    protected void buildBIP() 
+    {
+        numConstraints = 0;
+        
+        try {            
+            UtilConstraintBuilder.cplex = cplex;
+            
+            // 1. Add variables into list
+            constructVariables();
+            super.createCplexVariable(poolVariables.variables());
+            
+            // 2. Construct the query cost at each replica
+            totalQueryCost();
+            
+            // 3. Atomic constraints
+            atomicConstraints();
+            
+            // 4. Use index constraint
+            usedIndexConstraints();
+            
+            // 5. Top-m best cost 
+            routingMultiplicityConstraints();
+            
+            // 6. Space constraints
+            spaceConstraints();    
+            
+            // 7. upperCostConstraint
+            updateCostConstraint();
+        }     
+        catch (IloException e) {
+            e.printStackTrace();
+        }      
+    }
+    
+    /**
+     * Build the total cost formula, which is the summation of the costs of all replicas.      
+     *     
+     * @throws IloException 
+     *      when there is error in calling {@code IloCplex} class
+     */
+    protected void totalQueryCost() throws IloException
+    {         
+        IloLinearNumExpr obj = cplex.linearNumExpr();
+        
+        for (int r = 0; r < nReplicas; r++) 
+            obj.add(replicaQueryCost(r));
+        
+        cplex.addMinimize(obj);        
+    }
+    
+    /**
+     * Set the upper bound for update cost
+     * 
+     * @throws IloException
+     */
+    protected void updateCostConstraint() throws IloException
+    {
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+        
+        for (int r = 0; r < nReplicas; r++) 
+            expr.add(replicaUpdateCost(r));
+        
+        double baseTableCost = 0.0;
+        for (QueryPlanDesc desc : queryPlanDescs) 
+            if (desc.getSQLCategory().isSame(NOT_SELECT)) 
+                baseTableCost += desc.getBaseTableUpdateCost()
+                                * desc.getStatementWeight();
+        
+        cplex.addLe(expr, this.upperUpdateCost - baseTableCost, 
+                            "upper_bound_update_" + numConstraints);
+        numConstraints++;
+    }
+    
+    /**
+     * Build the cost at each replica.
+     * 
+     * QueryCostReplica(r) = \sum_{q \in Q} cost(q,r) / loadfactor : query statement
+     */
+    protected IloLinearNumExpr replicaQueryCost(int r) throws IloException
+    {
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+        
+        // query component
+        // only applicable for SELECT
+        for (QueryPlanDesc desc : queryPlanDescs) 
+            if (desc.getSQLCategory().isSame(SELECT))
+                expr.add(modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
+                                   getFactorStatement(desc) * desc.getStatementWeight()
+                                   ));
+        
+        return expr;
+    }
+    
+    /**
+     * Build the cost at each replica.
+     * 
+     * UpdateCostReplica(r) =
+     *                \sum_{q \in Qshell} cost(q,r)         : query shell in update statement
+     *                + \sum_{u \in Q} \sum_{a \in Cand} cost(u, a, r) \times s_a^r
+     *                                                        : update cost
+     */
+    protected IloLinearNumExpr replicaUpdateCost(int r) throws IloException
+    {
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+        
+        // query component
+        // only applicable for SELECT and UPDATE, DELETE statements
+        for (QueryPlanDesc desc : queryPlanDescs) 
+            if (desc.getSQLCategory().isSame(UPDATE)
+                || desc.getSQLCategory().isSame(DELETE))
+                expr.add(modifyCoef(queryExpr(r, desc.getStatementID(), desc), 
+                                   getFactorStatement(desc) * desc.getStatementWeight()
+                                   ));
+        
+        // update component of NOT_SELECT statement
+        for (QueryPlanDesc desc : queryPlanDescs) 
+            if (desc.getSQLCategory().isSame(NOT_SELECT)) { 
+                expr.add(modifyCoef(indexUpdateCost(r, desc.getStatementID(), desc),
+                        desc.getStatementWeight()));
+            }
+        
+        return expr;
+    }
+    
     
     public ConstraintDivBIP(final List<DivConstraint> constraints, final boolean isApproximation,
                             final boolean isGreedy)
@@ -62,102 +205,6 @@ public class ConstraintDivBIP extends DivBIP
         this.isGreedy = isGreedy;
         this.constraints = constraints;
     }
-    
-    @Override
-    protected void buildBIP() 
-    {
-        numConstraints = 0;
-                
-        try {
-            UtilConstraintBuilder.cplex = cplex;
-            
-            // 1. Add variables into list
-            constructVariables();
-            createCplexVariable(poolVariables.variables());
-            
-            // 2. Construct the query cost at each replica
-            super.totalCost();
-            
-            // 3. Atomic constraints
-            super.atomicConstraints();
-            
-            // 4. Used index constraints
-            super.usedIndexConstraints();
-            
-            // 5. Top-m best cost 
-            super.routingMultiplicityConstraints();
-            
-            // 6. Space constraints
-            super.spaceConstraints();
-            
-            // TOTAL cost constraint
-            if (super.isUpperTotalCost)
-                super.totalCostConstraint(super.upperTotalCost);
-            
-            // Greedy solution
-            if (isGreedy){
-                double defaultNodeFactor = 2.0;
-                
-                for (DivConstraint c : constraints) {
-                    if (c.getType().equals(NODE_IMBALANCE)) {
-                        imbalanceReplicaGreedy(c.getFactor());
-                        defaultNodeFactor = c.getFactor();
-                    }
-                    else if (c.getType().equals(FAILURE_IMBALANCE))
-                        failureGreedy(defaultNodeFactor, c.getFactor());
-                }
-                return;
-            }
-            
-            
-            // 6. if we have additional constraints
-            // need to impose top-m best cost constraints
-            if (constraints.size() > 0) {
-                // initial auxiliaries classes
-                queryOptimalBuilder = new QueryCostOptimalBuilderGeneral(cplex, cplexVar, 
-                                                                  poolVariables, isApproximation);
-                UtilConstraintBuilder.cplexVar = cplexVar;
-                //topMBestCostExplicit();                
-            }
-            
-            // this variable is turned on when 
-            // the constraints contain IMBALANCE_QUERY or NODE_FAILURE
-            boolean isSumYConstraint = false;
-            
-            for (DivConstraint c : constraints)
-                if (c.getType().equals(QUERY_IMBALANCE) 
-                      || c.getType().equals(FAILURE_IMBALANCE) ) {
-                    isSumYConstraint = true;
-                    break;
-                }
-            
-            if (isSumYConstraint)
-                sumYConstraint();
-            
-            // 7. additional constraints
-            for (DivConstraint c : constraints) {
-                if (c.getType().equals(NODE_IMBALANCE)) {
-                    setConstantReplicaImbalanceConstraint(c.getFactor());
-                    imbalanceReplicaConstraints(c.getFactor());
-                }
-                else if (c.getType().equals(FAILURE_IMBALANCE)) {
-                    setConstantFailureImbalanceConstraint(c.getFactor());
-                    nodeFailures(c.getFactor());
-                }
-                else if (c.getType().equals(QUERY_IMBALANCE)) {
-                    setConstantQueryImbalanceConstraint();
-                    imbalanceQueryConstraints(c.getFactor());                    
-                }
-            }
-        }     
-        catch (IloException e) {
-            e.printStackTrace();
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    
     
     
     /**********************************************************
