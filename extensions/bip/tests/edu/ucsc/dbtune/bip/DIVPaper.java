@@ -63,10 +63,14 @@ public class DIVPaper extends DivTestSetting
     
     protected static final String FAILURE_IMBALANCE_GREEDY_FILE = "failure_imbalance_greedy.bin";
     
+    protected static final String DIV_UPDATE_COST_CONSTRAINT = "div_update_cost.bin";
+    protected static final String ROUTING_UNSEEN_QUERY_DB2_FILE = "div_routing_unseen_queries.bin";
+    
     protected static File unifFile;
     protected static File divFile;
     protected static File designFile;
     protected static File onlineFile;
+    protected static File unseenQueriesFile;
     
     protected static File failureFile;
     protected static File elasticFile;
@@ -88,7 +92,11 @@ public class DIVPaper extends DivTestSetting
                                      Math.pow(10, -3),
                                      Math.pow(10, -2)};
     
-    protected static boolean isEquivalent = true;
+    // change weight of update
+    protected static double[] constraintUpdateRatios = new double[] 
+                                    {0.4, 0.6, 0.8, 1.0};
+    
+    protected static boolean isEquivalent = false;
     
     // draw figures
     protected static boolean isFailure = false;
@@ -102,6 +110,12 @@ public class DIVPaper extends DivTestSetting
     
     // analyze index configuration
     protected static boolean isAnalyzeConfiguration = false;
+    
+    // draw figures
+    protected static boolean isUpdateConstraint = false;
+    
+    // draw unseen queries
+    protected static boolean isUnseeQueries = true;
     
     /**
      *
@@ -129,9 +143,16 @@ public class DIVPaper extends DivTestSetting
                     (dbName, wlName, isDesign);
         }
         
+        if (isUpdateConstraint)
+            drawUpdateConstraint(dbName, wlName);
+        
         if (isFailure)
             drawFailure();
 
+        if (isUnseeQueries)
+            drawUnseenQueries();
+
+        
         if (isOnline)
             drawOnline();
 
@@ -142,7 +163,8 @@ public class DIVPaper extends DivTestSetting
             analyzeDivConfiguration();
         
         isLatex = isOnline || isEquivalent || isFailure
-                    || isImbalance || isElastic;
+                    || isImbalance || isElastic || isUpdateConstraint
+                    || isUnseeQueries;
 
         if (isLatex)
             LatexGenerator.generateLatex(latexFile, outputDir, plots);
@@ -159,6 +181,7 @@ public class DIVPaper extends DivTestSetting
         isFailure = false;
         isImbalance = false;
         isElastic = false;
+        isUpdateConstraint = false;
     }
     /**
      * Initialize the locations that stored file
@@ -643,6 +666,98 @@ public class DIVPaper extends DivTestSetting
             
     }
     
+    /**
+     * Add corresponding points into the list of points, which are 
+     * displayed in GnuPlot
+     * @param entry
+     * @param points
+     */ 
+    protected static void addPointDIVEquivBIPQueryCostDetail
+                        (double xcoordinate, DivPaperEntry entry, 
+                            List<Point> points)
+    {
+        
+        for (Map.Entry<DivPaperEntryDetail, Double> ele : mapUnifDetail.entrySet()) {
+            if (ele.getKey().equals(entry)) {
+                points.add(new Point(xcoordinate, ele.getKey().queryCost));
+                break;
+            }
+        }
+        
+        // DIVBIP
+        for (Map.Entry<DivPaperEntryDetail, Double> ele : mapDivDetail.entrySet()) {
+            if (ele.getKey().equals(entry)) {
+                points.add(new Point(xcoordinate, ele.getKey().queryCost));
+                Rt.p(" query cost = "
+                        + ele.getKey().queryCost);
+                break;
+            }
+        }   
+    }
+    
+    /**
+     * Read the data from files and draw the graphs
+     */
+    public static void drawUpdateConstraint (String dbName, String wlName) 
+                throws Exception
+    {   
+        DivPaperEntry entry;
+        String[] competitors;
+        
+        // 3. draw graphs
+        competitors = new String[] {"UNIF", "RITA"};
+        
+        int numX;
+        double ratio; 
+        long budget;
+        String prefix;
+        
+        numX = constraintUpdateRatios.length;
+        double[] xtics = new double[numX];
+        String[] xaxis = new String[numX];
+        List<Point> points = new ArrayList<Point>();
+        ratio = (double) B / Math.pow(2, 30) / 10;
+        budget = convertBudgetToMB (B);
+        
+        int i = 0;
+        int n = nReplicas;
+        
+        // 1. Read the result from UNIF file
+        unifFile = new File(rawDataDir, wlName + "_" + UNIF_DETAIL_DB2_FILE);
+        Rt.p(" read from file = " + unifFile.getAbsolutePath());
+        mapUnifDetail = readDivResultDetail(unifFile);
+        
+        for (double  w : constraintUpdateRatios) {
+            prefix = wlName + "_" + Double.toString(w) + "_";
+            
+            // 2. Read the result from DIV file
+            divFile = new File(rawDataDir, prefix + DIV_UPDATE_COST_CONSTRAINT);
+            mapDivDetail = readDivResultDetail(divFile);
+            Rt.p(" read from file = " + divFile.getAbsolutePath());
+            
+            xtics[i] = i;
+            xaxis[i] = Double.toString(w);
+            entry = new DivPaperEntry(dbName, wlName, n, budget, null);
+            addPointDIVEquivBIPQueryCostDetail(xtics[i], entry, points);
+            i++;
+        }
+            
+        plotName = dbName + "_" + wlName + "_update_constraint";
+        plotName += "_absolute";
+            
+        xname = "Ratio of update cost of RITA over UNIF";
+        yname = "QueryCost";
+            
+        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                    competitors, figsDir, points);
+            
+        plots.add(new Plot("figs/" + plotName, 
+                " Database = " + dbName + " workload = " + wlName +
+                " Varying upper bound update cost, B = " + Double.toString(ratio), 0.5));
+    
+    }
+    
+    
     /***************************************************
      * 
      * Draw online graph
@@ -828,6 +943,51 @@ public class DIVPaper extends DivTestSetting
                 " Elasticity, initial configuration includes the first 200 queries"
                 + ". The running time to generate this graph = "
                 + time + " secs ", 0.5));
+               
+    }
+    
+    /***************************************************
+     * 
+     * Draw unseen queries
+     * 
+     * 
+     ***************************************************/
+    public static void drawUnseenQueries() throws Exception
+    {   
+        File file;
+        file = new File(rawDataDir, wlName + "_" + ROUTING_UNSEEN_QUERY_DB2_FILE);
+        List<RoutingUnseenQueriesEntry> entries = readUnseenQueriesResult(file);
+        
+        // ---------------------------------------------
+        String[] competitors = {"UNIF", "RITA-routing", "RITA-bestcase"};
+        int numX = entries.size();
+
+        double[] xtics = new double[numX];
+        String[] xaxis = new String[numX];
+        List<Point> points = new ArrayList<Point>();
+        RoutingUnseenQueriesEntry entry;
+        for (int i = 0; i < numX; i++) {
+            entry = entries.get(i);
+            xaxis[i] = Integer.toString(i);
+            xtics[i] = i;
+            
+            points.add(new Point(i, entry.costUNIF));
+            points.add(new Point(i, entry.costSplitting));
+            points.add(new Point(i, entry.costBestCase));
+        }
+        
+        plotName = dbName + "_" + wlName + "_routing_unseen_queries";
+        xname = "Different run";
+        yname = "ExpTotalCost";
+
+        drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                competitors, figsDir, points);
+        
+        plots.add(new Plot("figs/" + plotName, 
+                " Database = " + dbName + ", workload = " + wlName +
+                " ROUTE 10 UNSEEN QUERIES, the training workload consists" +
+                " of 30 queries"
+                , 0.5));
                
     }
     
@@ -1344,6 +1504,27 @@ public class DIVPaper extends DivTestSetting
         }
     }
     
+    protected static List<RoutingUnseenQueriesEntry> readUnseenQueriesResult(File file) 
+    throws Exception
+    {
+        ObjectInputStream in;
+        List<RoutingUnseenQueriesEntry> results = null;
+        try {
+            FileInputStream fileIn = new FileInputStream(file);
+            in = new ObjectInputStream(fileIn);
+            results = (List<RoutingUnseenQueriesEntry>) in.readObject();
+
+            in.close();
+            fileIn.close();
+        } catch(IOException e) {
+            throw new SQLException(e);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException(e);
+        }
+
+return results;
+}
+    
     protected static List<RobustPaperEntry> readFailureImbalanceResult(File file) 
             throws Exception
     {
@@ -1364,6 +1545,8 @@ public class DIVPaper extends DivTestSetting
         
         return results;
     }
+    
+    
             
     /**
      * Class of data points drawn in GnuPlot
@@ -1638,6 +1821,27 @@ public class DIVPaper extends DivTestSetting
             listNumberReplicas = new ArrayList<Integer>();
             listReconfiguationCosts = new ArrayList<Double>();
             mapReplicaCosts = new HashMap<Integer, List<Double>>();
+        }
+    }
+    
+    /**
+     * Store the results of online features
+     * 
+     * @author Quoc Trung Tran
+     *
+     */
+    public static class RoutingUnseenQueriesEntry implements Serializable
+    {
+        private static final long serialVersionUID = 1L;
+        public DivConfiguration divTraining;
+        public DivConfiguration divTesting;
+        public double costBestCase;
+        public double costSplitting;
+        public double costUNIF;
+        
+        public RoutingUnseenQueriesEntry()
+        {
+         
         }
     }
     

@@ -97,8 +97,6 @@ public class RobustDivBIPTest extends DIVPaper
     }
     
     
-    
-    
     /**
      * Handle both load-imbalance and failures
      * 
@@ -154,8 +152,9 @@ public class RobustDivBIPTest extends DIVPaper
         } else 
             Rt.p(" NO SOLUTION ");
         
-        
     }
+    
+    
     
     /**
      * Get the cost under failure
