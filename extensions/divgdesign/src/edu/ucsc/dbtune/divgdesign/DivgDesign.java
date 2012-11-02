@@ -343,14 +343,8 @@ public abstract class DivgDesign
         
         @Override
         public int compareTo(QueryCostAtPartition o) 
-        {       
-            double objCost = o.cost; 
-            if (cost < objCost)
-                return -1;
-            else if (cost == objCost)
-                return 0;
-            else 
-                return 1;
+        {    
+            return Double.compare(cost, o.cost);
         }
     }
 }
