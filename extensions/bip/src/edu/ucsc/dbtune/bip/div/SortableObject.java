@@ -22,4 +22,13 @@ public class SortableObject implements Comparable<SortableObject>
     {
         return id;
     }
+    
+    @Override
+    public String toString()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append(" id = " + id).append(" val = " + val);
+        
+        return sb.toString();
+    }
 }

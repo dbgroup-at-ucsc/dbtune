@@ -15,6 +15,7 @@ import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -86,7 +87,8 @@ public class RoutingDivergent extends RobustDivBIP
             }
                     
             Collections.sort(scores); 
-        
+            Collections.reverse(scores);
+            Rt.p("List of scored = " + scores);
             // TODO: might consider top-2
             // For the time being: get the top query that is similar
             // to the given query

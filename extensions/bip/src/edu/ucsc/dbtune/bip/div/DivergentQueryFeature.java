@@ -86,14 +86,23 @@ public class DivergentQueryFeature
             numerator += presence.get(key) 
                             * opponent.presence.get(key);
         // 2. denoninator = \sqrtroot(\sum_{a_i^2})
-        //                + \sqrtroot(\sum_{b_i^2})
+        //                * \sqrtroot(\sum_{b_i^2})
         double absoluteFirst = 0.0, absoluteSecond = 0.0;
         for (IndexAtReplica key: keys) {
             absoluteFirst += Math.pow(presence.get(key), 2);
             absoluteSecond += Math.pow(opponent.presence.get(key), 2);
         }
         denominator = Math.sqrt(absoluteFirst) 
-                        + Math.sqrt(absoluteSecond);
+                        * Math.sqrt(absoluteSecond);
+        
+        if (denominator == 0) {
+            // both does not use any indexes
+            if (absoluteFirst == 0 && absoluteSecond == 0)
+                return 1.0;
+            else 
+                // one use indexes, the other does not
+                return -1.0;
+        }
         
         return numerator / denominator;
     }
