@@ -192,7 +192,7 @@ public class InumTest2 {
         System.exit(0);
     }
 
-    static Index createIndex(DatabaseSystem db, String cs) throws SQLException {
+    public static Index createIndex(DatabaseSystem db, String cs) throws SQLException {
         if (cs.startsWith("["))
             cs = cs.substring(1);
         if (cs.startsWith("+"))

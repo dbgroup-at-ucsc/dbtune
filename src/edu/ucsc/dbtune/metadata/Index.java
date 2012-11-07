@@ -58,6 +58,8 @@ public class Index extends DatabaseObject implements
     protected boolean       clustered;
     protected boolean       materialized;
 
+    public double benefit;
+    
     /**
      * Creates an index containing the given column. The name of the index is defaulted to {@code 
      * "dbtune_" + getId() + "_index"}. The column is taken as being in ascending order. The index 
@@ -462,6 +464,7 @@ public class Index extends DatabaseObject implements
         this.materialized = other.materialized;
         this.ascendingColumn   = other.ascendingColumn;
         this.scanOption   = other.scanOption;
+        this.benefit= other.benefit;
     }
 
     /**

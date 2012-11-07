@@ -1261,7 +1261,8 @@ public class DB2Optimizer extends AbstractOptimizer {
      *             if something goes wrong while talking to the DBMS
      */
     public static Set<Index> readAdviseIndexTable(Connection connection,
-            Catalog catalog, Map<String, Long> indexBytes) throws SQLException 
+            Catalog catalog, Map<String, Long> indexBytes,
+            Map<String, Double> indexBenefits) throws SQLException 
     {
         Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * FROM systools.advise_index");
@@ -1316,6 +1317,8 @@ public class DB2Optimizer extends AbstractOptimizer {
                 throw new RuntimeException(" No size information for index: " + nameInAdviseTable);
 
             index.setBytes((long) indexBytes.get(nameInAdviseTable));            
+            index.benefit=indexBenefits.get(nameInAdviseTable);
+            Rt.np(nameInAdviseTable+" "+index.benefit);
             index.setName(index.getName());
             recommended.add(index);
         }

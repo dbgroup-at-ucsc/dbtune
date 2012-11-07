@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.advisor.Advisor;
 import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
@@ -124,11 +125,15 @@ public class DB2Advisor extends Advisor
         
         rs = cstmt.executeQuery();
         indexBytes = new HashMap<String, Long>();
+        Map<String, Double> indexBenefits = new HashMap<String, Double>();
         
         while (rs.next()) {
             sizeInMB = Double.valueOf(rs.getString("DISKUSE").trim());
             indexBytes.put(rs.getString("NAME"), 
                         (long) (sizeInMB * Math.pow(2, 20)));
+//            Rt.np(rs.getString("NAME")+" "+rs.getString("BENEFIT"));
+            indexBenefits.put(rs.getString("NAME"),
+                    Double.valueOf(rs.getString("BENEFIT").trim()));
         }
         
         Set<ByContentIndex> unique = new HashSet<ByContentIndex>();
@@ -142,7 +147,7 @@ public class DB2Advisor extends Advisor
         // TODO: add a knob when we do not want
         // to compute the index creation cost
         // avoid what-if optimization
-        for (Index i : DB2Optimizer.readAdviseIndexTable(dbms.getConnection(), dbms.getCatalog(), indexBytes)){
+        for (Index i : DB2Optimizer.readAdviseIndexTable(dbms.getConnection(), dbms.getCatalog(), indexBytes,indexBenefits)){
             i.setCreationCost(DB2Optimizer.getCreationCost(optimizer, new HashSet<Index>(), i));
             unique.add(new ByContentIndex(i));
         }

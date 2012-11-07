@@ -108,15 +108,15 @@ public class DATPaper {
     }
 
     public static class TestSet {
-        String name;
-        String shortName;
-        String dbName;
-        String workloadName;
-        String fileName;
-        long size;
-        long windowSize;
-        Vector<String> plotNames = new Vector<String>();
-        Vector<String> figureNames = new Vector<String>();
+        public String name;
+        public String shortName;
+        public String dbName;
+        public String workloadName;
+        public String fileName;
+        public long size;
+        public long windowSize;
+        public Vector<String> plotNames = new Vector<String>();
+        public Vector<String> figureNames = new Vector<String>();
 
         public TestSet(String name, String dbName, String workloadName,
                 long size, String shortName) {
