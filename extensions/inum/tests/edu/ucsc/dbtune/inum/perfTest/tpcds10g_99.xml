@@ -299,49 +299,49 @@
       <db2fts>419371.875</db2fts>
       <inumfts>419371.875</inumfts>
       <db2Index>17228.462890625</db2Index>
-      <inumIndex>25136.7067128919</inumIndex>
+      <inumIndex>25976.89730290601</inumIndex>
     </result>
     <result id="2" timeout="false">
-      <db2fts>3792524.25</db2fts>
-      <inumfts>3792524.25</inumfts>
-      <db2Index>3146967.25</db2Index>
-      <inumIndex>3750287.885939598</inumIndex>
+      <db2fts>3851094.0</db2fts>
+      <inumfts>3851094.0</inumfts>
+      <db2Index>3311209.0</db2Index>
+      <inumIndex>3808857.635939598</inumIndex>
     </result>
     <result id="3" timeout="false">
-      <db2fts>1606249.75</db2fts>
-      <inumfts>1606248.125</inumfts>
+      <db2fts>1606592.125</db2fts>
+      <inumfts>1606590.3749999998</inumfts>
       <db2Index>26237.046875</db2Index>
-      <inumIndex>28353.97378308142</inumIndex>
+      <inumIndex>28696.41220312246</inumIndex>
     </result>
     <result id="4" timeout="false">
-      <db2fts>1131774.0</db2fts>
-      <inumfts>1131774.0</inumfts>
-      <db2Index>82387.6796875</db2Index>
-      <inumIndex>1117771.2900428772</inumIndex>
+      <db2fts>1136235.125</db2fts>
+      <inumfts>1136235.125</inumfts>
+      <db2Index>119298.2421875</db2Index>
+      <inumIndex>1119738.7900428772</inumIndex>
     </result>
     <result id="5" timeout="false">
-      <db2fts>1131786.25</db2fts>
-      <inumfts>1131786.25</inumfts>
-      <db2Index>82399.796875</db2Index>
-      <inumIndex>1117783.5400428772</inumIndex>
+      <db2fts>1136247.25</db2fts>
+      <inumfts>1136247.25</inumfts>
+      <db2Index>119310.3515625</db2Index>
+      <inumIndex>1119751.0400428772</inumIndex>
     </result>
     <result id="6" timeout="false">
       <db2fts>2935536.25</db2fts>
       <inumfts>2935536.25</inumfts>
       <db2Index>233799.21875</db2Index>
-      <inumIndex>233801.75555764668</inumIndex>
+      <inumIndex>233801.75439034932</inumIndex>
     </result>
     <result id="7" timeout="false">
       <db2fts>6185490.0</db2fts>
       <inumfts>6185490.0</inumfts>
       <db2Index>1806.9588623046875</db2Index>
-      <inumIndex>2219.4141285106803</inumIndex>
+      <inumIndex>2246.03893116904</inumIndex>
     </result>
     <result id="8" timeout="false">
       <db2fts>421241.78125</db2fts>
       <inumfts>421241.78125</inumfts>
       <db2Index>4253.310546875</db2Index>
-      <inumIndex>8034.512824180401</inumIndex>
+      <inumIndex>8034.512591483868</inumIndex>
     </result>
     <result id="9" timeout="true">
       <db2fts>764048.9375</db2fts>
@@ -350,16 +350,16 @@
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="10" timeout="false">
-      <db2fts>975441.1875</db2fts>
-      <inumfts>975441.1875</inumfts>
+      <db2fts>978622.625</db2fts>
+      <inumfts>978622.625</inumfts>
       <db2Index>98570.8828125</db2Index>
-      <inumIndex>122147.40509939152</inumIndex>
+      <inumIndex>120393.91649314962</inumIndex>
     </result>
     <result id="11" timeout="false">
       <db2fts>511508.34375</db2fts>
       <inumfts>511508.34375</inumfts>
       <db2Index>37033.8125</db2Index>
-      <inumIndex>38682.75409081054</inumIndex>
+      <inumIndex>40350.60691104006</inumIndex>
     </result>
     <result id="12" timeout="false">
       <db2fts>114491.359375</db2fts>
@@ -371,31 +371,31 @@
       <db2fts>65011.4375</db2fts>
       <inumfts>65011.4375</inumfts>
       <db2Index>10106.599609375</db2Index>
-      <inumIndex>10112.82364147016</inumIndex>
+      <inumIndex>10112.82950084516</inumIndex>
     </result>
     <result id="14" timeout="false">
       <db2fts>499130.46875</db2fts>
       <inumfts>499130.46875</inumfts>
       <db2Index>1136.826171875</db2Index>
-      <inumIndex>1743.0237333524653</inumIndex>
+      <inumIndex>1826.247197514816</inumIndex>
     </result>
     <result id="15" timeout="false">
       <db2fts>395053.09375</db2fts>
       <inumfts>395053.09375</inumfts>
       <db2Index>6018.56640625</db2Index>
-      <inumIndex>9726.576966457935</inumIndex>
+      <inumIndex>10120.394403527387</inumIndex>
     </result>
     <result id="16" timeout="false">
       <db2fts>1257959.0</db2fts>
       <inumfts>1257959.0</inumfts>
       <db2Index>51649.60546875</db2Index>
-      <inumIndex>75366.82936289979</inumIndex>
+      <inumIndex>77887.40113294212</inumIndex>
     </result>
     <result id="17" timeout="false">
       <db2fts>317012.46875</db2fts>
-      <inumfts>344546.515625</inumfts>
+      <inumfts>343151.875</inumfts>
       <db2Index>1433.7794189453125</db2Index>
-      <inumIndex>1293.9555402556175</inumIndex>
+      <inumIndex>99840.98948724658</inumIndex>
     </result>
     <result id="18" timeout="false">
       <db2fts>196729.140625</db2fts>
@@ -403,41 +403,41 @@
       <db2Index>18600.3203125</db2Index>
       <inumIndex>18746.02906941146</inumIndex>
     </result>
-    <result id="19" timeout="false">
+    <result id="19" timeout="true">
       <db2fts>913218.5</db2fts>
-      <inumfts>913218.5</inumfts>
+      <inumfts>0.0</inumfts>
       <db2Index>10271.3681640625</db2Index>
-      <inumIndex>898448.8078255653</inumIndex>
+      <inumIndex>0.0</inumIndex>
     </result>
-    <result id="20" timeout="false">
-      <db2fts>2200066.5</db2fts>
-      <inumfts>2200066.5</inumfts>
-      <db2Index>1038678.5</db2Index>
-      <inumIndex>2097489.304446432</inumIndex>
+    <result id="20" timeout="true">
+      <db2fts>2208941.5</db2fts>
+      <inumfts>0.0</inumfts>
+      <db2Index>1066094.625</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="21" timeout="false">
-      <db2fts>1205541.375</db2fts>
-      <inumfts>1205541.375</inumfts>
-      <db2Index>51251.4765625</db2Index>
-      <inumIndex>70268.97462004352</inumIndex>
+      <db2fts>1210221.5</db2fts>
+      <inumfts>1210221.5</inumfts>
+      <db2Index>55931.703125</db2Index>
+      <inumIndex>76974.38304701234</inumIndex>
     </result>
     <result id="22" timeout="false">
       <db2fts>941747.25</db2fts>
       <inumfts>941747.25</inumfts>
       <db2Index>9083.939453125</db2Index>
-      <inumIndex>9051.704080355785</inumIndex>
+      <inumIndex>9000.893533480785</inumIndex>
     </result>
     <result id="23" timeout="false">
       <db2fts>419932.0625</db2fts>
       <inumfts>419932.0625</inumfts>
       <db2Index>30745.837890625</db2Index>
-      <inumIndex>42057.814332413385</inumIndex>
+      <inumIndex>42865.975421660274</inumIndex>
     </result>
     <result id="24" timeout="false">
       <db2fts>163795.390625</db2fts>
       <inumfts>163795.390625</inumfts>
       <db2Index>5619.46728515625</db2Index>
-      <inumIndex>6167.477095218794</inumIndex>
+      <inumIndex>6723.03824936814</inumIndex>
     </result>
     <result id="25" timeout="false">
       <db2fts>682672.375</db2fts>
@@ -467,19 +467,19 @@
       <db2fts>941745.75</db2fts>
       <inumfts>941745.75</inumfts>
       <db2Index>16060.4970703125</db2Index>
-      <inumIndex>16093.287706149242</inumIndex>
+      <inumIndex>16061.393419039867</inumIndex>
     </result>
     <result id="30" timeout="false">
-      <db2fts>1522775.125</db2fts>
-      <inumfts>1522775.125</inumfts>
-      <db2Index>1520065.375</db2Index>
-      <inumIndex>1520065.539551735</inumIndex>
+      <db2fts>1793713.5</db2fts>
+      <inumfts>1793713.5</inumfts>
+      <db2Index>1691506.25</db2Index>
+      <inumIndex>1791003.7890863419</inumIndex>
     </result>
     <result id="31" timeout="false">
       <db2fts>846513.625</db2fts>
       <inumfts>846513.625</inumfts>
       <db2Index>1775.1314697265625</db2Index>
-      <inumIndex>2254.633096167282</inumIndex>
+      <inumIndex>2326.687892736278</inumIndex>
     </result>
     <result id="32" timeout="false">
       <db2fts>401763.1875</db2fts>
@@ -497,13 +497,13 @@
       <db2fts>2370254.0</db2fts>
       <inumfts>2370254.0</inumfts>
       <db2Index>36046.44140625</db2Index>
-      <inumIndex>58340.06038500008</inumIndex>
+      <inumIndex>60702.93770181376</inumIndex>
     </result>
     <result id="35" timeout="false">
-      <db2fts>5724314.0</db2fts>
-      <inumfts>5724314.0</inumfts>
-      <db2Index>2219474.25</db2Index>
-      <inumIndex>2250594.355529831</inumIndex>
+      <db2fts>5779033.0</db2fts>
+      <inumfts>5779033.0</inumfts>
+      <db2Index>2274192.75</db2Index>
+      <inumIndex>2308617.760813529</inumIndex>
     </result>
     <result id="36" timeout="false">
       <db2fts>2382180.5</db2fts>
@@ -518,22 +518,22 @@
       <inumIndex>33763.16864587854</inumIndex>
     </result>
     <result id="38" timeout="false">
-      <db2fts>1451349.75</db2fts>
-      <inumfts>1451349.75</inumfts>
-      <db2Index>23442.32421875</db2Index>
-      <inumIndex>43502.28966687322</inumIndex>
+      <db2fts>1451598.875</db2fts>
+      <inumfts>1451598.875</inumfts>
+      <db2Index>23443.3203125</db2Index>
+      <inumIndex>45551.1870812575</inumIndex>
     </result>
     <result id="39" timeout="false">
       <db2fts>492546.875</db2fts>
       <inumfts>492546.875</inumfts>
       <db2Index>15858.169921875</db2Index>
-      <inumIndex>20199.703460635785</inumIndex>
+      <inumIndex>21615.946065224536</inumIndex>
     </result>
     <result id="40" timeout="false">
       <db2fts>327487.65625</db2fts>
       <inumfts>327487.65625</inumfts>
       <db2Index>13889.423828125</db2Index>
-      <inumIndex>325034.32324028015</inumIndex>
+      <inumIndex>13889.423826217651</inumIndex>
     </result>
     <result id="41" timeout="true">
       <db2fts>764043.25</db2fts>
@@ -542,39 +542,39 @@
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="42" timeout="false">
-      <db2fts>1443927.625</db2fts>
-      <inumfts>1443927.625</inumfts>
-      <db2Index>215962.09375</db2Index>
-      <inumIndex>1439771.7702579498</inumIndex>
+      <db2fts>1459720.125</db2fts>
+      <inumfts>1459720.125</inumfts>
+      <db2Index>260763.921875</db2Index>
+      <inumIndex>1429475.3320598602</inumIndex>
     </result>
     <result id="43" timeout="false">
-      <db2fts>841711.8125</db2fts>
-      <inumfts>841711.8125</inumfts>
+      <db2fts>844621.9375</db2fts>
+      <inumfts>844621.9375</inumfts>
       <db2Index>48686.29296875</db2Index>
-      <inumIndex>403600.0388922852</inumIndex>
+      <inumIndex>48686.90217353518</inumIndex>
     </result>
     <result id="44" timeout="false">
       <db2fts>1638403.0</db2fts>
       <inumfts>1638402.9999999998</inumfts>
       <db2Index>1599.110595703125</db2Index>
-      <inumIndex>1829.5330885409955</inumIndex>
+      <inumIndex>1850.0160375945836</inumIndex>
     </result>
     <result id="45" timeout="false">
       <db2fts>401747.875</db2fts>
       <inumfts>401747.875</inumfts>
       <db2Index>1714.4403076171875</db2Index>
-      <inumIndex>1715.2802112364357</inumIndex>
+      <inumIndex>1762.1828774811543</inumIndex>
     </result>
     <result id="46" timeout="false">
-      <db2fts>1123712.875</db2fts>
-      <inumfts>1123712.875</inumfts>
-      <db2Index>23507.328125</db2Index>
-      <inumIndex>37365.63094958539</inumIndex>
+      <db2fts>1125210.0</db2fts>
+      <inumfts>1125210.0</inumfts>
+      <db2Index>23507.60546875</db2Index>
+      <inumIndex>40740.30049182028</inumIndex>
     </result>
     <result id="47" timeout="true">
       <db2fts>2.45508571136E11</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>57655.12109375</db2Index>
+      <db2Index>60243.7109375</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="48" timeout="false">
@@ -586,26 +586,26 @@
     <result id="49" timeout="false">
       <db2fts>5949818.0</db2fts>
       <inumfts>5949818.625000059</inumfts>
-      <db2Index>60224.6328125</db2Index>
+      <db2Index>60224.625</db2Index>
       <inumIndex>62103.15273704027</inumIndex>
     </result>
     <result id="50" timeout="false">
-      <db2fts>1721757.625</db2fts>
-      <inumfts>1721757.625</inumfts>
-      <db2Index>78182.984375</db2Index>
-      <inumIndex>93051.38732500434</inumIndex>
+      <db2fts>1727523.375</db2fts>
+      <inumfts>1727523.375</inumfts>
+      <db2Index>78149.8671875</db2Index>
+      <inumIndex>101666.1613110448</inumIndex>
     </result>
     <result id="51" timeout="false">
-      <db2fts>5.6900378624E10</db2fts>
-      <inumfts>5.6900378624E10</inumfts>
-      <db2Index>5.6900378624E10</db2Index>
-      <inumIndex>5.690037812724805E10</inumIndex>
+      <db2fts>5.690079232E10</db2fts>
+      <inumfts>5.690079232E10</inumfts>
+      <db2Index>5.6900800512E10</db2Index>
+      <inumIndex>5.690079182324805E10</inumIndex>
     </result>
     <result id="52" timeout="false">
-      <db2fts>428776.65625</db2fts>
-      <inumfts>428776.65625</inumfts>
-      <db2Index>395726.8125</db2Index>
-      <inumIndex>395726.732617806</inumIndex>
+      <db2fts>435488.125</db2fts>
+      <inumfts>435488.125</inumfts>
+      <db2Index>402438.28125</db2Index>
+      <inumIndex>402438.16135855264</inumIndex>
     </result>
     <result id="53" timeout="true">
       <db2fts>764051.1875</db2fts>
@@ -614,34 +614,34 @@
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="54" timeout="false">
-      <db2fts>950869.6875</db2fts>
-      <inumfts>950869.6875</inumfts>
-      <db2Index>82662.765625</db2Index>
-      <inumIndex>88961.0925789834</inumIndex>
+      <db2fts>955742.3125</db2fts>
+      <inumfts>955742.3125</inumfts>
+      <db2Index>87535.4140625</db2Index>
+      <inumIndex>95274.1492779935</inumIndex>
     </result>
     <result id="55" timeout="false">
-      <db2fts>3076430.5</db2fts>
-      <inumfts>3076430.5</inumfts>
-      <db2Index>607195.625</db2Index>
-      <inumIndex>3069769.9703793526</inumIndex>
+      <db2fts>3136886.0</db2fts>
+      <inumfts>3136886.0</inumfts>
+      <db2Index>691292.8125</db2Index>
+      <inumIndex>3130225.4703793526</inumIndex>
     </result>
     <result id="56" timeout="false">
       <db2fts>401850.28125</db2fts>
       <inumfts>401850.28125</inumfts>
       <db2Index>13491.5361328125</db2Index>
-      <inumIndex>17613.291185130438</inumIndex>
+      <inumIndex>18051.088680795343</inumIndex>
     </result>
     <result id="57" timeout="false">
       <db2fts>345657.71875</db2fts>
       <inumfts>345657.71875</inumfts>
       <db2Index>15386.2099609375</db2Index>
-      <inumIndex>15486.265185860282</inumIndex>
+      <inumIndex>15485.52797460556</inumIndex>
     </result>
-    <result id="58" timeout="false">
+    <result id="58" timeout="true">
       <db2fts>7.2215176E7</db2fts>
-      <inumfts>7.221517600012209E7</inumfts>
+      <inumfts>0.0</inumfts>
       <db2Index>54982.55859375</db2Index>
-      <inumIndex>1.0075979751578452E7</inumIndex>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="59" timeout="false">
       <db2fts>401753.53125</db2fts>
@@ -649,11 +649,11 @@
       <db2Index>591.7427368164062</db2Index>
       <inumIndex>591.9899880208832</inumIndex>
     </result>
-    <result id="60" timeout="false">
+    <result id="60" timeout="true">
       <db2fts>431909.875</db2fts>
-      <inumfts>431909.875</inumfts>
+      <inumfts>0.0</inumfts>
       <db2Index>16474.7421875</db2Index>
-      <inumIndex>33789.92664382576</inumIndex>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="61" timeout="false">
       <db2fts>401753.53125</db2fts>
@@ -668,10 +668,10 @@
       <inumIndex>2.8307314993469235E7</inumIndex>
     </result>
     <result id="63" timeout="false">
-      <db2fts>425025.0</db2fts>
-      <inumfts>425025.0</inumfts>
-      <db2Index>12364.95703125</db2Index>
-      <inumIndex>17029.28347658508</inumIndex>
+      <db2fts>427599.28125</db2fts>
+      <inumfts>427599.28125</inumfts>
+      <db2Index>13186.8095703125</db2Index>
+      <inumIndex>19726.906792951806</inumIndex>
     </result>
     <result id="64" timeout="false">
       <db2fts>170491.953125</db2fts>
@@ -692,46 +692,46 @@
       <inumIndex>3150150.988079107</inumIndex>
     </result>
     <result id="67" timeout="false">
-      <db2fts>915286.5625</db2fts>
-      <inumfts>915286.5625</inumfts>
+      <db2fts>916673.5</db2fts>
+      <inumfts>916673.5</inumfts>
       <db2Index>1777.572021484375</db2Index>
-      <inumIndex>2257.0423360852737</inumIndex>
+      <inumIndex>2329.0966167081706</inumIndex>
     </result>
     <result id="68" timeout="false">
-      <db2fts>4426982.5</db2fts>
-      <inumfts>4426982.5</inumfts>
-      <db2Index>1520957.875</db2Index>
-      <inumIndex>3880543.762301515</inumIndex>
+      <db2fts>4510988.5</db2fts>
+      <inumfts>4510988.5</inumfts>
+      <db2Index>1545590.625</db2Index>
+      <inumIndex>3949367.8257899415</inumIndex>
     </result>
     <result id="69" timeout="false">
-      <db2fts>4455114.5</db2fts>
-      <inumfts>4455114.5</inumfts>
-      <db2Index>1549089.75</db2Index>
-      <inumIndex>3908675.512301515</inumIndex>
+      <db2fts>4539120.5</db2fts>
+      <inumfts>4539120.5</inumfts>
+      <db2Index>1568474.125</db2Index>
+      <inumIndex>3977499.5757899415</inumIndex>
     </result>
-    <result id="70" timeout="false">
-      <db2fts>3.177118E7</db2fts>
-      <inumfts>3.1771180625000037E7</inumfts>
-      <db2Index>1760371.125</db2Index>
-      <inumIndex>2.573608905792605E7</inumIndex>
+    <result id="70" timeout="true">
+      <db2fts>3.1858278E7</db2fts>
+      <inumfts>0.0</inumfts>
+      <db2Index>1816116.75</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
-    <result id="71" timeout="false">
-      <db2fts>4438848.0</db2fts>
-      <inumfts>4438848.250244141</inumfts>
-      <db2Index>231755.015625</db2Index>
-      <inumIndex>4160423.9070711136</inumIndex>
+    <result id="71" timeout="true">
+      <db2fts>4450461.0</db2fts>
+      <inumfts>0.0</inumfts>
+      <db2Index>239187.765625</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="72" timeout="false">
-      <db2fts>1040408.25</db2fts>
-      <inumfts>1040408.25</inumfts>
-      <db2Index>82018.515625</db2Index>
-      <inumIndex>90428.40486428206</inumIndex>
+      <db2fts>1051629.25</db2fts>
+      <inumfts>1051629.25</inumfts>
+      <db2Index>65678.5625</db2Index>
+      <inumIndex>103302.79438936085</inumIndex>
     </result>
     <result id="73" timeout="false">
-      <db2fts>802550.8125</db2fts>
-      <inumfts>802550.8125</inumfts>
-      <db2Index>20381.232421875</db2Index>
-      <inumIndex>34097.39170566484</inumIndex>
+      <db2fts>803185.375</db2fts>
+      <inumfts>803185.375</inumfts>
+      <db2Index>21015.787109375</db2Index>
+      <inumIndex>35607.486696994645</inumIndex>
     </result>
     <result id="74" timeout="false">
       <db2fts>909041.5625</db2fts>
@@ -743,13 +743,13 @@
       <db2fts>409147.71875</db2fts>
       <inumfts>409147.71875</inumfts>
       <db2Index>8374.2626953125</db2Index>
-      <inumIndex>14138.902353528536</inumIndex>
+      <inumIndex>14726.998864100982</inumIndex>
     </result>
     <result id="76" timeout="false">
       <db2fts>441645.3125</db2fts>
       <inumfts>441645.3125</inumfts>
       <db2Index>19901.72265625</db2Index>
-      <inumIndex>22444.29282791656</inumIndex>
+      <inumIndex>23248.165706575815</inumIndex>
     </result>
     <result id="77" timeout="false">
       <db2fts>56380.5390625</db2fts>
@@ -758,16 +758,16 @@
       <inumIndex>32691.000369393445</inumIndex>
     </result>
     <result id="78" timeout="false">
-      <db2fts>2727370.5</db2fts>
-      <inumfts>2727348.25</inumfts>
-      <db2Index>584847.375</db2Index>
-      <inumIndex>2716712.656513214</inumIndex>
+      <db2fts>2754931.25</db2fts>
+      <inumfts>2754931.25</inumfts>
+      <db2Index>612430.3125</db2Index>
+      <inumIndex>2744295.656513214</inumIndex>
     </result>
     <result id="79" timeout="false">
-      <db2fts>947399.9375</db2fts>
-      <inumfts>947399.9375</inumfts>
-      <db2Index>79192.9609375</db2Index>
-      <inumIndex>85491.3425789834</inumIndex>
+      <db2fts>952165.875</db2fts>
+      <inumfts>952165.875</inumfts>
+      <db2Index>83959.0078125</db2Index>
+      <inumIndex>91697.7117779935</inumIndex>
     </result>
     <result id="80" timeout="true">
       <db2fts>2884978.25</db2fts>
@@ -779,7 +779,7 @@
       <db2fts>409138.875</db2fts>
       <inumfts>409138.875</inumfts>
       <db2Index>3462.40576171875</db2Index>
-      <inumIndex>3408.6957523314204</inumIndex>
+      <inumIndex>3448.9273792744434</inumIndex>
     </result>
     <result id="82" timeout="false">
       <db2fts>71450.4453125</db2fts>
@@ -803,19 +803,19 @@
       <db2fts>941739.9375</db2fts>
       <inumfts>941739.9375</inumfts>
       <db2Index>13773.5859375</db2Index>
-      <inumIndex>13403.667711032054</inumIndex>
+      <inumIndex>13371.78123642268</inumIndex>
     </result>
     <result id="86" timeout="false">
-      <db2fts>1207633.25</db2fts>
-      <inumfts>1207633.25</inumfts>
+      <db2fts>1374201.75</db2fts>
+      <inumfts>1374201.75</inumfts>
       <db2Index>841473.6875</db2Index>
-      <inumIndex>1038308.8914221232</inumIndex>
+      <inumIndex>1204878.8169893385</inumIndex>
     </result>
     <result id="87" timeout="false">
       <db2fts>350592.21875</db2fts>
       <inumfts>350592.21875</inumfts>
       <db2Index>14091.0576171875</db2Index>
-      <inumIndex>18066.237437278505</inumIndex>
+      <inumIndex>18961.912785051612</inumIndex>
     </result>
     <result id="88" timeout="false">
       <db2fts>359237.71875</db2fts>
@@ -826,7 +826,7 @@
     <result id="89" timeout="true">
       <db2fts>870307.5</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>12384.6494140625</db2Index>
+      <db2Index>12384.9443359375</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="90" timeout="false">
@@ -836,76 +836,76 @@
       <inumIndex>7036.956480681188</inumIndex>
     </result>
     <result id="91" timeout="false">
-      <db2fts>411511.65625</db2fts>
-      <inumfts>411511.65625</inumfts>
-      <db2Index>20576.546875</db2Index>
-      <inumIndex>23414.626908386064</inumIndex>
+      <db2fts>413879.46875</db2fts>
+      <inumfts>413879.46875</inumfts>
+      <db2Index>22944.359375</db2Index>
+      <inumIndex>26366.17510209279</inumIndex>
     </result>
     <result id="92" timeout="false">
       <db2fts>1936031.875</db2fts>
       <inumfts>1936031.875</inumfts>
-      <db2Index>152908.78125</db2Index>
-      <inumIndex>139231.22389285153</inumIndex>
+      <db2Index>152909.25</db2Index>
+      <inumIndex>143934.85952830847</inumIndex>
     </result>
     <result id="93" timeout="false">
-      <db2fts>446122.25</db2fts>
-      <inumfts>446122.25</inumfts>
-      <db2Index>23575.396484375</db2Index>
-      <inumIndex>30948.82194614161</inumIndex>
+      <db2fts>446772.375</db2fts>
+      <inumfts>446772.375</inumfts>
+      <db2Index>26285.408203125</db2Index>
+      <inumIndex>32360.798630427533</inumIndex>
     </result>
     <result id="94" timeout="false">
-      <db2fts>1292687.25</db2fts>
-      <inumfts>1292687.25</inumfts>
+      <db2fts>1291907.25</db2fts>
+      <inumfts>1291907.25</inumfts>
       <db2Index>387455.9375</db2Index>
-      <inumIndex>1243291.6324997172</inumIndex>
+      <inumIndex>1242511.6324920373</inumIndex>
     </result>
     <result id="95" timeout="false">
-      <db2fts>1292687.25</db2fts>
-      <inumfts>1292687.25</inumfts>
+      <db2fts>1291907.25</db2fts>
+      <inumfts>1291907.25</inumfts>
       <db2Index>387455.9375</db2Index>
-      <inumIndex>1243291.6324997172</inumIndex>
+      <inumIndex>1242511.6324920373</inumIndex>
     </result>
     <result id="96" timeout="false">
-      <db2fts>1.32431888384E11</db2fts>
-      <inumfts>1.32431880192E11</inumfts>
-      <db2Index>1.32431888384E11</db2Index>
-      <inumIndex>1.3243187969524805E11</inumIndex>
+      <db2fts>1.32447739904E11</db2fts>
+      <inumfts>1.32447731712E11</inumfts>
+      <db2Index>1.32447731712E11</db2Index>
+      <inumIndex>1.3244773121524805E11</inumIndex>
     </result>
     <result id="97" timeout="false">
       <db2fts>326314.375</db2fts>
       <inumfts>326314.375</inumfts>
       <db2Index>5658.955078125</db2Index>
-      <inumIndex>7947.373386796294</inumIndex>
+      <inumIndex>8464.647738270703</inumIndex>
     </result>
     <result id="98" timeout="false">
       <db2fts>419897.875</db2fts>
       <inumfts>419897.875</inumfts>
       <db2Index>27534.921875</db2Index>
-      <inumIndex>27523.711611056355</inumIndex>
+      <inumIndex>27577.144148604406</inumIndex>
     </result>
-    <result id="99" timeout="false">
+    <result id="99" timeout="true">
       <db2fts>104937.3828125</db2fts>
-      <inumfts>104937.3828125</inumfts>
+      <inumfts>0.0</inumfts>
       <db2Index>9706.697265625</db2Index>
-      <inumIndex>49514.42721033096</inumIndex>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="100" timeout="false">
       <db2fts>842612.625</db2fts>
       <inumfts>842612.625</inumfts>
       <db2Index>20535.69140625</db2Index>
-      <inumIndex>20538.175743846296</inumIndex>
+      <inumIndex>20538.558556346296</inumIndex>
     </result>
-    <result id="101" timeout="false">
-      <db2fts>3588500.75</db2fts>
-      <inumfts>3588500.75</inumfts>
-      <db2Index>1233013.875</db2Index>
-      <inumIndex>1233015.122572509</inumIndex>
+    <result id="101" timeout="true">
+      <db2fts>3591480.25</db2fts>
+      <inumfts>0.0</inumfts>
+      <db2Index>1235993.625</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="102" timeout="false">
-      <db2fts>954599.875</db2fts>
-      <inumfts>954599.875</inumfts>
-      <db2Index>68171.34375</db2Index>
-      <inumIndex>108495.1056175232</inumIndex>
+      <db2fts>962782.375</db2fts>
+      <inumfts>962782.375</inumfts>
+      <db2Index>72166.75</db2Index>
+      <inumIndex>116677.6056175232</inumIndex>
     </result>
   </indexSet>
   <indexSet name="powerset">
@@ -2667,50 +2667,50 @@
     <result id="1" timeout="false">
       <db2fts>419371.875</db2fts>
       <inumfts>419371.875</inumfts>
-      <db2Index>326716.9375</db2Index>
-      <inumIndex>343742.9763894081</inumIndex>
+      <db2Index>336005.90625</db2Index>
+      <inumIndex>339977.32774066925</inumIndex>
     </result>
     <result id="2" timeout="false">
-      <db2fts>3792524.25</db2fts>
-      <inumfts>3792524.25</inumfts>
-      <db2Index>3763160.25</db2Index>
-      <inumIndex>3755576.951125145</inumIndex>
+      <db2fts>3851094.0</db2fts>
+      <inumfts>3851094.0</inumfts>
+      <db2Index>3821730.0</db2Index>
+      <inumIndex>3814146.701125145</inumIndex>
     </result>
     <result id="3" timeout="false">
-      <db2fts>1606249.75</db2fts>
-      <inumfts>1606248.125</inumfts>
-      <db2Index>260675.703125</db2Index>
-      <inumIndex>259943.79058039485</inumIndex>
+      <db2fts>1606592.125</db2fts>
+      <inumfts>1606590.3749999998</inumfts>
+      <db2Index>261019.203125</db2Index>
+      <inumIndex>260286.1894243517</inumIndex>
     </result>
     <result id="4" timeout="false">
-      <db2fts>1131774.0</db2fts>
-      <inumfts>1131774.0</inumfts>
-      <db2Index>1118311.875</db2Index>
-      <inumIndex>1117982.5083770752</inumIndex>
+      <db2fts>1136235.125</db2fts>
+      <inumfts>1136235.125</inumfts>
+      <db2Index>1120279.375</db2Index>
+      <inumIndex>1119950.0083770752</inumIndex>
     </result>
     <result id="5" timeout="false">
-      <db2fts>1131786.25</db2fts>
-      <inumfts>1131786.25</inumfts>
-      <db2Index>1118324.0</db2Index>
-      <inumIndex>1117994.7583770752</inumIndex>
+      <db2fts>1136247.25</db2fts>
+      <inumfts>1136247.25</inumfts>
+      <db2Index>1120291.5</db2Index>
+      <inumIndex>1119962.2583770752</inumIndex>
     </result>
     <result id="6" timeout="false">
       <db2fts>2935536.25</db2fts>
       <inumfts>2935536.25</inumfts>
       <db2Index>327731.0</db2Index>
-      <inumIndex>349702.53166007996</inumIndex>
+      <inumIndex>327731.07804203033</inumIndex>
     </result>
     <result id="7" timeout="false">
       <db2fts>6185490.0</db2fts>
       <inumfts>6185490.0</inumfts>
       <db2Index>27529.40234375</db2Index>
-      <inumIndex>32314.88049886528</inumIndex>
+      <inumIndex>32610.527679038143</inumIndex>
     </result>
     <result id="8" timeout="false">
       <db2fts>421241.78125</db2fts>
       <inumfts>421241.78125</inumfts>
       <db2Index>21977.12109375</db2Index>
-      <inumIndex>21977.31202994025</inumIndex>
+      <inumIndex>21977.311797243718</inumIndex>
     </result>
     <result id="9" timeout="true">
       <db2fts>764048.9375</db2fts>
@@ -2719,16 +2719,16 @@
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="10" timeout="false">
-      <db2fts>975441.1875</db2fts>
-      <inumfts>975441.1875</inumfts>
-      <db2Index>660029.25</db2Index>
-      <inumIndex>664917.858985424</inumIndex>
+      <db2fts>978622.625</db2fts>
+      <inumfts>978622.625</inumfts>
+      <db2Index>692310.4375</db2Index>
+      <inumIndex>692587.1822276115</inumIndex>
     </result>
     <result id="11" timeout="false">
       <db2fts>511508.34375</db2fts>
       <inumfts>511508.34375</inumfts>
-      <db2Index>232308.15625</db2Index>
-      <inumIndex>232279.74472761154</inumIndex>
+      <db2Index>251671.46875</db2Index>
+      <inumIndex>251631.08847761154</inumIndex>
     </result>
     <result id="12" timeout="false">
       <db2fts>114491.359375</db2fts>
@@ -2739,14 +2739,14 @@
     <result id="13" timeout="false">
       <db2fts>65011.4375</db2fts>
       <inumfts>65011.4375</inumfts>
-      <db2Index>11027.2705078125</db2Index>
-      <inumIndex>11032.228876113892</inumIndex>
+      <db2Index>11032.2294921875</db2Index>
+      <inumIndex>11032.234735488892</inumIndex>
     </result>
     <result id="14" timeout="false">
       <db2fts>499130.46875</db2fts>
       <inumfts>499130.46875</inumfts>
       <db2Index>15523.6904296875</db2Index>
-      <inumIndex>16068.141577720642</inumIndex>
+      <inumIndex>16556.213843345642</inumIndex>
     </result>
     <result id="15" timeout="false">
       <db2fts>395053.09375</db2fts>
@@ -2757,12 +2757,12 @@
     <result id="16" timeout="false">
       <db2fts>1257959.0</db2fts>
       <inumfts>1257959.0</inumfts>
-      <db2Index>978416.875</db2Index>
-      <inumIndex>1031089.0119886398</inumIndex>
+      <db2Index>1006283.6875</db2Index>
+      <inumIndex>533914.3650417328</inumIndex>
     </result>
     <result id="17" timeout="false">
       <db2fts>317012.46875</db2fts>
-      <inumfts>344546.515625</inumfts>
+      <inumfts>343151.875</inumfts>
       <db2Index>11254.34765625</db2Index>
       <inumIndex>11397.102779865265</inumIndex>
     </result>
@@ -2772,29 +2772,29 @@
       <db2Index>33431.53515625</db2Index>
       <inumIndex>33576.54330446478</inumIndex>
     </result>
-    <result id="19" timeout="false">
+    <result id="19" timeout="true">
       <db2fts>913218.5</db2fts>
-      <inumfts>913218.5</inumfts>
+      <inumfts>0.0</inumfts>
       <db2Index>17653.66015625</db2Index>
-      <inumIndex>17866.197157382965</inumIndex>
+      <inumIndex>0.0</inumIndex>
     </result>
-    <result id="20" timeout="false">
-      <db2fts>2200066.5</db2fts>
-      <inumfts>2200066.5</inumfts>
-      <db2Index>1743489.25</db2Index>
-      <inumIndex>2087191.403208944</inumIndex>
+    <result id="20" timeout="true">
+      <db2fts>2208941.5</db2fts>
+      <inumfts>0.0</inumfts>
+      <db2Index>1804968.25</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="21" timeout="false">
-      <db2fts>1205541.375</db2fts>
-      <inumfts>1205541.375</inumfts>
-      <db2Index>532534.125</db2Index>
-      <inumIndex>532443.2856960297</inumIndex>
+      <db2fts>1210221.5</db2fts>
+      <inumfts>1210221.5</inumfts>
+      <db2Index>537214.375</db2Index>
+      <inumIndex>537123.5356960297</inumIndex>
     </result>
     <result id="22" timeout="false">
       <db2fts>941747.25</db2fts>
       <inumfts>941747.25</inumfts>
       <db2Index>40660.3515625</db2Index>
-      <inumIndex>40711.1647644043</inumIndex>
+      <inumIndex>40660.3542175293</inumIndex>
     </result>
     <result id="23" timeout="false">
       <db2fts>419932.0625</db2fts>
@@ -2805,8 +2805,8 @@
     <result id="24" timeout="false">
       <db2fts>163795.390625</db2fts>
       <inumfts>163795.390625</inumfts>
-      <db2Index>70650.4921875</db2Index>
-      <inumIndex>70650.49348926544</inumIndex>
+      <db2Index>77094.65625</db2Index>
+      <inumIndex>77094.65755176544</inumIndex>
     </result>
     <result id="25" timeout="false">
       <db2fts>682672.375</db2fts>
@@ -2817,7 +2817,7 @@
     <result id="26" timeout="true">
       <db2fts>2.45508112384E11</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>708780.8125</db2Index>
+      <db2Index>750583.5625</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="27" timeout="false">
@@ -2829,50 +2829,50 @@
     <result id="28" timeout="true">
       <db2fts>2.45506670592E11</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>393259.28125</db2Index>
+      <db2Index>432586.9375</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="29" timeout="false">
       <db2fts>941745.75</db2fts>
       <inumfts>941745.75</inumfts>
       <db2Index>47636.91015625</db2Index>
-      <inumIndex>47668.99210357666</inumIndex>
+      <inumIndex>47637.097816467285</inumIndex>
     </result>
     <result id="30" timeout="false">
-      <db2fts>1522775.125</db2fts>
-      <inumfts>1522775.125</inumfts>
-      <db2Index>1520088.125</db2Index>
-      <inumIndex>1520088.2268190384</inumIndex>
+      <db2fts>1793713.5</db2fts>
+      <inumfts>1793713.5</inumfts>
+      <db2Index>1672624.25</db2Index>
+      <inumIndex>1672624.2890863419</inumIndex>
     </result>
     <result id="31" timeout="false">
       <db2fts>846513.625</db2fts>
       <inumfts>846513.625</inumfts>
-      <db2Index>73998.7890625</db2Index>
-      <inumIndex>102643.21064179475</inumIndex>
+      <db2Index>80908.7578125</db2Index>
+      <inumIndex>107661.2473731487</inumIndex>
     </result>
     <result id="32" timeout="false">
       <db2fts>401763.1875</db2fts>
       <inumfts>401763.1875</inumfts>
-      <db2Index>23356.751953125</db2Index>
+      <db2Index>23546.79296875</db2Index>
       <inumIndex>19549.2026348114</inumIndex>
     </result>
     <result id="33" timeout="true">
       <db2fts>220630.203125</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>82394.2265625</db2Index>
+      <db2Index>88848.6640625</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="34" timeout="false">
       <db2fts>2370254.0</db2fts>
       <inumfts>2370254.0</inumfts>
-      <db2Index>2018654.75</db2Index>
-      <inumIndex>2018572.9276533127</inumIndex>
+      <db2Index>2100797.5</db2Index>
+      <inumIndex>2100647.3465299606</inumIndex>
     </result>
     <result id="35" timeout="false">
-      <db2fts>5724314.0</db2fts>
-      <inumfts>5724314.0</inumfts>
-      <db2Index>5199121.0</db2Index>
-      <inumIndex>5199120.454547882</inumIndex>
+      <db2fts>5779033.0</db2fts>
+      <inumfts>5779033.0</inumfts>
+      <db2Index>5377043.0</db2Index>
+      <inumIndex>5377041.139953613</inumIndex>
     </result>
     <result id="36" timeout="false">
       <db2fts>2382180.5</db2fts>
@@ -2887,10 +2887,10 @@
       <inumIndex>51940.46217592551</inumIndex>
     </result>
     <result id="38" timeout="false">
-      <db2fts>1451349.75</db2fts>
-      <inumfts>1451349.75</inumfts>
-      <db2Index>1029208.25</db2Index>
-      <inumIndex>1029122.076303482</inumIndex>
+      <db2fts>1451598.875</db2fts>
+      <inumfts>1451598.875</inumfts>
+      <db2Index>1079756.625</db2Index>
+      <inumIndex>1079663.701303482</inumIndex>
     </result>
     <result id="39" timeout="false">
       <db2fts>492546.875</db2fts>
@@ -2901,49 +2901,49 @@
     <result id="40" timeout="false">
       <db2fts>327487.65625</db2fts>
       <inumfts>327487.65625</inumfts>
-      <db2Index>137432.625</db2Index>
-      <inumIndex>142934.50406646729</inumIndex>
+      <db2Index>145345.390625</db2Index>
+      <inumIndex>158250.39469146729</inumIndex>
     </result>
     <result id="41" timeout="true">
       <db2fts>764043.25</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>73297.0703125</db2Index>
+      <db2Index>77584.3203125</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="42" timeout="false">
-      <db2fts>1443927.625</db2fts>
-      <inumfts>1443927.625</inumfts>
-      <db2Index>1440717.875</db2Index>
-      <inumIndex>1440717.7434692383</inumIndex>
+      <db2fts>1459720.125</db2fts>
+      <inumfts>1459720.125</inumfts>
+      <db2Index>1430353.375</db2Index>
+      <inumIndex>1430353.2434692383</inumIndex>
     </result>
     <result id="43" timeout="false">
-      <db2fts>841711.8125</db2fts>
-      <inumfts>841711.8125</inumfts>
+      <db2fts>844621.9375</db2fts>
+      <inumfts>844621.9375</inumfts>
       <db2Index>58506.46875</db2Index>
-      <inumIndex>85533.85802745819</inumIndex>
+      <inumIndex>58506.47130870819</inumIndex>
     </result>
     <result id="44" timeout="false">
       <db2fts>1638403.0</db2fts>
       <inumfts>1638402.9999999998</inumfts>
       <db2Index>14515.62890625</db2Index>
-      <inumIndex>14927.414330327938</inumIndex>
+      <inumIndex>15051.537824596797</inumIndex>
     </result>
     <result id="45" timeout="false">
       <db2fts>401747.875</db2fts>
       <inumfts>401747.875</inumfts>
-      <db2Index>42450.125</db2Index>
-      <inumIndex>42450.13751220703</inumIndex>
+      <db2Index>43790.4765625</db2Index>
+      <inumIndex>43717.57501220703</inumIndex>
     </result>
     <result id="46" timeout="false">
-      <db2fts>1123712.875</db2fts>
-      <inumfts>1123712.875</inumfts>
-      <db2Index>821438.25</db2Index>
-      <inumIndex>821437.9719238281</inumIndex>
+      <db2fts>1125210.0</db2fts>
+      <inumfts>1125210.0</inumfts>
+      <db2Index>863214.625</db2Index>
+      <inumIndex>863214.4094238281</inumIndex>
     </result>
     <result id="47" timeout="true">
       <db2fts>2.45508571136E11</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>475265.8125</db2Index>
+      <db2Index>500796.5625</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="48" timeout="false">
@@ -2959,22 +2959,22 @@
       <inumIndex>446150.7193703235</inumIndex>
     </result>
     <result id="50" timeout="false">
-      <db2fts>1721757.625</db2fts>
-      <inumfts>1721757.625</inumfts>
-      <db2Index>1268345.5</db2Index>
-      <inumIndex>1268343.6380615234</inumIndex>
+      <db2fts>1727523.375</db2fts>
+      <inumfts>1727523.375</inumfts>
+      <db2Index>1334529.75</db2Index>
+      <inumIndex>1334527.8880615234</inumIndex>
     </result>
     <result id="51" timeout="false">
-      <db2fts>5.690038272E10</db2fts>
-      <inumfts>5.6900378624E10</inumfts>
-      <db2Index>5.6900378624E10</db2Index>
-      <inumIndex>5.690037812724805E10</inumIndex>
+      <db2fts>5.690079232E10</db2fts>
+      <inumfts>5.690079232E10</inumfts>
+      <db2Index>5.690079232E10</db2Index>
+      <inumIndex>5.690079182324805E10</inumIndex>
     </result>
     <result id="52" timeout="false">
-      <db2fts>428776.65625</db2fts>
-      <inumfts>428776.65625</inumfts>
-      <db2Index>401952.78125</db2Index>
-      <inumIndex>401952.78125</inumIndex>
+      <db2fts>435488.125</db2fts>
+      <inumfts>435488.125</inumfts>
+      <db2Index>408667.625</db2Index>
+      <inumIndex>408667.625</inumIndex>
     </result>
     <result id="53" timeout="true">
       <db2fts>764051.1875</db2fts>
@@ -2983,34 +2983,34 @@
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="54" timeout="false">
-      <db2fts>950869.6875</db2fts>
-      <inumfts>950869.6875</inumfts>
-      <db2Index>83470.1171875</db2Index>
-      <inumIndex>89768.44063386928</inumIndex>
+      <db2fts>955742.3125</db2fts>
+      <inumfts>955742.3125</inumfts>
+      <db2Index>88342.7578125</db2Index>
+      <inumIndex>96081.49733287937</inumIndex>
     </result>
     <result id="55" timeout="false">
-      <db2fts>3076430.5</db2fts>
-      <inumfts>3076430.5</inumfts>
-      <db2Index>3069770.0</db2Index>
-      <inumIndex>3069769.9703793526</inumIndex>
+      <db2fts>3136886.0</db2fts>
+      <inumfts>3136886.0</inumfts>
+      <db2Index>3130256.0</db2Index>
+      <inumIndex>3130256.2203793526</inumIndex>
     </result>
     <result id="56" timeout="false">
       <db2fts>401850.28125</db2fts>
       <inumfts>401850.28125</inumfts>
-      <db2Index>63478.87890625</db2Index>
-      <inumIndex>63478.88439941406</inumIndex>
+      <db2Index>64978.66015625</db2Index>
+      <inumIndex>64978.66564941406</inumIndex>
     </result>
     <result id="57" timeout="false">
       <db2fts>345657.71875</db2fts>
       <inumfts>345657.71875</inumfts>
       <db2Index>44899.0703125</db2Index>
-      <inumIndex>44998.38552856445</inumIndex>
+      <inumIndex>44998.39724731445</inumIndex>
     </result>
-    <result id="58" timeout="false">
+    <result id="58" timeout="true">
       <db2fts>7.2215176E7</db2fts>
-      <inumfts>7.221517600012209E7</inumfts>
+      <inumfts>0.0</inumfts>
       <db2Index>71889.046875</db2Index>
-      <inumIndex>3684189.4584884644</inumIndex>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="59" timeout="false">
       <db2fts>401753.53125</db2fts>
@@ -3018,11 +3018,11 @@
       <db2Index>18758.056640625</db2Index>
       <inumIndex>18758.05638885498</inumIndex>
     </result>
-    <result id="60" timeout="false">
+    <result id="60" timeout="true">
       <db2fts>431909.875</db2fts>
-      <inumfts>431909.875</inumfts>
+      <inumfts>0.0</inumfts>
       <db2Index>18200.9921875</db2Index>
-      <inumIndex>18205.860080431994</inumIndex>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="61" timeout="false">
       <db2fts>401753.53125</db2fts>
@@ -3033,25 +3033,25 @@
     <result id="62" timeout="false">
       <db2fts>2.8313492E7</db2fts>
       <inumfts>2.8313491999999996E7</inumfts>
-      <db2Index>194586.890625</db2Index>
-      <inumIndex>194586.19860839844</inumIndex>
+      <db2Index>328555.3125</db2Index>
+      <inumIndex>328554.62048339844</inumIndex>
     </result>
     <result id="63" timeout="false">
-      <db2fts>425025.0</db2fts>
-      <inumfts>425025.0</inumfts>
-      <db2Index>75224.9140625</db2Index>
-      <inumIndex>75214.67459106445</inumIndex>
+      <db2fts>427599.28125</db2fts>
+      <inumfts>427599.28125</inumfts>
+      <db2Index>82086.734375</db2Index>
+      <inumIndex>82076.21365356445</inumIndex>
     </result>
     <result id="64" timeout="false">
       <db2fts>170491.953125</db2fts>
       <inumfts>170491.953125</inumfts>
-      <db2Index>11179.03125</db2Index>
+      <db2Index>11369.0703125</db2Index>
       <inumIndex>7371.481442928314</inumIndex>
     </result>
     <result id="65" timeout="false">
       <db2fts>332989.90625</db2fts>
       <inumfts>332989.90625</inumfts>
-      <db2Index>16169.203125</db2Index>
+      <db2Index>16359.244140625</db2Index>
       <inumIndex>12361.651731014252</inumIndex>
     </result>
     <result id="66" timeout="false">
@@ -3061,46 +3061,46 @@
       <inumIndex>240415.66364038613</inumIndex>
     </result>
     <result id="67" timeout="false">
-      <db2fts>915286.5625</db2fts>
-      <inumfts>915286.5625</inumfts>
-      <db2Index>73997.625</db2Index>
-      <inumIndex>102641.16637658013</inumIndex>
+      <db2fts>916673.5</db2fts>
+      <inumfts>916673.5</inumfts>
+      <db2Index>80907.234375</db2Index>
+      <inumIndex>107659.1671764402</inumIndex>
     </result>
     <result id="68" timeout="false">
-      <db2fts>4426982.5</db2fts>
-      <inumfts>4426982.5</inumfts>
-      <db2Index>3151702.5</db2Index>
-      <inumIndex>3895862.811549211</inumIndex>
+      <db2fts>4510988.5</db2fts>
+      <inumfts>4510988.5</inumfts>
+      <db2Index>3226981.0</db2Index>
+      <inumIndex>3964686.8741960526</inumIndex>
     </result>
     <result id="69" timeout="false">
-      <db2fts>4455114.5</db2fts>
-      <inumfts>4455114.5</inumfts>
-      <db2Index>3179834.5</db2Index>
-      <inumIndex>3923994.561549211</inumIndex>
+      <db2fts>4539120.5</db2fts>
+      <inumfts>4539120.5</inumfts>
+      <db2Index>3255113.0</db2Index>
+      <inumIndex>3992818.6241960526</inumIndex>
     </result>
-    <result id="70" timeout="false">
-      <db2fts>3.177118E7</db2fts>
-      <inumfts>3.1771180625000037E7</inumfts>
-      <db2Index>1.4733005E7</db2Index>
-      <inumIndex>2.571998392415506E7</inumIndex>
+    <result id="70" timeout="true">
+      <db2fts>3.1858278E7</db2fts>
+      <inumfts>0.0</inumfts>
+      <db2Index>1.4838077E7</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
-    <result id="71" timeout="false">
-      <db2fts>4438848.0</db2fts>
-      <inumfts>4438848.250244141</inumfts>
-      <db2Index>1944960.625</db2Index>
-      <inumIndex>3408120.189476013</inumIndex>
+    <result id="71" timeout="true">
+      <db2fts>4450461.0</db2fts>
+      <inumfts>0.0</inumfts>
+      <db2Index>1958970.125</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="72" timeout="false">
-      <db2fts>1040408.25</db2fts>
-      <inumfts>1040408.25</inumfts>
-      <db2Index>698319.75</db2Index>
-      <inumIndex>698319.5559692383</inumIndex>
+      <db2fts>1051629.25</db2fts>
+      <inumfts>1051629.25</inumfts>
+      <db2Index>746168.3125</db2Index>
+      <inumIndex>746168.0559692383</inumIndex>
     </result>
     <result id="73" timeout="false">
-      <db2fts>802550.8125</db2fts>
-      <inumfts>802550.8125</inumfts>
-      <db2Index>685371.6875</db2Index>
-      <inumIndex>685324.2883844376</inumIndex>
+      <db2fts>803185.375</db2fts>
+      <inumfts>803185.375</inumfts>
+      <db2Index>713387.125</db2Index>
+      <inumIndex>713337.1008844376</inumIndex>
     </result>
     <result id="74" timeout="false">
       <db2fts>909041.5625</db2fts>
@@ -3117,8 +3117,8 @@
     <result id="76" timeout="false">
       <db2fts>441645.3125</db2fts>
       <inumfts>441645.3125</inumfts>
-      <db2Index>246257.875</db2Index>
-      <inumIndex>341753.764193058</inumIndex>
+      <db2Index>257718.015625</db2Index>
+      <inumIndex>355446.3340172768</inumIndex>
     </result>
     <result id="77" timeout="false">
       <db2fts>56380.5390625</db2fts>
@@ -3127,16 +3127,16 @@
       <inumIndex>38759.97289391424</inumIndex>
     </result>
     <result id="78" timeout="false">
-      <db2fts>2727402.5</db2fts>
-      <inumfts>2727348.25</inumfts>
-      <db2Index>2716774.25</db2Index>
-      <inumIndex>2716712.656513214</inumIndex>
+      <db2fts>2754931.25</db2fts>
+      <inumfts>2754931.25</inumfts>
+      <db2Index>2744357.25</db2Index>
+      <inumIndex>2744295.656513214</inumIndex>
     </result>
     <result id="79" timeout="false">
-      <db2fts>947399.9375</db2fts>
-      <inumfts>947399.9375</inumfts>
-      <db2Index>80000.3125</db2Index>
-      <inumIndex>86298.69063386928</inumIndex>
+      <db2fts>952165.875</db2fts>
+      <inumfts>952165.875</inumfts>
+      <db2Index>84766.3515625</db2Index>
+      <inumIndex>92505.05983287937</inumIndex>
     </result>
     <result id="80" timeout="true">
       <db2fts>2884978.25</db2fts>
@@ -3172,30 +3172,30 @@
       <db2fts>941739.9375</db2fts>
       <inumfts>941739.9375</inumfts>
       <db2Index>57378.1484375</db2Index>
-      <inumIndex>48987.96482086182</inumIndex>
+      <inumIndex>48956.07834625244</inumIndex>
     </result>
     <result id="86" timeout="false">
-      <db2fts>1207633.25</db2fts>
-      <inumfts>1207633.25</inumfts>
+      <db2fts>1374201.75</db2fts>
+      <inumfts>1374201.75</inumfts>
       <db2Index>841473.6875</db2Index>
-      <inumIndex>1006899.3914771334</inumIndex>
+      <inumIndex>1165563.2544137305</inumIndex>
     </result>
     <result id="87" timeout="false">
       <db2fts>350592.21875</db2fts>
       <inumfts>350592.21875</inumfts>
-      <db2Index>179080.53125</db2Index>
-      <inumIndex>181049.35480737686</inumIndex>
+      <db2Index>190539.71875</db2Index>
+      <inumIndex>192509.86237573624</inumIndex>
     </result>
     <result id="88" timeout="false">
       <db2fts>359237.71875</db2fts>
       <inumfts>359237.71875</inumfts>
       <db2Index>11748.39453125</db2Index>
-      <inumIndex>13176.277195930481</inumIndex>
+      <inumIndex>13664.349461555481</inumIndex>
     </result>
     <result id="89" timeout="true">
       <db2fts>870307.5</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>177228.015625</db2Index>
+      <db2Index>188685.140625</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="90" timeout="false">
@@ -3205,46 +3205,46 @@
       <inumIndex>11891.631885528564</inumIndex>
     </result>
     <result id="91" timeout="false">
-      <db2fts>411511.65625</db2fts>
-      <inumfts>411511.65625</inumfts>
-      <db2Index>34765.35546875</db2Index>
-      <inumIndex>32558.855832959103</inumIndex>
+      <db2fts>413879.46875</db2fts>
+      <inumfts>413879.46875</inumfts>
+      <db2Index>37133.16796875</db2Index>
+      <inumIndex>34926.6683329591</inumIndex>
     </result>
     <result id="92" timeout="false">
       <db2fts>1936031.875</db2fts>
       <inumfts>1936031.875</inumfts>
-      <db2Index>1017537.9375</db2Index>
-      <inumIndex>1025039.2230648994</inumIndex>
+      <db2Index>1074834.375</db2Index>
+      <inumIndex>1082324.4122738838</inumIndex>
     </result>
     <result id="93" timeout="false">
-      <db2fts>446122.25</db2fts>
-      <inumfts>446122.25</inumfts>
-      <db2Index>169430.65625</db2Index>
-      <inumIndex>31259.469217146423</inumIndex>
+      <db2fts>446772.375</db2fts>
+      <inumfts>446772.375</inumfts>
+      <db2Index>169660.0625</db2Index>
+      <inumIndex>32644.99158472797</inumIndex>
     </result>
     <result id="94" timeout="false">
-      <db2fts>1292687.25</db2fts>
-      <inumfts>1292687.25</inumfts>
+      <db2fts>1291907.25</db2fts>
+      <inumfts>1291907.25</inumfts>
       <db2Index>1151587.125</db2Index>
-      <inumIndex>1243312.783994216</inumIndex>
+      <inumIndex>1242532.7839886772</inumIndex>
     </result>
     <result id="95" timeout="false">
-      <db2fts>1292687.25</db2fts>
-      <inumfts>1292687.25</inumfts>
+      <db2fts>1291907.25</db2fts>
+      <inumfts>1291907.25</inumfts>
       <db2Index>1151587.125</db2Index>
-      <inumIndex>1243312.783994216</inumIndex>
+      <inumIndex>1242532.7839886772</inumIndex>
     </result>
     <result id="96" timeout="false">
-      <db2fts>1.32431880192E11</db2fts>
-      <inumfts>1.32431880192E11</inumfts>
-      <db2Index>1.32431888384E11</db2Index>
-      <inumIndex>1.3243187969524805E11</inumIndex>
+      <db2fts>1.32447739904E11</db2fts>
+      <inumfts>1.32447731712E11</inumfts>
+      <db2Index>1.32447731712E11</db2Index>
+      <inumIndex>1.3244773121524805E11</inumIndex>
     </result>
     <result id="97" timeout="false">
       <db2fts>326314.375</db2fts>
       <inumfts>326314.375</inumfts>
-      <db2Index>173652.09375</db2Index>
-      <inumIndex>173652.10286426544</inumIndex>
+      <db2Index>185105.921875</db2Index>
+      <inumIndex>185105.93098926544</inumIndex>
     </result>
     <result id="98" timeout="false">
       <db2fts>419897.875</db2fts>
@@ -3262,19 +3262,19 @@
       <db2fts>842612.625</db2fts>
       <inumfts>842612.625</inumfts>
       <db2Index>53523.1953125</db2Index>
-      <inumIndex>53534.97580433644</inumIndex>
+      <inumIndex>53535.35861683644</inumIndex>
     </result>
-    <result id="101" timeout="false">
-      <db2fts>3588500.75</db2fts>
-      <inumfts>3588500.75</inumfts>
-      <db2Index>1275862.0</db2Index>
-      <inumIndex>1275861.9240441322</inumIndex>
+    <result id="101" timeout="true">
+      <db2fts>3591480.25</db2fts>
+      <inumfts>0.0</inumfts>
+      <db2Index>1278841.75</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="102" timeout="false">
-      <db2fts>954599.875</db2fts>
-      <inumfts>954599.875</inumfts>
-      <db2Index>202768.140625</db2Index>
-      <inumIndex>237101.84130859375</inumIndex>
+      <db2fts>962782.375</db2fts>
+      <inumfts>962782.375</inumfts>
+      <db2Index>211728.140625</db2Index>
+      <inumIndex>244267.59130859375</inumIndex>
     </result>
   </indexSet>
   <indexSet name="one-column-index">
@@ -3463,44 +3463,44 @@
     <result id="1" timeout="false">
       <db2fts>419371.875</db2fts>
       <inumfts>419371.875</inumfts>
-      <db2Index>337954.625</db2Index>
-      <inumIndex>350421.84356689453</inumIndex>
+      <db2Index>347250.34375</db2Index>
+      <inumIndex>349755.96838378906</inumIndex>
     </result>
     <result id="2" timeout="false">
-      <db2fts>3792524.25</db2fts>
-      <inumfts>3792524.25</inumfts>
-      <db2Index>3763553.75</db2Index>
-      <inumIndex>3757198.013305664</inumIndex>
+      <db2fts>3851094.0</db2fts>
+      <inumfts>3851094.0</inumfts>
+      <db2Index>3822124.0</db2Index>
+      <inumIndex>3815767.763305664</inumIndex>
     </result>
     <result id="3" timeout="false">
-      <db2fts>1606249.75</db2fts>
-      <inumfts>1606248.125</inumfts>
-      <db2Index>250703.6875</db2Index>
-      <inumIndex>363564.89214289485</inumIndex>
+      <db2fts>1606592.125</db2fts>
+      <inumfts>1606590.3749999998</inumfts>
+      <db2Index>251047.203125</db2Index>
+      <inumIndex>363907.2909868517</inumIndex>
     </result>
     <result id="4" timeout="false">
-      <db2fts>1131774.0</db2fts>
-      <inumfts>1131774.0</inumfts>
-      <db2Index>1118311.875</db2Index>
-      <inumIndex>1118311.892150879</inumIndex>
+      <db2fts>1136235.125</db2fts>
+      <inumfts>1136235.125</inumfts>
+      <db2Index>1120279.375</db2Index>
+      <inumIndex>1120279.392150879</inumIndex>
     </result>
     <result id="5" timeout="false">
-      <db2fts>1131786.25</db2fts>
-      <inumfts>1131786.25</inumfts>
-      <db2Index>1118324.0</db2Index>
-      <inumIndex>1118324.142150879</inumIndex>
+      <db2fts>1136247.25</db2fts>
+      <inumfts>1136247.25</inumfts>
+      <db2Index>1120291.5</db2Index>
+      <inumIndex>1120291.642150879</inumIndex>
     </result>
     <result id="6" timeout="false">
       <db2fts>2935536.25</db2fts>
       <inumfts>2935536.25</inumfts>
-      <db2Index>360432.3125</db2Index>
-      <inumIndex>360432.3865966797</inumIndex>
+      <db2Index>360460.5625</db2Index>
+      <inumIndex>360460.6258544922</inumIndex>
     </result>
     <result id="7" timeout="false">
       <db2fts>6185490.0</db2fts>
       <inumfts>6185490.0</inumfts>
       <db2Index>32489.08984375</db2Index>
-      <inumIndex>36878.87142775526</inumIndex>
+      <inumIndex>37345.36000534564</inumIndex>
     </result>
     <result id="8" timeout="false">
       <db2fts>421241.78125</db2fts>
@@ -3515,16 +3515,16 @@
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="10" timeout="false">
-      <db2fts>975441.1875</db2fts>
-      <inumfts>975441.1875</inumfts>
-      <db2Index>672059.0</db2Index>
-      <inumIndex>672058.8383178711</inumIndex>
+      <db2fts>978622.625</db2fts>
+      <inumfts>978622.625</inumfts>
+      <db2Index>706837.1875</db2Index>
+      <inumIndex>706836.9633178711</inumIndex>
     </result>
     <result id="11" timeout="false">
       <db2fts>511508.34375</db2fts>
       <inumfts>511508.34375</inumfts>
-      <db2Index>233090.453125</db2Index>
-      <inumIndex>233090.2758178711</inumIndex>
+      <db2Index>252441.8125</db2Index>
+      <inumIndex>252441.6195678711</inumIndex>
     </result>
     <result id="12" timeout="false">
       <db2fts>114491.359375</db2fts>
@@ -3542,7 +3542,7 @@
       <db2fts>499130.46875</db2fts>
       <inumfts>499130.46875</inumfts>
       <db2Index>15719.9482421875</db2Index>
-      <inumIndex>16264.399642944336</inumIndex>
+      <inumIndex>16752.471908569336</inumIndex>
     </result>
     <result id="15" timeout="false">
       <db2fts>395053.09375</db2fts>
@@ -3553,12 +3553,12 @@
     <result id="16" timeout="false">
       <db2fts>1257959.0</db2fts>
       <inumfts>1257959.0</inumfts>
-      <db2Index>1012174.0625</db2Index>
-      <inumIndex>1051108.9057006836</inumIndex>
+      <db2Index>1040061.25</db2Index>
+      <inumIndex>554848.1815185547</inumIndex>
     </result>
     <result id="17" timeout="false">
       <db2fts>317012.46875</db2fts>
-      <inumfts>344546.515625</inumfts>
+      <inumfts>343151.875</inumfts>
       <db2Index>12611.271484375</db2Index>
       <inumIndex>12611.274284362793</inumIndex>
     </result>
@@ -3568,23 +3568,23 @@
       <db2Index>42586.78125</db2Index>
       <inumIndex>42598.33127975464</inumIndex>
     </result>
-    <result id="19" timeout="false">
+    <result id="19" timeout="true">
       <db2fts>913218.5</db2fts>
-      <inumfts>913218.5</inumfts>
+      <inumfts>0.0</inumfts>
       <db2Index>28475.6171875</db2Index>
-      <inumIndex>28475.61719894409</inumIndex>
+      <inumIndex>0.0</inumIndex>
     </result>
-    <result id="20" timeout="false">
-      <db2fts>2200066.5</db2fts>
-      <inumfts>2200066.5</inumfts>
-      <db2Index>2139572.25</db2Index>
-      <inumIndex>2138055.764038086</inumIndex>
+    <result id="20" timeout="true">
+      <db2fts>2208941.5</db2fts>
+      <inumfts>0.0</inumfts>
+      <db2Index>2145817.0</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="21" timeout="false">
-      <db2fts>1205541.375</db2fts>
-      <inumfts>1205541.375</inumfts>
-      <db2Index>534291.4375</db2Index>
-      <inumIndex>534291.4266357422</inumIndex>
+      <db2fts>1210221.5</db2fts>
+      <inumfts>1210221.5</inumfts>
+      <db2Index>538971.6875</db2Index>
+      <inumIndex>538971.6766357422</inumIndex>
     </result>
     <result id="22" timeout="false">
       <db2fts>941747.25</db2fts>
@@ -3601,8 +3601,8 @@
     <result id="24" timeout="false">
       <db2fts>163795.390625</db2fts>
       <inumfts>163795.390625</inumfts>
-      <db2Index>70920.78125</db2Index>
-      <inumIndex>70920.72619628906</inumIndex>
+      <db2Index>77364.9453125</db2Index>
+      <inumIndex>77364.89025878906</inumIndex>
     </result>
     <result id="25" timeout="false">
       <db2fts>682672.375</db2fts>
@@ -3613,7 +3613,7 @@
     <result id="26" timeout="true">
       <db2fts>2.45508112384E11</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>953941.3125</db2Index>
+      <db2Index>966719.125</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="27" timeout="false">
@@ -3625,7 +3625,7 @@
     <result id="28" timeout="true">
       <db2fts>2.45506670592E11</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>901123.1875</db2Index>
+      <db2Index>910519.9375</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="29" timeout="false">
@@ -3635,40 +3635,40 @@
       <inumIndex>65931.54327392578</inumIndex>
     </result>
     <result id="30" timeout="false">
-      <db2fts>1522775.125</db2fts>
-      <inumfts>1522775.125</inumfts>
-      <db2Index>1520651.125</db2Index>
-      <inumIndex>1520651.267211914</inumIndex>
+      <db2fts>1793713.5</db2fts>
+      <inumfts>1793713.5</inumfts>
+      <db2Index>1673187.25</db2Index>
+      <inumIndex>1673187.392211914</inumIndex>
     </result>
     <result id="31" timeout="false">
       <db2fts>846513.625</db2fts>
       <inumfts>846513.625</inumfts>
-      <db2Index>267282.78125</db2Index>
-      <inumIndex>266685.4853439331</inumIndex>
+      <db2Index>280375.5</db2Index>
+      <inumIndex>279778.2040939331</inumIndex>
     </result>
     <result id="32" timeout="false">
       <db2fts>401763.1875</db2fts>
       <inumfts>401763.1875</inumfts>
-      <db2Index>23406.70703125</db2Index>
+      <db2Index>23596.748046875</db2Index>
       <inumIndex>19599.157390594482</inumIndex>
     </result>
     <result id="33" timeout="true">
       <db2fts>220630.203125</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>82670.7421875</db2Index>
+      <db2Index>89121.203125</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="34" timeout="false">
       <db2fts>2370254.0</db2fts>
       <inumfts>2370254.0</inumfts>
-      <db2Index>2020201.75</db2Index>
-      <inumIndex>2020201.4705123901</inumIndex>
+      <db2Index>2102336.75</db2Index>
+      <inumIndex>2102336.47051239</inumIndex>
     </result>
     <result id="35" timeout="false">
-      <db2fts>5724314.0</db2fts>
-      <inumfts>5724314.0</inumfts>
-      <db2Index>5199325.5</db2Index>
-      <inumIndex>5199324.639953613</inumIndex>
+      <db2fts>5779033.0</db2fts>
+      <inumfts>5779033.0</inumfts>
+      <db2Index>5377246.0</db2Index>
+      <inumIndex>5377246.0</inumIndex>
     </result>
     <result id="36" timeout="false">
       <db2fts>2382180.5</db2fts>
@@ -3683,10 +3683,10 @@
       <inumIndex>55913.64147632725</inumIndex>
     </result>
     <result id="38" timeout="false">
-      <db2fts>1451349.75</db2fts>
-      <inumfts>1451349.75</inumfts>
-      <db2Index>1030203.0</db2Index>
-      <inumIndex>1030202.7844238281</inumIndex>
+      <db2fts>1451598.875</db2fts>
+      <inumfts>1451598.875</inumfts>
+      <db2Index>1080744.625</db2Index>
+      <inumIndex>1080744.4094238281</inumIndex>
     </result>
     <result id="39" timeout="false">
       <db2fts>492546.875</db2fts>
@@ -3697,24 +3697,24 @@
     <result id="40" timeout="false">
       <db2fts>327487.65625</db2fts>
       <inumfts>327487.65625</inumfts>
-      <db2Index>137565.3125</db2Index>
-      <inumIndex>143067.18103027344</inumIndex>
+      <db2Index>145478.0625</db2Index>
+      <inumIndex>158383.07165527344</inumIndex>
     </result>
     <result id="41" timeout="true">
       <db2fts>764043.25</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>75396.140625</db2Index>
+      <db2Index>79683.3984375</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="42" timeout="false">
-      <db2fts>1443927.625</db2fts>
-      <inumfts>1443927.625</inumfts>
-      <db2Index>1443927.625</db2Index>
-      <inumIndex>1443927.625</inumIndex>
+      <db2fts>1459720.125</db2fts>
+      <inumfts>1459720.125</inumfts>
+      <db2Index>1433563.125</db2Index>
+      <inumIndex>1433563.125</inumIndex>
     </result>
     <result id="43" timeout="false">
-      <db2fts>841711.8125</db2fts>
-      <inumfts>841711.8125</inumfts>
+      <db2fts>844621.9375</db2fts>
+      <inumfts>844621.9375</inumfts>
       <db2Index>86748.015625</db2Index>
       <inumIndex>86748.02253723145</inumIndex>
     </result>
@@ -3722,24 +3722,24 @@
       <db2fts>1638403.0</db2fts>
       <inumfts>1638402.9999999998</inumfts>
       <db2Index>16161.9853515625</db2Index>
-      <inumIndex>17010.32343229232</inumIndex>
+      <inumIndex>17143.304077148438</inumIndex>
     </result>
     <result id="45" timeout="false">
       <db2fts>401747.875</db2fts>
       <inumfts>401747.875</inumfts>
-      <db2Index>42450.125</db2Index>
-      <inumIndex>42450.13751220703</inumIndex>
+      <db2Index>43717.5703125</db2Index>
+      <inumIndex>43717.57501220703</inumIndex>
     </result>
     <result id="46" timeout="false">
-      <db2fts>1123712.875</db2fts>
-      <inumfts>1123712.875</inumfts>
-      <db2Index>821438.25</db2Index>
-      <inumIndex>821437.9719238281</inumIndex>
+      <db2fts>1125210.0</db2fts>
+      <inumfts>1125210.0</inumfts>
+      <db2Index>863214.625</db2Index>
+      <inumIndex>863214.4094238281</inumIndex>
     </result>
     <result id="47" timeout="true">
       <db2fts>2.45508571136E11</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>1278357.125</db2Index>
+      <db2Index>1303288.25</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="48" timeout="false">
@@ -3755,22 +3755,22 @@
       <inumIndex>5949810.7271028</inumIndex>
     </result>
     <result id="50" timeout="false">
-      <db2fts>1721757.625</db2fts>
-      <inumfts>1721757.625</inumfts>
-      <db2Index>1268345.5</db2Index>
-      <inumIndex>1268345.0514526367</inumIndex>
+      <db2fts>1727523.375</db2fts>
+      <inumfts>1727523.375</inumfts>
+      <db2Index>1334529.75</db2Index>
+      <inumIndex>1334529.3014526367</inumIndex>
     </result>
     <result id="51" timeout="false">
-      <db2fts>5.6900378624E10</db2fts>
-      <inumfts>5.6900378624E10</inumfts>
-      <db2Index>5.690038272E10</db2Index>
-      <inumIndex>5.6900378624E10</inumIndex>
+      <db2fts>5.690079232E10</db2fts>
+      <inumfts>5.690079232E10</inumfts>
+      <db2Index>5.690079232E10</db2Index>
+      <inumIndex>5.690079232E10</inumIndex>
     </result>
     <result id="52" timeout="false">
-      <db2fts>428776.65625</db2fts>
-      <inumfts>428776.65625</inumfts>
-      <db2Index>401952.75</db2Index>
-      <inumIndex>401952.76414871216</inumIndex>
+      <db2fts>435488.125</db2fts>
+      <inumfts>435488.125</inumfts>
+      <db2Index>408667.625</db2Index>
+      <inumIndex>408667.60789871216</inumIndex>
     </result>
     <result id="53" timeout="true">
       <db2fts>764051.1875</db2fts>
@@ -3779,34 +3779,34 @@
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="54" timeout="false">
-      <db2fts>950869.6875</db2fts>
-      <inumfts>950869.6875</inumfts>
-      <db2Index>647491.0625</db2Index>
-      <inumIndex>647490.9008178711</inumIndex>
+      <db2fts>955742.3125</db2fts>
+      <inumfts>955742.3125</inumfts>
+      <db2Index>683960.5</db2Index>
+      <inumIndex>683960.3383178711</inumIndex>
     </result>
     <result id="55" timeout="false">
-      <db2fts>3076430.5</db2fts>
-      <inumfts>3076430.5</inumfts>
-      <db2Index>3071120.75</db2Index>
-      <inumIndex>3071120.855529785</inumIndex>
+      <db2fts>3136886.0</db2fts>
+      <inumfts>3136886.0</inumfts>
+      <db2Index>3131607.0</db2Index>
+      <inumIndex>3131576.355529785</inumIndex>
     </result>
     <result id="56" timeout="false">
       <db2fts>401850.28125</db2fts>
       <inumfts>401850.28125</inumfts>
-      <db2Index>63478.87890625</db2Index>
-      <inumIndex>63478.88439941406</inumIndex>
+      <db2Index>64978.66015625</db2Index>
+      <inumIndex>64978.66564941406</inumIndex>
     </result>
     <result id="57" timeout="false">
       <db2fts>345657.71875</db2fts>
       <inumfts>345657.71875</inumfts>
       <db2Index>50430.28515625</db2Index>
-      <inumIndex>50484.6162109375</inumIndex>
+      <inumIndex>50484.6279296875</inumIndex>
     </result>
-    <result id="58" timeout="false">
+    <result id="58" timeout="true">
       <db2fts>7.2215176E7</db2fts>
-      <inumfts>7.221517600012209E7</inumfts>
-      <db2Index>3684247.0</db2Index>
-      <inumIndex>3684410.755432129</inumIndex>
+      <inumfts>0.0</inumfts>
+      <db2Index>6940814.0</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="59" timeout="false">
       <db2fts>401753.53125</db2fts>
@@ -3814,40 +3814,40 @@
       <db2Index>18815.63671875</db2Index>
       <inumIndex>18979.381469726562</inumIndex>
     </result>
-    <result id="60" timeout="false">
+    <result id="60" timeout="true">
       <db2fts>431909.875</db2fts>
-      <inumfts>431909.875</inumfts>
+      <inumfts>0.0</inumfts>
       <db2Index>34300.61328125</db2Index>
-      <inumIndex>34464.359098911285</inumIndex>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="61" timeout="false">
       <db2fts>401753.53125</db2fts>
       <inumfts>401753.53125</inumfts>
       <db2Index>18815.64453125</db2Index>
-      <inumIndex>18979.389282226562</inumIndex>
+      <inumIndex>18979.36114501953</inumIndex>
     </result>
     <result id="62" timeout="false">
       <db2fts>2.8313492E7</db2fts>
       <inumfts>2.8313491999999996E7</inumfts>
-      <db2Index>194586.890625</db2Index>
-      <inumIndex>194586.19860839844</inumIndex>
+      <db2Index>328555.3125</db2Index>
+      <inumIndex>328554.62048339844</inumIndex>
     </result>
     <result id="63" timeout="false">
-      <db2fts>425025.0</db2fts>
-      <inumfts>425025.0</inumfts>
-      <db2Index>75294.1640625</db2Index>
-      <inumIndex>75338.21426391602</inumIndex>
+      <db2fts>427599.28125</db2fts>
+      <inumfts>427599.28125</inumfts>
+      <db2Index>82155.984375</db2Index>
+      <inumIndex>82199.75332641602</inumIndex>
     </result>
     <result id="64" timeout="false">
       <db2fts>170491.953125</db2fts>
       <inumfts>170491.953125</inumfts>
-      <db2Index>11228.982421875</db2Index>
+      <db2Index>11419.0224609375</db2Index>
       <inumIndex>7421.43270111084</inumIndex>
     </result>
     <result id="65" timeout="false">
       <db2fts>332989.90625</db2fts>
       <inumfts>332989.90625</inumfts>
-      <db2Index>16219.154296875</db2Index>
+      <db2Index>16409.193359375</db2Index>
       <inumIndex>12411.602989196777</inumIndex>
     </result>
     <result id="66" timeout="false">
@@ -3857,46 +3857,46 @@
       <inumIndex>249712.4698166057</inumIndex>
     </result>
     <result id="67" timeout="false">
-      <db2fts>915286.5625</db2fts>
-      <inumfts>915286.5625</inumfts>
-      <db2Index>267273.46875</db2Index>
-      <inumIndex>266676.16820526123</inumIndex>
+      <db2fts>916673.5</db2fts>
+      <inumfts>916673.5</inumfts>
+      <db2Index>280366.09375</db2Index>
+      <inumIndex>279768.79320526123</inumIndex>
     </result>
     <result id="68" timeout="false">
-      <db2fts>4426982.5</db2fts>
-      <inumfts>4426982.5</inumfts>
-      <db2Index>3897452.25</db2Index>
-      <inumIndex>3896997.994812461</inumIndex>
+      <db2fts>4510988.5</db2fts>
+      <inumfts>4510988.5</inumfts>
+      <db2Index>3966276.5</db2Index>
+      <inumIndex>3965822.057434082</inumIndex>
     </result>
     <result id="69" timeout="false">
-      <db2fts>4455114.5</db2fts>
-      <inumfts>4455114.5</inumfts>
-      <db2Index>3925584.0</db2Index>
-      <inumIndex>3925129.716675252</inumIndex>
+      <db2fts>4539120.5</db2fts>
+      <inumfts>4539120.5</inumfts>
+      <db2Index>3994408.25</db2Index>
+      <inumIndex>3993953.779296875</inumIndex>
     </result>
-    <result id="70" timeout="false">
-      <db2fts>3.177118E7</db2fts>
-      <inumfts>3.1771180625000037E7</inumfts>
-      <db2Index>2.7404172E7</db2Index>
-      <inumIndex>2.741934581135708E7</inumIndex>
+    <result id="70" timeout="true">
+      <db2fts>3.1858278E7</db2fts>
+      <inumfts>0.0</inumfts>
+      <db2Index>2.7491268E7</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
-    <result id="71" timeout="false">
-      <db2fts>4438848.0</db2fts>
-      <inumfts>4438848.250244141</inumfts>
-      <db2Index>3634540.0</db2Index>
-      <inumIndex>3634867.6339416504</inumIndex>
+    <result id="71" timeout="true">
+      <db2fts>4450461.0</db2fts>
+      <inumfts>0.0</inumfts>
+      <db2Index>3646153.0</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="72" timeout="false">
-      <db2fts>1040408.25</db2fts>
-      <inumfts>1040408.25</inumfts>
-      <db2Index>701529.4375</db2Index>
-      <inumIndex>701529.4375</inumIndex>
+      <db2fts>1051629.25</db2fts>
+      <inumfts>1051629.25</inumfts>
+      <db2Index>749377.9375</db2Index>
+      <inumIndex>749377.9375</inumIndex>
     </result>
     <result id="73" timeout="false">
-      <db2fts>802550.8125</db2fts>
-      <inumfts>802550.8125</inumfts>
-      <db2Index>685887.4375</db2Index>
-      <inumIndex>685887.3297119141</inumIndex>
+      <db2fts>803185.375</db2fts>
+      <inumfts>803185.375</inumfts>
+      <db2Index>713900.25</db2Index>
+      <inumIndex>713900.1422119141</inumIndex>
     </result>
     <result id="74" timeout="false">
       <db2fts>909041.5625</db2fts>
@@ -3913,8 +3913,8 @@
     <result id="76" timeout="false">
       <db2fts>441645.3125</db2fts>
       <inumfts>441645.3125</inumfts>
-      <db2Index>347264.09375</db2Index>
-      <inumIndex>344879.7620239258</inumIndex>
+      <db2Index>360956.65625</db2Index>
+      <inumIndex>358568.94952392584</inumIndex>
     </result>
     <result id="77" timeout="false">
       <db2fts>56380.5390625</db2fts>
@@ -3923,16 +3923,16 @@
       <inumIndex>43799.30675585021</inumIndex>
     </result>
     <result id="78" timeout="false">
-      <db2fts>2727447.5</db2fts>
-      <inumfts>2727348.25</inumfts>
-      <db2Index>2721128.0</db2Index>
-      <inumIndex>2718874.0727539062</inumIndex>
+      <db2fts>2755008.0</db2fts>
+      <inumfts>2754931.25</inumfts>
+      <db2Index>2748711.0</db2Index>
+      <inumIndex>2746457.0727539062</inumIndex>
     </result>
     <result id="79" timeout="false">
-      <db2fts>947399.9375</db2fts>
-      <inumfts>947399.9375</inumfts>
-      <db2Index>644021.3125</db2Index>
-      <inumIndex>644021.1508178711</inumIndex>
+      <db2fts>952165.875</db2fts>
+      <inumfts>952165.875</inumfts>
+      <db2Index>680384.0625</db2Index>
+      <inumIndex>680383.9008178711</inumIndex>
     </result>
     <result id="80" timeout="true">
       <db2fts>2884978.25</db2fts>
@@ -3971,27 +3971,27 @@
       <inumIndex>64270.97381591797</inumIndex>
     </result>
     <result id="86" timeout="false">
-      <db2fts>1207633.25</db2fts>
-      <inumfts>1207633.25</inumfts>
-      <db2Index>1205509.25</db2Index>
-      <inumIndex>1205509.2351268658</inumIndex>
+      <db2fts>1374201.75</db2fts>
+      <inumfts>1374201.75</inumfts>
+      <db2Index>1372078.0</db2Index>
+      <inumIndex>1372077.7530092662</inumIndex>
     </result>
     <result id="87" timeout="false">
       <db2fts>350592.21875</db2fts>
       <inumfts>350592.21875</inumfts>
-      <db2Index>186476.21875</db2Index>
-      <inumIndex>187732.34356689453</inumIndex>
+      <db2Index>197936.71875</db2Index>
+      <inumIndex>199189.46856689453</inumIndex>
     </result>
     <result id="88" timeout="false">
       <db2fts>359237.71875</db2fts>
       <inumfts>359237.71875</inumfts>
       <db2Index>12828.052734375</db2Index>
-      <inumIndex>13372.528274536133</inumIndex>
+      <inumIndex>13860.600540161133</inumIndex>
     </result>
     <result id="89" timeout="true">
       <db2fts>870307.5</db2fts>
       <inumfts>0.0</inumfts>
-      <db2Index>181310.90625</db2Index>
+      <db2Index>192768.03125</db2Index>
       <inumIndex>0.0</inumIndex>
     </result>
     <result id="90" timeout="false">
@@ -4001,46 +4001,46 @@
       <inumIndex>11891.631885528564</inumIndex>
     </result>
     <result id="91" timeout="false">
-      <db2fts>411511.65625</db2fts>
-      <inumfts>411511.65625</inumfts>
-      <db2Index>35885.87109375</db2Index>
-      <inumIndex>34772.11572265625</inumIndex>
+      <db2fts>413879.46875</db2fts>
+      <inumfts>413879.46875</inumfts>
+      <db2Index>38253.68359375</db2Index>
+      <inumIndex>37139.92822265625</inumIndex>
     </result>
     <result id="92" timeout="false">
       <db2fts>1936031.875</db2fts>
       <inumfts>1936031.875</inumfts>
-      <db2Index>1036182.9375</db2Index>
-      <inumIndex>1036182.6109008789</inumIndex>
+      <db2Index>1093468.625</db2Index>
+      <inumIndex>1105153.8137207031</inumIndex>
     </result>
     <result id="93" timeout="false">
-      <db2fts>446122.25</db2fts>
-      <inumfts>446122.25</inumfts>
-      <db2Index>352791.34375</db2Index>
-      <inumIndex>350129.83868408203</inumIndex>
+      <db2fts>446772.375</db2fts>
+      <inumfts>446772.375</inumfts>
+      <db2Index>367809.3125</db2Index>
+      <inumIndex>364469.08868408203</inumIndex>
     </result>
     <result id="94" timeout="false">
-      <db2fts>1292687.25</db2fts>
-      <inumfts>1292687.25</inumfts>
-      <db2Index>1243367.5</db2Index>
-      <inumIndex>1243367.5</inumIndex>
+      <db2fts>1291907.25</db2fts>
+      <inumfts>1291907.25</inumfts>
+      <db2Index>1242587.5</db2Index>
+      <inumIndex>1242587.5</inumIndex>
     </result>
     <result id="95" timeout="false">
-      <db2fts>1292687.25</db2fts>
-      <inumfts>1292687.25</inumfts>
-      <db2Index>1243367.5</db2Index>
-      <inumIndex>1243367.5</inumIndex>
+      <db2fts>1291907.25</db2fts>
+      <inumfts>1291907.25</inumfts>
+      <db2Index>1242587.5</db2Index>
+      <inumIndex>1242587.5</inumIndex>
     </result>
     <result id="96" timeout="false">
-      <db2fts>1.32431880192E11</db2fts>
-      <inumfts>1.32431880192E11</inumfts>
-      <db2Index>1.32431880192E11</db2Index>
-      <inumIndex>1.32431880192E11</inumIndex>
+      <db2fts>1.32447731712E11</db2fts>
+      <inumfts>1.32447731712E11</inumfts>
+      <db2Index>1.32447748096E11</db2Index>
+      <inumIndex>1.32447731712E11</inumIndex>
     </result>
     <result id="97" timeout="false">
       <db2fts>326314.375</db2fts>
       <inumfts>326314.375</inumfts>
-      <db2Index>173922.390625</db2Index>
-      <inumIndex>173922.33557128906</inumIndex>
+      <db2Index>185376.21875</db2Index>
+      <inumIndex>185376.16369628906</inumIndex>
     </result>
     <result id="98" timeout="false">
       <db2fts>419897.875</db2fts>
@@ -4058,19 +4058,19 @@
       <db2fts>842612.625</db2fts>
       <inumfts>842612.625</inumfts>
       <db2Index>58723.21875</db2Index>
-      <inumIndex>59050.65856933594</inumIndex>
+      <inumIndex>59051.04138183594</inumIndex>
     </result>
-    <result id="101" timeout="false">
-      <db2fts>3588500.75</db2fts>
-      <inumfts>3588500.75</inumfts>
-      <db2Index>1276361.625</db2Index>
-      <inumIndex>1276361.7417507172</inumIndex>
+    <result id="101" timeout="true">
+      <db2fts>3591480.25</db2fts>
+      <inumfts>0.0</inumfts>
+      <db2Index>1279341.375</db2Index>
+      <inumIndex>0.0</inumIndex>
     </result>
     <result id="102" timeout="false">
-      <db2fts>954599.875</db2fts>
-      <inumfts>954599.875</inumfts>
-      <db2Index>235666.140625</db2Index>
-      <inumIndex>237101.84130859375</inumIndex>
+      <db2fts>962782.375</db2fts>
+      <inumfts>962782.375</inumfts>
+      <db2Index>243727.359375</db2Index>
+      <inumIndex>244267.59130859375</inumIndex>
     </result>
   </indexSet>
 </workload>

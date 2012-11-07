@@ -91,7 +91,15 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
         if ( tested.contains(bitset))
             return;
         tested.add(bitset);
-        ExplainedSQLStatement estmt = delegate.explain(statement, indexes);
+        ExplainedSQLStatement estmt;
+        try {
+            estmt = delegate.explain(statement, indexes);
+        } catch (SQLException e) {
+            if ("Invalid plan, too many invalid nodes".equals(e.getMessage()))
+                return;
+            else
+                throw e;
+        }
         whatIfCount++;
 
         //Can't remember why I disabled the following code
@@ -127,14 +135,19 @@ public class IBGSpaceComputation extends AbstractSpaceComputation
             List<Index> usedIndexes = estmt.getPlan().getIndexes();
             // check
             Set<Index> set2 = new HashSet<Index>();
+            Set<Index> materializedIndexes = new HashSet<Index>();
             set2.addAll(usedIndexes);
             for (Index usedIndex : set2) {
-                if (!indexes.contains(usedIndex))
-                    throw new Error("index " + usedIndex
-                            + " was not in input index set");
+                if (!indexes.contains(usedIndex)) {
+                    materializedIndexes.add(usedIndex);
+//                    Rt.error("index " + usedIndex
+//                            + " was not in input index set");
+                }
             }
             int id = 0;
             for (Index usedIndex : set2) {
+                if (materializedIndexes.contains(usedIndex))
+                    continue;
                 Set<Index> conf = new HashSet<Index>();
 
                 conf.addAll(indexes);

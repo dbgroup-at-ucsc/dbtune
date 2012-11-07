@@ -4,11 +4,18 @@ import java.io.File;
 import java.util.HashMap;
 import org.junit.Test;
 
+import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.util.Rt;
 
-
+/**
+ * Test basic DIT
+ * @author Quoc Trung Tran
+ *
+ */
 public class DIVBIPEquivalentTest extends DIVPaper 
 {   
+    public static String fileName;
+    
     @Test
     public void main() throws Exception
     {
@@ -16,53 +23,59 @@ public class DIVBIPEquivalentTest extends DIVPaper
         // data structures
         initialize();
         
-        // 2. special data structures for this class
-        entries = new HashMap<DivPaperEntry, Double>();
-        divFile = new File(rawDataDir, DIV_DB2_FILE);
-        divFile.delete();
-        divFile = new File(rawDataDir, DIV_DB2_FILE);
-        divFile.createNewFile();
+        // get parameters
+        getEnvironmentParameters();        
+        setParameters();
+        fileName = wlName + "_" + DIV_DETAIL_DB2_FILE;
         
-        // experiment for DIV equivalent to BIP
-        for (int i = 0; i < dbNames.length; i++) 
-            runExpts(dbNames[i], wlNames[i]);
+        // experiment for DIV equivalent to BIP    
+        runDivBIP();
         
-        // store in the serialize file
-        serializeDivResult(entries, divFile);
-        
-        // test the result
-        entries = readDivResult(divFile);
-        Rt.p(" result " + entries);
+        // not to draw graph
+        resetParameterNotDrawingGraph();
     }
     
     /**
      * Call DIVBIP for each pair of replicas and budgets 
      * 
-     * @param dbName
-     *      Database name
-     * @param wlName
-     *      Workload name
+     * 
      * @throws Exception
      */
-    public static void runExpts(String dbName, String wlName)
-                       throws Exception
-    {
-        //get database instances, candidate indexes
-        getEnvironmentParameters(dbName, wlName);
-
-        // get parameters
-        setParameters();
-        
-        double costBip;
+    public static void runDivBIP() throws Exception
+    {   
         long budget;
+        timeBIP = 0.0;
+        
+        boolean isOnTheFly = false;
+        WorkloadCostDetail wc;
+        detailEntries = new HashMap<DivPaperEntryDetail, Double>();
         for (double B : listBudgets) 
             for (int n : listNumberReplicas) {
-                costBip = DivBIPFunctionalTest.testDivSimplify(n, B, false);
+                LogListener logger = LogListener.getInstance();
+                wc = DivBIPFunctionalTest.testDivSimplify(n, B, 
+                                    isOnTheFly, logger);
                 budget = convertBudgetToMB(B);
-                DivPaperEntry entry = new DivPaperEntry
-                        (dbName, wlName, n, budget);
+                DivPaperEntryDetail entry = new DivPaperEntryDetail
+                        (dbName, wlName, n, budget, divConf);
+                entry.queryCost = wc.queryCost;
+                entry.updateCost = wc.updateCost;
                 
-                entries.put(entry, costBip);
+                detailEntries.put(entry, wc.totalCost);
+                timeBIP += logger.getTotalRunningTime();
+                
+                // 2. store in the file
+                divFile = new File(rawDataDir, fileName);
+                divFile.delete();
+                divFile = new File(rawDataDir, fileName);
+                divFile.createNewFile();
+                
+                // store in the serialize file
+                serializeDivResultDetail(detailEntries, divFile);
             }
+        
+        double averageBIP = timeBIP / (listBudgets.size()
+                                        * listNumberReplicas.size());
+        Rt.p("TOTAL running time = " + timeBIP
+                + " AVERGE Running time = " + averageBIP);
     }
 }

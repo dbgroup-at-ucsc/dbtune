@@ -104,7 +104,7 @@ public class QueryCostOptimalBuilderGeneral
         
         // constraint for the local optimal
         localOptimal(r, desc.getStatementID(), desc, exprOptimal);
-        presentVariableLocalOptimal(r, desc.getStatementID(), desc);
+        //presentVariableLocalOptimal(r, desc.getStatementID(), desc);
         selectingIndexAtEachSlot(r, desc.getStatementID(), desc);
     }
     
@@ -118,6 +118,16 @@ public class QueryCostOptimalBuilderGeneral
     protected void localOptimal(int r, int q, QueryPlanDesc desc, IloLinearNumExpr exprQuery)
                    throws IloException
     {   
+        // local optimal
+        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++) 
+            localOptimal(r, q, desc, exprQuery, t);
+    }
+    
+    
+    protected void localOptimal(int r, int q, QueryPlanDesc desc, 
+                                IloLinearNumExpr exprQuery, int t)
+            throws IloException
+    {
         IloLinearNumExpr expr;
         IloLinearNumExpr exprAtomic;
         int idU;
@@ -129,46 +139,43 @@ public class QueryCostOptimalBuilderGeneral
         else 
             approxCoef = 1.0;
         
-        // local optimal
-        for (int t = 0; t < desc.getNumberOfTemplatePlans(); t++) {
-            
-            expr = cplex.linearNumExpr();
-            expr.add(exprQuery);    
-                        
-            for (int i = 0; i < desc.getNumberOfSlots(t); i++) {
-                
-                isFTSInSlot = false;
-                for (Index index : desc.getIndexesAtSlot(t, i)) {
-                    idU = poolVariables.get(VAR_U, r, q, t, i, index.getId()).getId();
-                    expr.addTerm(-approxCoef * desc.getAccessCost(t, i, index), cplexVar.get(idU));
+        expr = cplex.linearNumExpr();
+        expr.add(exprQuery);    
                     
-                    if (index instanceof FullTableScanIndex)
-                        isFTSInSlot = true;
-                }
+        for (int i = 0; i < desc.getNumberOfSlots(t); i++) {
+            
+            isFTSInSlot = false;
+            for (Index index : desc.getIndexesAtSlot(t, i)) {
+                idU = poolVariables.get(VAR_U, r, q, t, i, index.getId()).getId();
+                expr.addTerm(-approxCoef * desc.getAccessCost(t, i, index), cplexVar.get(idU));
                 
-                // atomic
-                exprAtomic = cplex.linearNumExpr();
-                for (Index index : desc.getIndexesAtSlot(t, i)) {
-                    idU = poolVariables.get(VAR_U, r, q, t, i, index.getId()).getId();
-                    exprAtomic.addTerm(1, cplexVar.get(idU));           
-                }
-                
-                // add an infinity for the FTS-U variable
-                if (!isFTSInSlot) {
-                    Index fts = desc.getFTSAtSlot(t, i);
-                    idU = poolVariables.get(VAR_U, r, q, t, i, fts.getId()).getId();
-                    expr.addTerm(-approxCoef * BIP_MAX_VALUE, cplexVar.get(idU));
-                    exprAtomic.addTerm(1, cplexVar.get(idU));   
-                }
-                
-                cplex.addEq(exprAtomic, 1, "atomic_U" + numConstraints);
-                numConstraints++;
+                if (index instanceof FullTableScanIndex)
+                    isFTSInSlot = true;
             }
             
-            cplex.addLe(expr, approxCoef * desc.getInternalPlanCost(t), "local_" + numConstraints);
+            // atomic
+            exprAtomic = cplex.linearNumExpr();
+            for (Index index : desc.getIndexesAtSlot(t, i)) {
+                idU = poolVariables.get(VAR_U, r, q, t, i, index.getId()).getId();
+                exprAtomic.addTerm(1, cplexVar.get(idU));           
+            }
+            
+            // add an infinity for the FTS-U variable
+            if (!isFTSInSlot) {
+                Index fts = desc.getFTSAtSlot(t, i);
+                idU = poolVariables.get(VAR_U, r, q, t, i, fts.getId()).getId();
+                expr.addTerm(-approxCoef * BIP_MAX_VALUE, cplexVar.get(idU));
+                exprAtomic.addTerm(1, cplexVar.get(idU));   
+            }
+            
+            cplex.addEq(exprAtomic, 1, "atomic_U" + numConstraints);
             numConstraints++;
         }
+        
+        cplex.addLe(expr, approxCoef * desc.getInternalPlanCost(t), "local_" + numConstraints);
+        numConstraints++; 
     }
+
      
     /**
      * Constraint on the present of {@code VAR_U} variables.

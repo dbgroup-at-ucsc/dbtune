@@ -6,7 +6,7 @@ import java.util.List;
 import org.junit.Test;
 
 
-import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
+import edu.ucsc.dbtune.bip.DIVPaper.WorkloadCostDetail;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.div.DivBIP;
@@ -19,8 +19,8 @@ import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
-import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
 
 /**
@@ -32,6 +32,9 @@ import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
  */
 public class DivBIPFunctionalTest extends DivTestSetting
 {   
+    protected static boolean isComparedDB2 = false;
+    protected static boolean isComparedUnif = true;
+    
     @Test
     public void main() throws Exception
     {
@@ -40,27 +43,28 @@ public class DivBIPFunctionalTest extends DivTestSetting
         
         // 2. set parameter for DivBIP()
         setParameters();
-        
-        if (!(io instanceof InumOptimizer))
-            return;
-        
-        db2Advis = new DB2Advisor(db);
-        candidates = readCandidateIndexes(db2Advis);
                 
         // 3. Test the benefit of indexes
-        //compareDB2InumQueryCosts(workload, candidates);
+        if (isComparedDB2)
+            compareDB2InumQueryCosts(workload, candidates);
         
+        // 4. test divergent
+        if (isComparedUnif) {
+            for (double B1 : listBudgets) 
+                for (int n : listNumberReplicas)
+                    testDiv(n, B1, false);
+        }
         
-        // 3. test divergent
-        for (double B1 : listBudgets) 
-            for (int n : listNumberReplicas)
-                testDiv(n, B1, false);
-              
     }
     
     
     /**
      * Run the BIP with the parameters set by other functions
+     * @param _n
+     *      Number of replicas
+     * @param _B  
+     *      Space budget
+     *               
      * @throws Exception
      */
     public static double testDiv(int _n, double _B, boolean isOnTheFly) throws Exception
@@ -120,8 +124,8 @@ public class DivBIPFunctionalTest extends DivTestSetting
             
             Rt.p(" TOTAL COST(INUM): " + totalCostBIP);
             Rt.p(" NODE IMBALANCE: " + div.getNodeImbalance());
-            Rt.p(" PREDICTABILITY IMBALANCE: " + div.getQueryImbalance());   
-            Rt.p(" FAILURE IMBALANCE: " + div.getFailureImbalance());
+            //Rt.p(" PREDICTABILITY IMBALANCE: " + div.getQueryImbalance());   
+            //Rt.p(" FAILURE IMBALANCE: " + div.getFailureImbalance());
             // check for node balance constraint
             /*
             div.setUpperReplicaCost(totalCostBIP * 1.1 / nReplicas);
@@ -186,33 +190,22 @@ public class DivBIPFunctionalTest extends DivTestSetting
             
             Rt.p("CPLEX result: number of replicas: " + nReplicas + "\n" 
                     + " TOTAL cost:  " + totalCostBIP + "\n"
-                    + " QUERY cost:  " + queryCost   + "\n"
-                    + " UPDATE cost: " + updateCost  + "\n"
-                    + " ----- Update cost details: "  + "\n"
-                    + "          + query shell & update indexes: " 
-                                        + div.getUpdateCostFromCplex() + "\n"
-                    + " ----- CPLEX info: \n"
-                    + "          + obj value: " + div.getObjValue() + "\n"
-                    + "          + gap from the optimal: " + div.getObjectiveGap() + "\n"
-                    + " NUMBER of distinct indexes: " + divConf.countDistinctIndexes()+ "\n"
-                    + " NUMBER OF queries:          " + 
-                            div.computeNumberQueriesSpecializeForReplica()
+                    //+ " QUERY cost:  " + queryCost   + "\n"
+                    //+ " UPDATE cost: " + updateCost  + "\n"
+                    //+ " ----- Update cost details: "  + "\n"
+                    //+ "          + query shell & update indexes: " 
+                    //                    + div.getUpdateCostFromCplex() + "\n"
+                    //+ " ----- CPLEX info: \n"
+                    //+ "          + obj value: " + div.getObjValue() + "\n"
+                    //+ "          + gap from the optimal: " + div.getObjectiveGap() + "\n"
+                    //+ " NUMBER of distinct indexes: " + divConf.countDistinctIndexes()+ "\n"
+                    //+ " NUMBER OF queries:          " + 
+                     //       div.computeNumberQueriesSpecializeForReplica()
                     );
             
             Rt.p(" TOTAL COST(INUM): " + totalCostBIP);
-            Rt.p(" NODE IMBALANCE: " + div.getNodeImbalance());
-            Rt.p(" PREDICTABILITY IMBALANCE: " + div.getQueryImbalance());   
-            Rt.p(" FAILURE IMBALANCE: " + div.getFailureImbalance());
-            // check for node balance constraint
-            /*
-            div.setUpperReplicaCost(totalCostBIP * 1.1 / nReplicas);
-            output = div.solve();
-            Rt.p(logger.toString());
-            if (output != null)
-                Rt.p(" COST OF NODE-BALANCE CONSTRAINT " + div.getObjValue()
-                        + " NODE IMBALANCE: " + div.getNodeImbalance()
-                        + " NEW RATIO: " + (div.getObjValue() / totalCostBIP));
-            */
+            //Rt.p(" NODE IMBALANCE: " + div.getNodeImbalance());
+            
             return totalCostBIP;
             
         } else {
@@ -225,7 +218,10 @@ public class DivBIPFunctionalTest extends DivTestSetting
      * Run the BIP with the parameters set by other functions
      * @throws Exception
      */
-    public static double testDivSimplify(int _n, double _B, boolean isOnTheFly) throws Exception
+    public static WorkloadCostDetail testDivSimplify(int _n, double _B, 
+                                        boolean isOnTheFly,
+                                        LogListener logger) 
+            throws Exception
     {
         div = new DivBIP();
         
@@ -235,8 +231,6 @@ public class DivBIPFunctionalTest extends DivTestSetting
         loadfactor = (int) Math.ceil( (double) nReplicas / 2);
         
         Optimizer io = db.getOptimizer();
-         
-        LogListener logger = LogListener.getInstance();
         div.setCandidateIndexes(candidates);
         div.setWorkload(workload); 
         div.setOptimizer((InumOptimizer) io);
@@ -252,20 +246,38 @@ public class DivBIPFunctionalTest extends DivTestSetting
         if (isExportToFile)
             div.exportCplexToFile(en.getWorkloadsFoldername() + "/test.lp");
         
+        double updateCost;
+        double queryCost;
+        
         if (output != null) {
             divConf = (DivConfiguration) output;
-            double costDB2 = getDB2CostDivConf();
+            Rt.p(divConf.indexAtReplicaInfo());
+            
+            WorkloadCostDetail wc;
+            if (isShowOptimizerCost) {
+                queryCost = div.computeOptimizerQueryCost(divConf);
+                updateCost = div.computeOptimizerUpdateCost(divConf);
+                wc = new WorkloadCostDetail(queryCost, updateCost, 
+                                            queryCost + updateCost);    
+            }
+            else {
+                // TODO: derive query cost and update cost
+                Rt.p("temporary NOT COMPUTE DB2 COST");
+                wc = new WorkloadCostDetail(-1, -1, div.getObjValue());
+            }
+            
             Rt.p(" n = " + _n + " B = " + _B
                     + " cost in INUM = "
                     + div.getObjValue());
-            Rt.p(" cost in DB2 = " + costDB2);
-            Rt.p(" RATIO = " + (costDB2 / div.getObjValue()));
-            
-            return costDB2;
+            Rt.p(" cost in DB2 = " + wc.totalCost);
+            Rt.p(" RATIO = " + (wc.totalCost / div.getObjValue()));
+            Rt.p(" REPLICA IMBALANCE = " + div.getNodeImbalance());
+            Rt.p(" ROUTING QUERIES = " + div.computeNumberQueriesSpecializeForReplica());
+            return wc;
         }
         else {
             Rt.p(" NO SOLUTION ");
-            return -1;
+            return null;
         }
     }
     
@@ -279,18 +291,24 @@ public class DivBIPFunctionalTest extends DivTestSetting
         B = B1;
         nReplicas = 1;
         loadfactor = 1;
+        double queryCost, updateCost;
+        LogListener logger = LogListener.getInstance();
+        double totalCost = testDivSimplify(1, B, false, logger).totalCost;
+        updateCost = div.getUpdateCostFromCplex();
+        queryCost = totalCost - updateCost;
         
-        double queryCost = testDivSimplify(1, B, false);
         Rt.p("----------------------------------------");
         Rt.p(" DIV-UNIF-BIP, # replicas = " + nReplicas
                             + ", load factor = " + loadfactor
-                            + ", space = " + B
-                            + " COST = " + queryCost);
-        List<Double> totalCost = new ArrayList<Double>();
+                            + ", space = " + B + "\n"
+                            + " UPDATE cost = " + updateCost
+                            + " QUERY cost = " + queryCost
+                            + " TOTAL cost = " + totalCost);
+        List<Double> totalCosts = new ArrayList<Double>();
         for (int i = 0; i < listNReplicas.size(); i++)
-            totalCost.add(queryCost);
+            totalCosts.add(queryCost + listNReplicas.get(i) * updateCost);
         
-        return totalCost;
+        return totalCosts;
     }
     
     /**
@@ -372,15 +390,17 @@ public class DivBIPFunctionalTest extends DivTestSetting
      * in terms of DB2 units
      * 
      */
-    protected static double getDB2CostDivConf() throws Exception
+    public static double getDB2QueryCostDivConf(DivConfiguration divConf) throws Exception
     {   
         double queryCostDB2 = 0.0;
         
-        
         for (SQLStatement sql : workload) {
+            
+            if(sql.getSQL().equals(NOT_SELECT))
+                continue;
+            
             List<Double> costs = computeQueryCostsDB2(sql, divConf);
             Collections.sort(costs);
-            
             for (int k = 0; k < loadfactor; k++)
                 queryCostDB2 += costs.get(k) / loadfactor;
         }
@@ -393,6 +413,43 @@ public class DivBIPFunctionalTest extends DivTestSetting
     }
     
     /**
+     * Compute TotalCost() of a divergent configuration 
+     * in terms of DB2 units
+     * 
+     */
+    public static double getTotalDB2QueryCostDivConfFailure(DivConfiguration divConf) throws Exception
+    {   
+        List<List<Double>> queryCostReplicas = new ArrayList<List<Double>>();
+        for (SQLStatement sql : workload)
+            queryCostReplicas.add(computeQueryCostsDB2(sql, divConf));
+        Rt.p(" query cost replicas size = " + queryCostReplicas.size());
+        double totalCost = 0.0;
+        double oneCaseCost;
+        
+        loadfactor = divConf.getLoadFactor();
+        Rt.p(" load factor = " + loadfactor);
+        
+        for (int failR = 0; failR < divConf.getNumberReplicas(); failR++){
+            oneCaseCost = 0.0;
+            
+            for (List<Double> costs : queryCostReplicas){
+                List<Double> costUnderFailure = new ArrayList<Double>();
+                for (int r = 0; r < divConf.getNumberReplicas(); r++){
+                    if (r != failR)
+                        costUnderFailure.add(costs.get(r));
+                }
+                Collections.sort(costUnderFailure);
+                for (int k = 0; k < loadfactor; k++)
+                    oneCaseCost += (costUnderFailure.get(k) / loadfactor);
+            }
+            
+            totalCost += oneCaseCost;
+        }
+        
+        return totalCost;
+    }
+    
+    /**
      * Run the instance of the problem five times and 
      * get the average imbalance factors
      * 
@@ -402,34 +459,17 @@ public class DivBIPFunctionalTest extends DivTestSetting
     {
         // run four more times and get the average of imbalance query & replica
         int numRuns;
-        double avgImbalanceQuery;
-        double avgImbalanceReplica;
-        double avgNodeFailure;
-        
-        avgImbalanceQuery = 0.0;
-        avgImbalanceReplica = 0.0;
-        avgNodeFailure = 0.0;
-        
+        double avgImbalanceReplica = 0.0;
         numRuns = 5;
         
         for (int iterImbalance = 0; iterImbalance < numRuns; iterImbalance++) {
             testDiv(nReplicas, B, false);
-            avgImbalanceQuery += div.getQueryImbalance();
             avgImbalanceReplica += div.getNodeImbalance();
-            avgNodeFailure += div.getFailureImbalance();
         }
         
-        
-        Rt.p("================== Number of replicas: " +  nReplicas
-                            + " AVG Imbalance QUERY: "
-                            + (double) avgImbalanceQuery / numRuns);
         Rt.p("================== Number of replicas: " +  nReplicas
                             + " AVG Imbalance REPLICA: "
                             + (double) avgImbalanceReplica / numRuns);
-        
-        Rt.p("================== Number of replicas: " +  nReplicas
-                + " AVG NODE failure: "
-                + (double) avgNodeFailure / numRuns);
     }
 
     

@@ -30,6 +30,68 @@ public class UtilConstraintBuilder
     public static double constantRHSImbalanceConstraint = 0;
     
     /**
+     * Compute coefficient for the total cost without failure,
+     * computed as {@code (1 - alpha)^N}. Scale 
+     * by a factor (1 - alpha) (n - 1)
+     * 
+     *  
+     * @param alpha
+     *      The failure factor
+     * @param N
+     *      The number of replica
+     *      
+     * @return
+     *      The coefficient
+     */
+    public static double computeCoefCostWithoutFailure(double alpha, int N)
+    {
+        //return Math.pow(1 - alpha, N);
+        return (1 - alpha);
+    }
+    
+    public static double scaleDownFactor(double alpha, int N)
+    {
+        //return Math.pow(1 - alpha, N - 1);
+        return 1;
+    }
+    
+    /**
+     * Compute coefficient for the total cost with 
+     * at most one failure, 
+     * computed as {@code alpha (1 - alpha)^(N-1)}
+     *  
+     * @param alpha
+     *      The failure factor
+     * @param N
+     *      The number of replica
+     *      
+     * @return
+     *      The coefficient
+     */
+    public static double computeCoefCostWithFailure(double alpha, int N)
+    {
+        //return alpha * Math.pow(1 - alpha, N - 1);
+        return alpha;
+    }
+    
+    /**
+     * Round the given value into up to two decimal
+     * 
+     * @param num
+     *      The given value     
+     *       
+     * @return
+     *      The double value after round-up 2 digits
+     */
+    public static double round2(double num) 
+    {
+        double result = num * 100;
+        result = Math.round(result);
+        result = result / 100;
+        return result;
+    }
+    
+    /**
      * Impose the set of constraints when replacing the produce of two binary variables 
      * {@code idFirst} and {@code idSecond} by {@code idCombine}.
      *  
@@ -104,6 +166,28 @@ public class UtilConstraintBuilder
     }
     
     /**
+     * Add the constraint on the imbalance for the given two expressions 
+     * (usually the load at two replicas): expr1 <= beta * expr2
+     * 
+     * @param expr1
+     *      The first expression     
+     * @param expr2
+     *      The second expression
+     * @param factor
+     *      The imbalance factor.
+     */
+    public static void imbalanceConstraintOrder(IloLinearNumExpr expr1, IloLinearNumExpr expr2, 
+                                           double beta)
+                   throws IloException
+    {
+        IloLinearNumExpr expr = cplex.linearNumExpr();
+        expr.add(expr1); 
+        expr.add(modifyCoef(expr2, -beta));
+        cplex.addLe(expr, 0, "imbalance_replica_" + numConstraints);
+        numConstraints++;
+    }
+    
+    /**
      * Modify all the coefficient in the formula by multiply with given factor
      * 
      * @param expr
@@ -121,8 +205,8 @@ public class UtilConstraintBuilder
         if (factor == 1.0)
             return expr;
         
-        IloNumVar        var;
-        double           coef;
+        IloNumVar var;
+        double coef;
         IloLinearNumExprIterator iter;
         IloLinearNumExpr result = cplex.linearNumExpr();
         
@@ -130,7 +214,7 @@ public class UtilConstraintBuilder
         while (iter.hasNext()) {
             var = iter.nextNumVar();
             coef = iter.getValue();
-            result.addTerm(var, factor * coef);
+            result.addTerm(var, round2(factor * coef));
         }
         
         return result;

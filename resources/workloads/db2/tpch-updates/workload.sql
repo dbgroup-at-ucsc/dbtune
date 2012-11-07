@@ -1,388 +1,556 @@
-UPDATE tpch.lineitem
-   SET l_tax = l_tax - 0.000001
- WHERE tpch.lineitem.l_extendedprice BETWEEN
-       65522.37840623342 AND 66256.94369066914;
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice - 0.000001
- WHERE tpch.lineitem.l_shipdate BETWEEN 'Fri Aug 18 23:48:58 PDT 1995' AND
-                                        'Tue Sep 05 23:48:58 PDT 1995';
-
-UPDATE tpch.lineitem
-   SET l_tax = l_tax - 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Tue Jun 30 22:07:36 PDT 1992' AND
-                                          'Fri Jul 17 22:07:36 PDT 1992';
-
-UPDATE tpch.orders
-   SET o_shippriority = o_shippriority - 1
- WHERE tpch.orders.o_orderdate BETWEEN 'Thu Apr 07 05:46:45 PDT 1994' AND
-                                       'Thu Apr 14 05:46:45 PDT 1994';
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity - 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Fri Oct 25 19:36:34 PDT 1996' AND 'Mon Oct 28 18:36:34 PST 1996';
-
-UPDATE tpch.partsupp
-   SET ps_supplycost = ps_supplycost - 0.000001
- WHERE tpch.partsupp.ps_availqty BETWEEN 1425 AND 1464;
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice - 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Tue May 24 21:09:40 PDT 1994' AND
-                                          'Fri Jun 17 21:09:40 PDT 1994';
-
-UPDATE tpch.partsupp
-   SET ps_supplycost = ps_supplycost - 0.000001
- WHERE tpch.partsupp.ps_availqty BETWEEN 6777 AND 6844;
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice - 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Mon Jul 27 04:39:49 PDT 1998' AND
-                                          'Sat Aug 08 04:39:49 PDT 1998';
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity - 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Mon Oct 06 10:20:41 PDT 1997' AND 'Mon Oct 27 09:20:41 PST 1997';
-
-UPDATE tpch.lineitem
-   SET l_tax = l_tax - 0.000001
- WHERE tpch.lineitem.l_extendedprice BETWEEN
-       37019.781528540014 AND 37378.021592062534;
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity - 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Sat Sep 26 14:56:02 PDT 1998' AND
-                                          'Fri Jan 28 13:56:02 PST 2000';
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice - 0.000001
- WHERE tpch.lineitem.l_shipdate BETWEEN 'Sun May 15 23:25:44 PDT 1994' AND
-                                        'Sat May 21 23:25:44 PDT 1994';
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice - 0.000001
- WHERE tpch.lineitem.l_shipdate BETWEEN 'Mon Apr 05 09:51:35 PDT 1993' AND
-                                        'Tue Apr 27 09:51:35 PDT 1993';
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity - 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Mon Jul 17 14:09:02 PDT 1995' AND 'Thu Jul 20 14:09:02 PDT 1995';
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity - 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Sun Dec 20 01:15:21 PST 1992' AND 'Mon Dec 28 01:15:21 PST 1992';
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice - 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Tue May 24 21:09:40 PDT 1994' AND
-                                          'Fri Jun 17 21:09:40 PDT 1994';
-
-UPDATE tpch.lineitem
-   SET l_tax = l_tax - 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Sun Aug 07 20:53:40 PDT 1994' AND 'Wed Aug 31 20:53:40 PDT 1994';
-
-UPDATE tpch.orders
-   SET o_shippriority = o_shippriority - 1
- WHERE tpch.orders.o_orderdate BETWEEN 'Tue Mar 22 22:48:58 PST 1994' AND
-                                       'Wed Mar 23 22:48:58 PST 1994';
-
-UPDATE tpch.partsupp
-   SET ps_availqty = ps_availqty - 1
- WHERE tpch.partsupp.ps_supplycost BETWEEN
-       452.2498448729841 AND 459.8000030939402;
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice - 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Wed Apr 28 02:31:05 PDT 1993' AND 'Wed May 05 02:31:05 PDT 1993';
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity - 0.000001
- WHERE tpch.lineitem.l_shipdate BETWEEN 'Wed Jun 10 06:34:55 PDT 1998' AND
-                                        'Sun Jun 28 06:34:55 PDT 1998';
-
-UPDATE tpch.orders
-   SET o_shippriority = o_shippriority - 1
- WHERE tpch.orders.o_totalprice BETWEEN 477708.8460834578 AND 584509.4689130272;
-
-UPDATE tpch.lineitem
-   SET l_discount = l_discount - 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Wed Sep 21 04:20:01 PDT 1994' AND 'Fri Oct 07 04:20:01 PDT 1994';
-
-UPDATE tpch.orders
-   SET o_shippriority = o_shippriority - 1
- WHERE tpch.orders.o_totalprice BETWEEN 477708.8460834578 AND 584509.4689130272;
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity - 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Fri Feb 25 12:12:36 PST 1994' AND 'Sun Mar 06 12:12:36 PST 1994';
-
-UPDATE tpch.lineitem
-   SET l_tax = l_tax - 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Mon Jan 16 17:17:45 PST 1995' AND
-                                          'Fri Feb 03 17:17:45 PST 1995';
-
-UPDATE tpch.lineitem
-   SET l_tax = l_tax - 0.000001
- WHERE tpch.lineitem.l_extendedprice BETWEEN
-       52830.786489814825 AND 53552.16450816543;
-
-UPDATE tpch.orders
-   SET o_totalprice = o_totalprice + 0.000001
- WHERE tpch.orders.o_orderdate BETWEEN 'Tue Dec 03 21:19:36 PST 1996' AND
-                                       'Thu Dec 19 21:19:36 PST 1996';
-
-UPDATE tpch.lineitem
-   SET l_discount = l_discount + 0.000001
- WHERE tpch.lineitem.l_extendedprice BETWEEN
-       13294.572484763343 AND 13617.514467619252;
-
-UPDATE tpch.lineitem
-   SET l_tax = l_tax + 0.000001
- WHERE tpch.lineitem.l_extendedprice BETWEEN
-       72967.20560888002 AND 73920.43709064345;
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity + 0.000001
- WHERE tpch.lineitem.l_extendedprice BETWEEN
-       64803.95256364816 AND 65740.87743623629;
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity + 0.000001
- WHERE tpch.lineitem.l_shipdate BETWEEN 'Mon Jun 19 03:08:09 PDT 1995' AND
-                                        'Sat Jun 24 03:08:09 PDT 1995';
-
-UPDATE tpch.lineitem
-   SET l_tax = l_tax + 0.000001
- WHERE tpch.lineitem.l_extendedprice BETWEEN
-       52830.786489814825 AND 53552.16450816543;
-
-UPDATE tpch.lineitem
-   SET l_discount = l_discount + 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Wed Jul 22 10:23:07 PDT 1992' AND 'Wed Jul 22 10:23:07 PDT 1992';
-
-UPDATE tpch.lineitem
-   SET l_discount = l_discount + 0.000001
- WHERE tpch.lineitem.l_extendedprice BETWEEN
-       25328.646749630512 AND 25572.18925091511;
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice + 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Tue May 11 13:07:31 PDT 1993' AND
-                                          'Thu May 13 13:07:31 PDT 1993';
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice + 0.000001
- WHERE tpch.lineitem.l_shipdate BETWEEN 'Mon Dec 14 10:58:14 PST 1992' AND
-                                        'Tue Dec 15 10:58:14 PST 1992';
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice + 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Fri Aug 27 07:22:29 PDT 1993' AND 'Sun Sep 12 07:22:29 PDT 1993';
-
-UPDATE tpch.lineitem
-   SET l_discount = l_discount + 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Sun Feb 21 09:21:30 PST 1993' AND 'Sat Mar 06 09:21:30 PST 1993';
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity + 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Sun Jul 02 22:45:19 PDT 1995' AND
-                                          'Mon Jul 17 22:45:19 PDT 1995';
-
-UPDATE tpch.partsupp
-   SET ps_supplycost = ps_supplycost + 0.000001
- WHERE tpch.partsupp.ps_availqty BETWEEN 8524 AND 8565;
-
-UPDATE tpch.lineitem
-   SET l_tax = l_tax + 0.000001
- WHERE tpch.lineitem.l_shipdate BETWEEN 'Wed Oct 15 20:43:12 PDT 1997' AND
-                                        'Thu Oct 16 20:43:12 PDT 1997';
-
-UPDATE tpch.lineitem
-   SET l_tax = l_tax + 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Fri Jul 19 18:46:43 PDT 1996' AND
-                                          'Sun Aug 11 18:46:43 PDT 1996';
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity + 0.000001
- WHERE tpch.lineitem.l_extendedprice BETWEEN
-       78335.53203042406 AND 79154.6240933582;
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice + 0.000001
- WHERE tpch.lineitem.l_shipdate BETWEEN 'Wed Apr 22 17:44:35 PDT 1992' AND
-                                        'Wed May 13 17:44:35 PDT 1992';
-
-UPDATE tpch.partsupp
-   SET ps_availqty = ps_availqty + 1
- WHERE tpch.partsupp.ps_supplycost BETWEEN
-       331.42090722103404 AND 335.2362587135389;
-
-UPDATE tpch.lineitem
-   SET l_tax = l_tax + 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Tue Jun 30 22:07:36 PDT 1992' AND
-                                          'Fri Jul 17 22:07:36 PDT 1992';
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity + 0.000001
- WHERE tpch.lineitem.l_shipdate BETWEEN 'Mon Jan 06 05:10:02 PST 1992' AND
-                                        'Sun Jan 26 05:10:02 PST 1992';
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity + 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Mon Nov 06 15:29:47 PST 1995' AND
-                                          'Tue Nov 14 15:29:47 PST 1995';
-
-UPDATE tpch.partsupp
-   SET ps_supplycost = ps_supplycost + 0.000001
- WHERE tpch.partsupp.ps_availqty BETWEEN 6049 AND 6102;
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice + 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Mon Jul 27 04:39:49 PDT 1998' AND
-                                          'Sat Aug 08 04:39:49 PDT 1998';
-
-UPDATE tpch.lineitem
-   SET l_discount = l_discount + 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Wed Aug 14 17:08:16 PDT 1996' AND
-                                          'Fri Aug 23 17:08:16 PDT 1996';
-
-UPDATE tpch.orders
-   SET o_shippriority = o_shippriority + 1
- WHERE tpch.orders.o_orderdate BETWEEN 'Fri Oct 20 05:05:53 PDT 1995' AND
-                                       'Sun Nov 05 04:05:53 PST 1995';
-
-UPDATE tpch.lineitem
-   SET l_discount = l_discount + 0.000001
- WHERE tpch.lineitem.l_shipdate BETWEEN 'Sat Apr 29 10:31:45 PDT 1995' AND
-                                        'Fri May 19 10:31:45 PDT 1995';
-
-UPDATE tpch.lineitem
-   SET l_discount = l_discount + 0.000001
- WHERE tpch.lineitem.l_shipdate BETWEEN 'Thu Mar 05 18:40:44 PST 1992' AND
-                                        'Sun Mar 29 18:40:44 PST 1992';
-
-UPDATE tpch.lineitem
-   SET l_discount = l_discount + 0.000001
- WHERE tpch.lineitem.l_shipdate BETWEEN 'Tue Apr 04 08:26:47 PDT 1995' AND
-                                        'Sun Apr 09 08:26:47 PDT 1995';
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity + 0.000001
- WHERE tpch.lineitem.l_extendedprice BETWEEN
-       89309.47356988743 AND 90064.69237813987;
-
-UPDATE tpch.lineitem
-   SET l_extendedprice = l_extendedprice + 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Sat Jan 02 02:06:43 PST 1993' AND 'Thu Jan 07 02:06:43 PST 1993';
-
-UPDATE tpch.lineitem
-   SET l_discount = l_discount + 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Wed Aug 14 17:08:16 PDT 1996' AND
-                                          'Fri Aug 23 17:08:16 PDT 1996';
-
-UPDATE tpch.orders
-   SET o_shippriority = o_shippriority + 1
- WHERE tpch.orders.o_orderdate BETWEEN 'Tue May 31 03:38:30 PDT 1994' AND
-                                       'Tue Jun 21 03:38:30 PDT 1994';
-
-UPDATE tpch.part
-   SET p_size = p_size + 1
- WHERE tpch.part.p_retailprice BETWEEN 1158.1053417913936 AND 1167.9252322300965
-;
-
-UPDATE tpch.lineitem
-   SET l_tax = l_tax + 0.000001
- WHERE tpch.lineitem.l_extendedprice BETWEEN
-       104019.31371382915 AND 104082.1455424701;
-
-UPDATE tpch.lineitem
-   SET l_quantity = l_quantity + 0.000001
- WHERE tpch.lineitem.l_receiptdate BETWEEN
-       'Sun Dec 20 01:15:21 PST 1992' AND 'Mon Dec 28 01:15:21 PST 1992';
-
-UPDATE tpch.lineitem
-   SET l_discount = l_discount + 0.000001
- WHERE tpch.lineitem.l_commitdate BETWEEN 'Wed Aug 14 17:08:16 PDT 1996' AND
-                                          'Fri Aug 23 17:08:16 PDT 1996'; 
-
---UPDATE tpch.partsupp
-   --SET ps_supplycost = ps_supplycost - 0.000001
- --WHERE tpch.partsupp.ps_supplycost BETWEEN
-       --343.38192329849375 AND 352.89716370586683;
-
---UPDATE tpch.partsupp
-   --SET ps_supplycost = ps_supplycost - 0.000001
- --WHERE tpch.partsupp.ps_supplycost BETWEEN
-       --516.8553082806344 AND 520.7931494478674;
-
---UPDATE tpch.orders
-   --SET o_totalprice = o_totalprice - 0.000001
- --WHERE tpch.orders.o_totalprice BETWEEN 235736.15582258778 AND 236778.1602355858;
-
---UPDATE tpch.customer
-   --SET c_acctbal = c_acctbal - 0.000001
- --WHERE tpch.customer.c_acctbal BETWEEN 9714.80387595837 AND 9816.86602176394;
-
---UPDATE tpch.partsupp
-   --SET ps_supplycost = ps_supplycost - 0.000001
- --WHERE tpch.partsupp.ps_supplycost BETWEEN
-       --341.0948463496943 AND 350.0665342631519;
-
---UPDATE tpch.orders
-   --SET o_totalprice = o_totalprice - 0.000001
- --WHERE tpch.orders.o_totalprice BETWEEN 235736.15582258778 AND 236778.1602355858
---;
-
---UPDATE tpch.partsupp
-   --SET ps_supplycost = ps_supplycost - 0.000001
- --WHERE tpch.partsupp.ps_supplycost BETWEEN
-       --106.49003704475444 AND 111.94124171431024;
-
---UPDATE tpch.orders
-   --SET o_totalprice = o_totalprice - 0.000001
- --WHERE tpch.orders.o_totalprice BETWEEN 235736.15582258778 AND 236778.1602355858;
-
---UPDATE tpch.part
-   --SET p_retailprice = p_retailprice - 0.000001
- --WHERE tpch.part.p_retailprice BETWEEN 1941.435418319549 AND 1946.7336431047843;
-
---UPDATE tpch.partsupp
-   --SET ps_availqty = ps_availqty + 1
- --WHERE tpch.partsupp.ps_availqty BETWEEN 4823 AND 4901;
-
---UPDATE tpch.customer
-   --SET c_acctbal = c_acctbal + 0.000001
- --WHERE tpch.customer.c_acctbal BETWEEN 1034.1745936436641 AND 1107.8793288827928;
-
---UPDATE tpch.orders
-   --SET o_totalprice = o_totalprice + 0.000001
- --WHERE tpch.orders.o_totalprice BETWEEN 311646.2023200287 AND 313986.55191938294;
-
---UPDATE tpch.lineitem
-   --SET l_extendedprice = l_extendedprice + 0.000001
- --WHERE tpch.lineitem.l_extendedprice BETWEEN
-       --91949.84953402694 AND 91986.30537361333;
-
---UPDATE tpch.orders
-   --SET o_totalprice = o_totalprice + 0.000001
- --WHERE tpch.orders.o_totalprice BETWEEN 318591.5663842903 AND 323037.87898730097;
-
---UPDATE tpch.orders
-   --SET o_totalprice = o_totalprice + 0.000001
- --WHERE tpch.orders.o_totalprice BETWEEN 318591.5663842903 AND 323037.87898730097;
-
---UPDATE tpch.orders
-   --SET o_totalprice = o_totalprice + 0.000001
- --WHERE tpch.orders.o_totalprice BETWEEN 117439.1743096517 AND 119884.68364198053;
+-- query0
+select
+l_returnflag,
+l_linestatus,
+sum(l_quantity) as sum_qty,
+sum(l_extendedprice) as sum_base_price,
+sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
+sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
+avg(l_quantity) as avg_qty,
+avg(l_extendedprice) as avg_price,
+avg(l_discount) as avg_disc,
+count(*) as count_order
+from
+tpch.lineitem
+where
+l_shipdate >= '1998-08-01' and
+l_shipdate <  '1998-11-13'
+group by
+l_returnflag,
+l_linestatus
+order by
+l_returnflag,
+l_linestatus;
+-- query1
+
+select
+l_orderkey,
+sum(l_extendedprice * (1 - l_discount)) as revenue,
+o_orderdate,
+o_shippriority
+from
+tpch.customer,
+tpch.orders,
+tpch.lineitem
+where
+c_mktsegment = 'FURNITURE'
+and c_custkey = o_custkey
+and l_orderkey = o_orderkey
+and o_orderdate < '1995-03-17'
+and l_shipdate > '1995-03-17'
+group by
+l_orderkey,
+o_orderdate,
+o_shippriority
+order by
+revenue desc,
+o_orderdate;
+-- query2
+
+select
+o_orderpriority,
+count(*) as order_count
+from
+tpch.orders
+where
+o_orderdate >= '1995-08-01'
+and o_orderdate < '1995-11-01'
+and exists (
+select
+*
+from
+tpch.lineitem
+where
+l_orderkey = o_orderkey
+and l_commitdate < l_receiptdate
+)
+group by
+o_orderpriority
+order by
+o_orderpriority;
+-- query3
+
+select
+n_name,
+sum(l_extendedprice * (1 - l_discount)) as revenue
+from
+tpch.customer,
+tpch.orders,
+tpch.lineitem,
+tpch.supplier,
+tpch.nation,
+tpch.region
+where
+c_custkey = o_custkey
+and l_orderkey = o_orderkey
+and l_suppkey = s_suppkey
+and c_nationkey = s_nationkey
+and s_nationkey = n_nationkey
+and n_regionkey = r_regionkey
+and r_name = 'AMERICA'
+and o_orderdate >= '1993-01-01'
+and o_orderdate < '1994-01-01'
+group by
+n_name
+order by
+revenue desc;
+-- query4
+
+select
+sum(l_extendedprice * l_discount) as revenue
+from
+tpch.lineitem
+where
+l_shipdate >= '1993-01-01'
+and l_shipdate < '1994-01-01'
+and l_discount between 0.06 and 0.08
+and l_quantity < 25;
+-- query5
+
+select
+supp_nation,
+cust_nation,
+l_year,
+sum(volume) as revenue
+from
+(
+select
+n1.n_name as supp_nation,
+n2.n_name as cust_nation,
+year(l_shipdate) as l_year,
+l_extendedprice * (1 - l_discount) as volume
+from
+tpch.supplier,
+tpch.lineitem,
+tpch.orders,
+tpch.customer,
+tpch.nation n1,
+tpch.nation n2
+where
+s_suppkey = l_suppkey
+and o_orderkey = l_orderkey
+and c_custkey = o_custkey
+and s_nationkey = n1.n_nationkey
+and c_nationkey = n2.n_nationkey
+and (
+(n1.n_name = 'MOZAMBIQUE' and n2.n_name = 'UNITED KINGDOM')
+or (n1.n_name = 'UNITED KINGDOM' and n2.n_name = 'MOZAMBIQUE')
+)
+and l_shipdate between '1995-01-01' and '1996-12-31'
+) as shipping
+group by
+supp_nation,
+cust_nation,
+l_year
+order by
+supp_nation,
+cust_nation,
+l_year;
+-- query6
+
+select
+o_year,
+sum(case
+when nation = 'MOZAMBIQUE' then volume
+else 0
+end) / sum(volume) as mkt_share
+from
+(
+select
+year(o_orderdate) as o_year,
+l_extendedprice * (1 - l_discount) as volume,
+n2.n_name as nation
+from
+tpch.part,
+tpch.supplier,
+tpch.lineitem,
+tpch.orders,
+tpch.customer,
+tpch.nation n1,
+tpch.nation n2,
+tpch.region
+where
+p_partkey = l_partkey
+and s_suppkey = l_suppkey
+and l_orderkey = o_orderkey
+and o_custkey = c_custkey
+and c_nationkey = n1.n_nationkey
+and n1.n_regionkey = r_regionkey
+and r_name = 'AFRICA'
+and s_nationkey = n2.n_nationkey
+and o_orderdate between '1995-01-01' and '1996-12-31'
+and p_type = 'PROMO POLISHED TIN'
+) as all_nations
+group by
+o_year
+order by
+o_year;
+-- query7
+
+select
+nation,
+o_year,
+sum(amount) as sum_profit
+from
+(
+select
+n_name as nation,
+year(o_orderdate) as o_year,
+l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount
+from
+tpch.part,
+tpch.supplier,
+tpch.lineitem,
+tpch.partsupp,
+tpch.orders,
+tpch.nation
+where
+s_suppkey = l_suppkey
+and ps_suppkey = l_suppkey
+and ps_partkey = l_partkey
+and p_partkey = l_partkey
+and o_orderkey = l_orderkey
+and s_nationkey = n_nationkey
+and p_name like '%thistle%'
+) as profit
+group by
+nation,
+o_year
+order by
+nation,
+o_year desc;
+-- query8
+
+select
+c_custkey,
+c_name,
+sum(l_extendedprice * (1 - l_discount)) as revenue,
+c_acctbal,
+n_name,
+c_address,
+c_phone,
+c_comment
+from
+tpch.customer,
+tpch.orders,
+tpch.lineitem,
+tpch.nation
+where
+c_custkey = o_custkey
+and l_orderkey = o_orderkey
+and o_orderdate >= '1993-11-01'
+and o_orderdate < '1994-2-01'
+and l_returnflag = 'R'
+and c_nationkey = n_nationkey
+group by
+c_custkey,
+c_name,
+c_acctbal,
+c_phone,
+n_name,
+c_address,
+c_comment
+order by
+revenue desc;
+-- query9
+
+select
+ps_partkey,
+sum(ps_supplycost * ps_availqty) as value
+from
+tpch.partsupp,
+tpch.supplier,
+tpch.nation
+where
+ps_suppkey = s_suppkey
+and s_nationkey = n_nationkey
+and n_name = 'JAPAN'
+group by
+ps_partkey having
+sum(ps_supplycost * ps_availqty) > (
+select
+sum(ps_supplycost * ps_availqty) * 0.0001000000
+from
+tpch.partsupp,
+tpch.supplier,
+tpch.nation
+where
+ps_suppkey = s_suppkey
+and s_nationkey = n_nationkey
+and n_name = 'JAPAN'
+)
+order by
+value desc;
+-- query10
+
+select
+l_shipmode,
+sum(case
+when o_orderpriority = '1-URGENT'
+or o_orderpriority = '2-HIGH'
+then 1
+else 0
+end) as high_line_count,
+sum(case
+when o_orderpriority <> '1-URGENT'
+and o_orderpriority <> '2-HIGH'
+then 1
+else 0
+end) as low_line_count
+from
+tpch.orders,
+tpch.lineitem
+where
+o_orderkey = l_orderkey
+and l_shipmode in ('FOB', 'REG AIR')
+and l_commitdate < l_receiptdate
+and l_shipdate < l_commitdate
+and l_receiptdate >= '1993-01-01'
+and l_receiptdate < '1994-01-01'
+group by
+l_shipmode
+order by
+l_shipmode;
+-- query11
+
+select
+c_count,
+count(*) as custdist
+from
+(
+select
+c_custkey,
+count(o_orderkey)
+from
+tpch.customer left outer join tpch.orders on
+c_custkey = o_custkey
+and o_comment not like '%special%packages%'
+group by
+c_custkey
+) as c_orders (c_custkey, c_count)
+group by
+c_count
+order by
+custdist desc,
+c_count desc;
+-- query12
+
+select
+100.00 * sum(case
+when p_type like 'PROMO%'
+then l_extendedprice * (1 - l_discount)
+else 0
+end) / sum(l_extendedprice * (1 - l_discount)) as promo_revenue
+from
+tpch.lineitem,
+tpch.part
+where
+l_partkey = p_partkey
+and l_shipdate >= '1993-05-01'
+and l_shipdate < '1993-06-01';
+-- query13
+
+select
+s_suppkey,
+s_name,
+s_address,
+s_phone,
+total_revenue
+from
+tpch.supplier,
+(
+select
+l_suppkey,
+sum(l_extendedprice * (1 - l_discount)) as total_revenue
+from
+tpch.lineitem
+where
+l_shipdate >= '1995-08-01'
+and l_shipdate <  '1995-11-01'
+group by
+l_suppkey
+) as abcd0001
+where
+s_suppkey = l_suppkey
+and total_revenue = (
+select
+max(total_revenue)
+from (
+select
+l_suppkey,
+sum(l_extendedprice * (1 - l_discount)) as total_revenue
+from
+tpch.lineitem
+where
+l_shipdate >= '1995-08-01'
+and l_shipdate <  '1995-11-01'
+group by
+l_suppkey
+) as abcd0002)
+order by
+s_suppkey;
+-- query14
+
+select
+p_brand,
+p_type,
+p_size,
+count(distinct ps_suppkey) as supplier_cnt
+from tpch.partsupp, tpch.part where
+p_partkey = ps_partkey
+and p_brand <> 'Brand#41'
+and p_type not like 'MEDIUM BURNISHED%'
+and p_size in (4, 21, 15, 41, 49, 43, 27, 47)
+and ps_suppkey not in (
+select
+s_suppkey
+from
+tpch.supplier
+where
+s_comment like '%Customer%Complaints%'
+)
+group by
+p_brand,
+p_type,
+p_size
+order by
+supplier_cnt desc,
+p_brand,
+p_type,
+p_size;
+-- query15
+
+select
+sum(l_extendedprice) / 7.0 as avg_yearly
+from
+tpch.lineitem,
+tpch.part
+where
+p_partkey = l_partkey
+and p_brand = 'Brand#12'
+and p_container = 'SM BAG'
+and l_quantity < (
+select
+0.2 * avg(l_quantity)
+from
+tpch.lineitem
+where
+l_partkey = p_partkey
+);
+-- query16
+
+select
+c_name,
+c_custkey,
+o_orderkey,
+o_orderdate,
+o_totalprice,
+sum(l_quantity)
+from
+tpch.customer,
+tpch.orders,
+tpch.lineitem
+where
+o_orderkey in (
+select
+l_orderkey
+from
+tpch.lineitem
+group by
+l_orderkey having
+sum(l_quantity) > 313
+)
+and c_custkey = o_custkey
+and o_orderkey = l_orderkey
+group by
+c_name,
+c_custkey,
+o_orderkey,
+o_orderdate,
+o_totalprice
+order by
+o_totalprice desc,
+o_orderdate;
+-- query17
+
+select
+sum(l_extendedprice* (1 - l_discount)) as revenue
+from
+tpch.lineitem,
+tpch.part
+where
+(
+p_partkey = l_partkey
+and p_brand = 'Brand#13'
+and p_container in ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
+and l_quantity >= 6 and l_quantity <= 6 + 10
+and p_size between 1 and 5
+and l_shipmode in ('AIR', 'AIR REG')
+and l_shipinstruct = 'DELIVER IN PERSON'
+)
+or
+(
+p_partkey = l_partkey
+and p_brand = 'Brand#43'
+and p_container in ('MED BAG', 'MED BOX', 'MED PKG', 'MED PACK')
+and l_quantity >= 11 and l_quantity <= 11 + 10
+and p_size between 1 and 10
+and l_shipmode in ('AIR', 'AIR REG')
+and l_shipinstruct = 'DELIVER IN PERSON'
+)
+or
+(
+p_partkey = l_partkey
+and p_brand = 'Brand#55'
+and p_container in ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG')
+and l_quantity >= 27 and l_quantity <= 27 + 10
+and p_size between 1 and 15
+and l_shipmode in ('AIR', 'AIR REG')
+and l_shipinstruct = 'DELIVER IN PERSON'
+);
+-- query18
+
+select
+cntrycode,
+count(*) as numcust,
+sum(c_acctbal) as totacctbal
+from
+(
+select
+substring(c_phone, 1, 2, codeunits16) as cntrycode,
+c_acctbal
+from
+tpch.customer
+where
+substring(c_phone, 1, 2, codeunits16) in
+('24', '11', '14', '23', '31', '26', '10')
+and c_acctbal > (
+select
+avg(c_acctbal)
+from
+tpch.customer
+where
+c_acctbal > 0.00
+and substring(c_phone, 1, 2, codeunits16) in
+('24', '11', '14', '23', '31', '26', '10')
+)
+and not exists (
+select
+*
+from
+tpch.orders
+where
+o_custkey = c_custkey
+)
+) as custsale
+group by
+cntrycode
+order by
+cntrycode;
+
+
+
+ 
+INSERT INTO tpch.lineitem VALUES(9,127857,5394,1,45,84818.25,0.09,0.05,'N','O','1998-10-20','1998-09-10','1998-11-15','COLLECT COD','SHIP','es haggle blithely above the silent ac');
+ 
+INSERT INTO tpch.orders VALUES(10,38197,'O',130153.51,'1996-09-10','1-URGENT','Clerk#000000145',0,'ironic, even requests');

@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.divgdesign;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,7 @@ import java.util.Set;
 
 
 import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.indexadvisor.CoPhy;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
@@ -36,24 +38,25 @@ public class CoPhyDivgDesign extends DivgDesign
     private LogListener    logger;
     
     private CoPhy cophy;  
-    private Map<SQLStatement, Set<Index>> recommendedIndexStmt;
+    private Map<SQLStatement, QueryPlanDesc> mapDescs;
+    private List<QueryPlanDesc> descs;
     private double timeInum;
     private double timeAnalysis;
     
     protected Environment environment = Environment.getInstance();
     
     public CoPhyDivgDesign(DatabaseSystem db, InumOptimizer  io, LogListener logger,
-                           Map<SQLStatement, Set<Index>> recommendedIndexStmt)
+                           List<QueryPlanDesc> descs)
     {
         this.db = db;
         this.io = io;
         this.logger = logger;
+        this.descs = descs;
         
-        // initialize data structures
-        cophy = new CoPhy();        
-        this.recommendedIndexStmt = recommendedIndexStmt;
+        cophy = new CoPhy();
     }
     
+        
     /**
      * Get the running time to populate INUM space
      * 
@@ -77,7 +80,8 @@ public class CoPhyDivgDesign extends DivgDesign
     }
     
     @Override
-    public void recommend(Workload workload, int nReplicas, int loadfactor, double B)
+    public void recommend(Workload workload, 
+                         int nReplicas, int loadfactor, double B)
                           throws Exception
     {
         this.workload = workload;
@@ -85,7 +89,11 @@ public class CoPhyDivgDesign extends DivgDesign
         this.m = loadfactor;
         this.B = B;
         
-        maxIters = 30;
+        mapDescs = new HashMap<SQLStatement, QueryPlanDesc>();
+        for (int i = 0; i < workload.size(); i++)
+            mapDescs.put(workload.get(i), descs.get(i));
+        
+        maxIters = 5;
         epsilon = 0.05;
         
         long start = System.currentTimeMillis();
@@ -105,11 +113,10 @@ public class CoPhyDivgDesign extends DivgDesign
             throws Exception 
     {
         Set<Index> candidates = new HashSet<Index>();
-        
-        // check if we already generate candidate for this statement before
+        List<QueryPlanDesc> runningDescs = new ArrayList<QueryPlanDesc>();
         for (SQLStatement sql : sqls)
-            candidates.addAll(recommendedIndexStmt.get(sql));
-        
+            runningDescs.add(mapDescs.get(sql));
+            
         Optimizer io = db.getOptimizer();
         Workload wlPartition = new Workload(sqls);
         cophy.setCandidateIndexes(candidates);
@@ -117,7 +124,7 @@ public class CoPhyDivgDesign extends DivgDesign
         cophy.setOptimizer(io);
         cophy.setSpaceBudget(B);
         cophy.setLogListenter(logger);
-        cophy.setCommunicatingInumOnTheFly(true);
+        cophy.setQueryPlanDesc(runningDescs);
         
         return cophy.solve().getRecommendation();
     }
@@ -136,7 +143,6 @@ public class CoPhyDivgDesign extends DivgDesign
             preparedStmts.put(sql, inumStmt);
         }
         
-       
         // iterate over every replica 
         // and compute the cost
         List<QueryCostAtPartition> costs = new ArrayList<QueryCostAtPartition>();
@@ -167,7 +173,7 @@ public class CoPhyDivgDesign extends DivgDesign
             if (sql.getSQLCategory().isSame(NOT_SELECT))
                 cost -= explain.getBaseTableUpdateCost();
             
-            cost *= sql.getStatementWeight();            
+            //cost *= sql.getStatementWeight();            
             costs.add(new QueryCostAtPartition(i, cost));
         }
             

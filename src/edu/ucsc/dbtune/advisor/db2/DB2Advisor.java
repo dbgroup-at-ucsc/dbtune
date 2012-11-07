@@ -37,7 +37,7 @@ public class DB2Advisor extends Advisor
      * @param dbms
      *      system connected representing a DB2 instance
      * @throws SQLException
-     *      if the underlaying DBMS is not a DB2 instance
+     *      if the underlying DBMS is not a DB2 instance
      */
     public DB2Advisor(DatabaseSystem dbms)
         throws SQLException
@@ -62,13 +62,14 @@ public class DB2Advisor extends Advisor
 
         int i = 0;
 
-        for (SQLStatement sql : workload) 
+        for (SQLStatement sql : workload)  
             stmt.execute(
                     "INSERT INTO systools.advise_workload VALUES(" +
                     "   'dbtuneworkload'," +
                     "    " + i++ + ", " +
                     "   '" + sql.getSQL().replace("'", "''") + "'," +
-                    "   '',1,0,0,0,0,'')");
+                    "   ''," + Integer.toString(sql.getStatementWeight()) + "," +
+                    "   0,0,0,0,'')");
         
         stmt.close();
     }

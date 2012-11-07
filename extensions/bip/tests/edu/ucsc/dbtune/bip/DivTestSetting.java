@@ -3,10 +3,12 @@ package edu.ucsc.dbtune.bip;
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.TestUtils.workload;
 
-import static edu.ucsc.dbtune.workload.SQLCategory.INSERT;
-import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
-
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -14,7 +16,10 @@ import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
+import edu.ucsc.dbtune.bip.div.UtilConstraintBuilder;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.metadata.Table;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
@@ -26,11 +31,7 @@ import edu.ucsc.dbtune.workload.Workload;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
-
-import static edu.ucsc.dbtune.util.EnvironmentProperties.QUERY_IMBALANCE;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.NODE_IMBALANCE;
-import static edu.ucsc.dbtune.util.EnvironmentProperties.FAILURE_IMBALANCE;
-
+import edu.ucsc.dbtune.divgdesign.DivgDesign.QueryCostAtPartition;
 
 /**
  * The common setting parameters for DIVBIP test
@@ -60,12 +61,18 @@ public class DivTestSetting
     protected static DivConfiguration divConf;
     
     protected static Set<Index> candidates;
-    protected static double fQuery;    
-    protected static double fUpdate;
-    protected static double sf;
+        
+    // update weight = 10^{updateRatio} * size_of_relation
+    // default value
+    protected static double updateRatio = Math.pow(10, -3);
     protected static String folder;
     
     protected static DB2Advisor db2Advis;
+    protected static String dbName;
+    protected static String wlName;
+    protected static boolean isShowOptimizerCost;
+    
+    protected static double timeBIP;
     
     // for Debugging purpose only
     protected static double totalIndexSize;
@@ -74,8 +81,9 @@ public class DivTestSetting
     protected static boolean isShowRecommendation = false;
     protected static boolean isDB2Cost = false;
     protected static boolean isGetAverage = false;
-    protected static boolean isPostprocess = false; 
-    protected static boolean isAllImbalanceConstraint = false;
+    protected static boolean isPostprocess = false;
+    protected static boolean isCoPhyDesign = false;
+    
     
     /**
      * Retrieve the environment parameters set in {@code dbtune.cfg} file
@@ -95,18 +103,68 @@ public class DivTestSetting
             return;
         
         folder = en.getWorkloadsFoldername();
+        isShowOptimizerCost = en.getIsShowOptimizerCost();
+        dbName = db.getCatalog().getName().toLowerCase();
+        String[] tmp = en.getWorkloadsFoldername().split("/");
+        wlName = tmp[tmp.length - 1].toLowerCase();
+        Rt.p(" db name = " + dbName + " wl name = " + wlName
+                + " is show optimzier cost = "
+                + isShowOptimizerCost);
         
         // get workload and candidates
         workload = workload(folder);
         db2Advis = new DB2Advisor(db);
-        candidates = readCandidateIndexes(db2Advis);
+        candidates = new HashSet<Index>();
         
-        Rt.p(" DivTestSetting: # statements in the workload: " + workload.size()
-                + " # candidates in the workload: " + candidates.size()
-                + " workload folder: " + folder);
+        if (!isCoPhyDesign){
+            candidates = readCandidateIndexes(folder, db2Advis);
+        
+            long totalSize = 0;
+            for (Index i : candidates)
+                totalSize += i.getBytes();
+            
+            Rt.p(" Total size = " + (totalSize / Math.pow(2, 20)));
+        } 
+        
+        /*
+        for (SQLStatement sql : workload)
+            if (sql.getSQLCategory().isSame(INSERT)
+                    || sql.getSQLCategory().isSame(DELETE)) {
+                // for TPCH workload
+                if (sql.getSQL().contains("orders")) 
+                    sql.setStatementWeight(fInsert);
+                else if (sql.getSQL().contains("lineitem"))
+                    sql.setStatementWeight((int) (fInsert * 4));
+            }           
+            else if (sql.getSQLCategory().isSame(SELECT))
+                sql.setStatementWeight(fQuery);
+            else if (sql.getSQLCategory().isSame(UPDATE))
+                sql.setStatementWeight(fUpdate);
+        */
+        // TODO: add weight into the workload declaration
+        for (SQLStatement sql : workload)                   
+            if (sql.getSQLCategory().isSame(SELECT))
+                sql.setStatementWeight(1);
+            else {
+                // Set Statement weight = |relation size| * updateRatio
+                InumPreparedSQLStatement preparedStmt
+                        = (InumPreparedSQLStatement) io.prepareExplain(sql);
+                ExplainedSQLStatement inumExplain = preparedStmt.explain(new HashSet<Index>());
+                Table tbl = inumExplain.getUpdatedTable();
+                //int fUpdate = (int) (updateRatio * tbl.getCardinality());
+                int fUpdate = 1; 
+                sql.setStatementWeight(fUpdate);
+                Rt.p(" fupdate = " + fUpdate);
+            }
+       
+        
+        div = new DivBIP();
+        
+        Rt.p("DIVpaper: # statements in the workload =  " + workload.size()
+                + " # candidates in the workload = " + candidates.size()
+                + " workload folder = " + folder);
         
         isLoadEnvironmentParameter = true;
-        isPostprocess = false;
     }
     
     
@@ -116,34 +174,13 @@ public class DivTestSetting
      * @throws Exception
      */
     public static void setParameters() throws Exception
-    {  
-        fUpdate = 1;
-        fQuery = 1;
-        sf = 15000;
-        
-        for (SQLStatement sql : workload)
-            if (sql.getSQLCategory().isSame(INSERT)) {
-                
-                // for TPCH workload
-                if (sql.getSQL().contains("orders")) 
-                    sql.setStatementWeight(sf);
-                else if (sql.getSQL().contains("lineitem"))
-                    sql.setStatementWeight(sf * 3.5);
-            }   
-            else if (sql.getSQLCategory().isSame(DELETE))
-                sql.setStatementWeight(sf);            
-            else if (sql.getSQLCategory().isSame(SELECT))
-                sql.setStatementWeight(fQuery);
-            else if (sql.getSQLCategory().isSame(UPDATE))
-                sql.setStatementWeight(fUpdate);
-        
+    {   
         // debugging purpose
-        isExportToFile = true;
+        isExportToFile = false;
         isTestCost = false;
         isShowRecommendation = false;        
         isGetAverage = false;
         isDB2Cost = false;
-        isAllImbalanceConstraint = false;
         
         div = new DivBIP();
         
@@ -161,14 +198,6 @@ public class DivTestSetting
         nReplicas = listNumberReplicas.get(0);
         loadfactor = (int) Math.ceil( (double) nReplicas / 2);
         
-        // imbalance factors
-        for (String typeConstraint : en.getListImbalanceConstraints())                
-            if (typeConstraint.equals(NODE_IMBALANCE))
-                nodeImbalances = en.getListImbalanceFactors();
-            else if (typeConstraint.equals(QUERY_IMBALANCE))
-                queryImbalances = en.getListImbalanceFactors();
-            else if (typeConstraint.equals(FAILURE_IMBALANCE))
-                failureImbalances = en.getListImbalanceFactors();
     }
     
     /**
@@ -221,6 +250,66 @@ public class DivTestSetting
     }
     
     /**
+     * Compute the load-imbalance factor for the given divergent configuration
+     * @param conf
+     * @param workload
+     * @return
+     */
+    public static double computeLoadImbalance(DivConfiguration conf, Workload workload)
+                throws Exception
+    {
+        List<Double> replicas = new ArrayList<Double>();
+        for (int r = 0; r < conf.getNumberReplicas(); r++)
+            replicas.add(0.0);
+        List<Double> costs;
+        double newCost;
+        // TODO: assume no update statement
+        for (SQLStatement sql: workload){
+            costs = computQueryCostReplica(sql, conf);
+            for (int r = 0; r < conf.getNumberReplicas(); r++) {
+                newCost = replicas.get(r) + costs.get(r);
+                replicas.set(r, newCost);
+            }   
+        }
+        
+        return UtilConstraintBuilder.maxRatioInList(replicas);
+    }
+    
+    /**
+     * Compute the query execution cost for statements in the given workload
+     * 
+     * @param conf
+     *      A configuration
+     *      
+     * @throws Exception
+     */
+    protected static List<Double> computQueryCostReplica(SQLStatement sql,
+                                                         DivConfiguration divConf) 
+                                                       throws Exception
+    {
+        double cost;
+        List<QueryCostAtPartition> costPartitions = new ArrayList<QueryCostAtPartition>();
+        int nReplicas = divConf.getNumberReplicas();
+        List<Double> results = new ArrayList<Double>();
+        
+        for (int r = 0; r < nReplicas; r++) {   
+            cost = io.getDelegate().explain(sql, divConf.indexesAtReplica(r)).getTotalCost();
+            costPartitions.add(new QueryCostAtPartition(r, cost));
+            results.add(0.0);
+        }
+        Collections.sort(costPartitions);
+        int id;
+        for (int k = 0; k < divConf.getLoadFactor(); k++){
+            id = costPartitions.get(k).getPartitionID();
+            cost = costPartitions.get(k).getCost() * sql.getStatementWeight() 
+                        / divConf.getLoadFactor();
+            results.set(id, cost);
+        }
+        
+        return results;
+    }
+    
+    /**
      * Compute the query execution cost for statements in the given workload
      * 
      * @param conf
@@ -250,7 +339,6 @@ public class DivTestSetting
     }
     
     
-    
     /**
      * Compute the query execution cost for statements in the given workload
      * 
@@ -259,7 +347,7 @@ public class DivTestSetting
      *      
      * @throws Exception
      */
-    protected static List<Double> computeQueryCostsDB2(Workload workload, Set<Index> conf) throws Exception
+    protected static List<Double> computeCostsDB2(Workload workload, Set<Index> conf) throws Exception
     {           
         double db2Cost;
         List<Double> costs = new ArrayList<Double>();
@@ -294,17 +382,39 @@ public class DivTestSetting
         int id = 0;
         double totalDB2 = 0.0;
         double totalInum = 0.0;
+        List<Integer> goodStmts = new ArrayList<Integer>();
+        boolean isGood;
+        double ratio;
         
         for (SQLStatement sql : workload) {
-            
+            isGood = true;
             db2cost = io.getDelegate().explain(sql, conf).getTotalCost();
             inumPrepared = (InumPreparedSQLStatement) io.prepareExplain(sql);
+
+            if (inumPrepared.getTemplatePlans().size() > 9){
+                isGood = false;
+                Rt.p("Not good because too many plans ");
+                id++;
+                continue;
+            }
+                
             inumcost = inumPrepared.explain(conf).getTotalCost();
             Rt.p(" stmt: " + sql.getSQL());
-            if (inumcost < 0.0 || inumcost > Math.pow(10, 9)) 
-                Rt.p("WATCH OUT -----------------");
+            if (inumcost < 0.0 || inumcost > Math.pow(10, 9)) { 
+                Rt.p("NOT GOOD COST = " + inumcost 
+                        + " id = " + id);
+                isGood = false;
+            }
+            ratio = (double) db2cost / inumcost;
+            if (ratio > 2 || ratio < 0.4) {
+                isGood = false;
+                Rt.p(" NOT GOOD, id = " + id);
+            }
+            if (isGood)
+                goodStmts.add(id);
+            
             Rt.p(id + " " + sql.getSQLCategory() + " " + db2cost + " " + inumcost + " " 
-                                + (double) db2cost / inumcost);
+                                + ratio);
             totalDB2 += db2cost;
             totalInum += inumcost;
             id++;
@@ -313,6 +423,22 @@ public class DivTestSetting
         Rt.p(" total INUM = " + totalInum
                 + " total DB2 = " + totalDB2
                 + " DB2 / INUM = " + (totalDB2 / totalInum));
+        
+        Rt.p(" Number of good statements = " + goodStmts.size());
+        
+        // write to file
+        id = 0;
+        StringBuilder sb = new StringBuilder();
+        for (int i : goodStmts){
+            sb.append("-- query" + id + "\n");
+            sb.append(workload.get(i).getSQL() + ";" + "\n");
+            id++;
+        }
+        
+        File folderDir = new File (en.getWorkloadsFoldername());
+        PrintWriter out = new PrintWriter(new FileWriter(folderDir + "/workload_good.sql"), false);
+        out.println(sb.toString());
+        out.close();
     }
 
     /**
@@ -331,6 +457,7 @@ public class DivTestSetting
         Rt.p(" INUM plan: " + inumPrepared.explain(conf)
                 + " cost: " + inumPrepared.explain(conf).getTotalCost());
     }
+    
     
 }
  

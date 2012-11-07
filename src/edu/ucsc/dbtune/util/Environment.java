@@ -43,6 +43,14 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.NUMBER_OF_REPLICA;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.IMBALANCE_CONSTRAINT;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.IMBALANCE_FACTOR;
 
+import static edu.ucsc.dbtune.util.EnvironmentProperties.NODE_IMBALANCE;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.FAILURE_IMBALANCE;
+
+import static edu.ucsc.dbtune.util.EnvironmentProperties.WINDOW_DURATION;
+import static edu.ucsc.dbtune.util.EnvironmentProperties.NUMBER_RUNNING_QUERIES;
+
+import static edu.ucsc.dbtune.util.EnvironmentProperties.SHOW_OPTIMIZER_COST;
+
 /**
  * @author Huascar A. Sanchez
  * @author Ivo Jimenez
@@ -549,5 +557,74 @@ public class Environment
             factors.add(Double.valueOf(factor.trim()));
             
         return factors;
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#NODE_IMBALANCE}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public List<Double> getNodeImbalanceFactors()
+    {
+        List<Double> factors = new ArrayList<Double>();
+        
+        for (String factor : Arrays.asList(
+                getOrThrowIfNullOrEmpty(configuration, NODE_IMBALANCE).split(",")))
+            factors.add(Double.valueOf(factor.trim()));
+            
+        return factors;
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#NODE_IMBALANCE}
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public List<Double> getFailureImbalanceFactors()
+    {
+        List<Double> factors = new ArrayList<Double>();
+        
+        for (String factor : Arrays.asList(
+                getOrThrowIfNullOrEmpty(configuration, FAILURE_IMBALANCE).split(",")))
+            factors.add(Double.valueOf(factor.trim()));
+            
+        return factors;
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#WINDOW_DURATION}
+     * @throws NumberFormatException
+     *      unable to return the overhead factor due to the stated reason.
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public int getWindowDuration() throws NumberFormatException
+    {
+        return Integer.valueOf(
+                getOrThrowIfNullOrEmpty(configuration, WINDOW_DURATION));
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#NUMBER_RUNNING_QUERIES}
+     * @throws NumberFormatException
+     *      unable to return the overhead factor due to the stated reason.
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public int getNumberOfRunningQueries() throws NumberFormatException
+    {
+        return Integer.valueOf(
+                getOrThrowIfNullOrEmpty(configuration, NUMBER_RUNNING_QUERIES));
+    }
+    
+    /**
+     * @return {@link EnvironmentProperties#SHOW_OPTIMIZER_COST}
+     * 
+     * @throws NoSuchElementException
+     *      if the property is empty or null
+     */
+    public boolean getIsShowOptimizerCost() throws NoSuchElementException 
+    {
+        return toBoolean(getOrThrowIfNullOrEmpty(configuration, SHOW_OPTIMIZER_COST));
     }
 }

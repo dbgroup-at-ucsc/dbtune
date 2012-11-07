@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.inum;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -10,6 +11,7 @@ import java.util.Vector;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
+import edu.ucsc.dbtune.optimizer.plan.InumPlanWithCache;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
 import edu.ucsc.dbtune.util.Rt;
@@ -47,7 +49,7 @@ public class GreedyMatchingStrategy extends AbstractMatchingStrategy
         // over each slot and find the best index from the given
         // configuration that can be plugged into it. The best template
         // instantiation is the winner.
-
+        
         for (InumPlan template : inumSpace) {
 //            Rt.p(template);
 //            Rt.p(template.orgPlan);
@@ -83,7 +85,7 @@ public class GreedyMatchingStrategy extends AbstractMatchingStrategy
 
                 bestAtomicConfiguration.add(bestIndexForSlot);
             }
-
+            
 //            Rt.p(template);
             if (bestAtomicConfiguration.size() != slots.size()) {
                 // not all indexes where compatible, check the next template
@@ -93,7 +95,8 @@ public class GreedyMatchingStrategy extends AbstractMatchingStrategy
             SQLStatementPlan plan = template.instantiate(bestAtomicConfiguration);
 
             if (plan == null)
-                throw new SQLException("Can't instantiate best configuration; check compatibility");
+                continue;
+//                throw new SQLException("Can't instantiate best configuration; check compatibility");
 
 //            Rt.p(plan);
             if (plan.getRootOperator().getAccumulatedCost() < bestCost) {

@@ -29,7 +29,7 @@ public interface QueryPlanDesc
      * @param candidateIndexes
      *      The set of candidate indexes   
      * 
-     * {\bf Note: }The index full table scan is placed at the last position in the list of indexes
+     * Note that the index full table scan is placed at the last position in the list of indexes
      * at each slot.   
      *     
      * @throws SQLException
@@ -167,7 +167,7 @@ public interface QueryPlanDesc
      * @return
      *      The weight (or the frequency) of the statement
      */
-    public double getStatementWeight();
+    public int getStatementWeight();
     
     /**
      * Retrieve the full table scan indexes from this plan description

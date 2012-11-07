@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -34,6 +35,8 @@ public abstract class DivgDesign
     protected double totalCost;
     protected double updateCost;
     protected double queryCost;
+    protected double increasedCost;
+    
         
     /**
      * Retrieve the total cost of the recommended configuration.
@@ -85,9 +88,15 @@ public abstract class DivgDesign
      * @return
      *      The recommendation by the algorithm. 
      */
-    public List<Set<Index>> getRecommendation()
+    public DivConfiguration getRecommendation()
     {
-        return indexesAtReplica;
+        DivConfiguration output = new DivConfiguration(n, m);
+        for (int r = 0; r < n; r++){
+            for (Index index : indexesAtReplica.get(r))
+                output.addIndexReplica(r, index);
+        }
+        
+        return output;
     }
     /**
      * Recommend the divergent configuration. 
@@ -112,7 +121,7 @@ public abstract class DivgDesign
         this.m = loadfactor;
         this.B = B;
 
-        this.maxIters = 10;
+        this.maxIters = 5;
         this.epsilon = 0.05;
         
         // process 
@@ -236,8 +245,9 @@ public abstract class DivgDesign
                 
                 for (int i = 0; i < n; i++) {
                     partitionIDs.add(i);
-                    totalCost += costs.get(i).getCost();
-                    updateCost += costs.get(i).getCost();
+                    increasedCost = costs.get(i).getCost() * sql.getStatementWeight();
+                    totalCost += increasedCost;
+                    updateCost += increasedCost;
                 }
                 
             }
@@ -246,8 +256,9 @@ public abstract class DivgDesign
                 Collections.sort(costs);
                 
                 for (int k = 0; k < m; k++) {
-                    totalCost += costs.get(k).getCost() / m;
-                    queryCost += costs.get(k).getCost() / m;
+                    increasedCost = costs.get(k).getCost() * sql.getStatementWeight() / m;
+                    totalCost += increasedCost;
+                    queryCost += increasedCost;
                     partitionIDs.add(costs.get(k).getPartitionID());
                 }
                 
@@ -307,7 +318,8 @@ public abstract class DivgDesign
               throws Exception;
     
     
-    class QueryCostAtPartition implements Comparable<QueryCostAtPartition>
+    
+    public static class QueryCostAtPartition implements Comparable<QueryCostAtPartition>
     {
         private int id;
         private double cost;
@@ -331,14 +343,8 @@ public abstract class DivgDesign
         
         @Override
         public int compareTo(QueryCostAtPartition o) 
-        {       
-            double objCost = o.cost; 
-            if (cost < objCost)
-                return -1;
-            else if (cost == objCost)
-                return 0;
-            else 
-                return 1;
+        {    
+            return Double.compare(cost, o.cost);
         }
     }
 }

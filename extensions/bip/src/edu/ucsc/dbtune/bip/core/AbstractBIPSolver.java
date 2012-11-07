@@ -28,7 +28,6 @@ import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
 
-
 /**
  * This class abstracts the common methods shared by different BIP solvers
  * for different index tuning related problems.
@@ -76,6 +75,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     {
         try {
             cplex.clearModel();
+            
         } catch (IloException e) {
             e.printStackTrace();
         }
@@ -86,11 +86,27 @@ public abstract class AbstractBIPSolver implements BIPSolver
     /**
      * Set the list of query plan descs
      * @param descs
+     *      The set of query plan descriptions
      */
     public void setQueryPlanDesc(List<QueryPlanDesc> descs)
     {
+        // explicitly garbage collection
+        if (queryPlanDescs != null)
+            queryPlanDescs.clear();
+        // -------------------------------------------
         this.queryPlanDescs = descs;
         this.isSetPlanDesc = true;
+    }
+    
+    /**
+     * Retrieve the list of query plan descriptions stored in this object
+     * 
+     * @return
+     *      List of query plan descriptions
+     */
+    public List<QueryPlanDesc> getQueryPlanDescs()
+    {
+        return queryPlanDescs;
     }
     
     @Override    
@@ -127,7 +143,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
         // to derive the query plan descriptions 
         // including internal cost, index access cost, etc.
         logger.setStartTimer();
-        // only popuplate the plan descs if they have not been assigned
+        // only populate the plan descs if they have not been assigned
         if (!isSetPlanDesc){
             if (communicateInumOnTheFly)
                 populatePlanDescriptionOnTheFly();
@@ -135,7 +151,10 @@ public abstract class AbstractBIPSolver implements BIPSolver
                 populatePlanDescriptionForStatements();
         } else {
             // re-use the set of query plan description
-            candidateIndexes.clear();
+            if (candidateIndexes != null)
+                candidateIndexes.clear();
+            
+            candidateIndexes = new HashSet<Index>();
             for (QueryPlanDesc desc : queryPlanDescs)
                 candidateIndexes.addAll(desc.getIndexes());
         }
@@ -159,8 +178,10 @@ public abstract class AbstractBIPSolver implements BIPSolver
         
         if (isCheckFeasible) 
             cplex.setParam(IntParam.IntSolLim, 1);
-      
-        //cplex.setParam(DoubleParam.EpLin, 1e-1);
+        
+        // Improving performance for DIVBIP
+        // http://www-eio.upc.es/lceio/manuals/cplex-11/html/
+        //cplex.setParam(IntParam.MIPEmphasis, 3);
         
         buildBIP();       
         logger.onLogEvent(LogListener.EVENT_FORMULATING_BIP);
@@ -313,7 +334,6 @@ public abstract class AbstractBIPSolver implements BIPSolver
             for (QueryPlanDesc desc : queryPlanDescs)
                 candidateIndexes.addAll(desc.getFullTableScanIndexes());
         }
-        
     }
     
     /**

@@ -140,6 +140,39 @@ order by
 o_year;
 
 select
+nation,
+o_year,
+sum(amount) as sum_profit
+from
+(
+select
+n_name as nation,
+year(o_orderdate) as o_year,
+l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount
+from
+tpch.part,
+tpch.supplier,
+tpch.lineitem,
+tpch.partsupp,
+tpch.orders,
+tpch.nation
+where
+s_suppkey = l_suppkey
+and ps_suppkey = l_suppkey
+and ps_partkey = l_partkey
+and p_partkey = l_partkey
+and o_orderkey = l_orderkey
+and s_nationkey = n_nationkey
+and p_name like '%thistle%'
+) as profit
+group by
+nation,
+o_year
+order by
+nation,
+o_year desc;
+
+select
 c_custkey,
 c_name,
 sum(l_extendedprice * (1 - l_discount)) as revenue,
@@ -344,6 +377,46 @@ and l_shipdate < '1997-01-01'
 and s_nationkey = n_nationkey
 and n_name = 'KENYA'
 order by
+s_name;
+
+select
+s_name,
+count(*) as numwait
+from
+tpch.supplier,
+tpch.lineitem l1,
+tpch.orders,
+tpch.nation
+where
+s_suppkey = l1.l_suppkey
+and o_orderkey = l1.l_orderkey
+and o_orderstatus = 'F'
+and l1.l_receiptdate > l1.l_commitdate
+and exists (
+select
+*
+from
+tpch.lineitem l2
+where
+l2.l_orderkey = l1.l_orderkey
+and l2.l_suppkey <> l1.l_suppkey
+)
+and not exists (
+select
+*
+from
+tpch.lineitem l3
+where
+l3.l_orderkey = l1.l_orderkey
+and l3.l_suppkey <> l1.l_suppkey
+and l3.l_receiptdate > l3.l_commitdate
+)
+and s_nationkey = n_nationkey
+and n_name = 'PERU'
+group by
+s_name
+order by
+numwait desc,
 s_name;
 
 select

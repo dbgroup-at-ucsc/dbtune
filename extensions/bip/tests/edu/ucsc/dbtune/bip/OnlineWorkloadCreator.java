@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import edu.ucsc.dbtune.bip.util.SortablePairObject;
 import edu.ucsc.dbtune.metadata.ByContentIndex;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Rt;
@@ -21,6 +22,12 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 public class OnlineWorkloadCreator extends DIVPaper 
 {
     private static Random random;
+    private static List<SQLStatement> sqlFirst;
+    private static List<SQLStatement> sqlSecond;
+    
+    protected static boolean isPartitionWorkload = true;
+    protected static boolean isGenerateWorkload = false;
+    
     @Test
     public void main() throws Exception
     {
@@ -29,11 +36,14 @@ public class OnlineWorkloadCreator extends DIVPaper
         initialize();
         
         // 1. Read common parameter
-        getEnvironmentParameters(dbNames[0], wlNames[0]);
+        getEnvironmentParameters();
         
         // 2. generate online workload
-        generateOnlineWorkload();
-        //partitionWorkload();
+        if (isGenerateWorkload)
+            generateOnlineWorkload();
+        
+        if (isPartitionWorkload)
+            partitionWorkload();
     }
     
     /**
@@ -45,16 +55,8 @@ public class OnlineWorkloadCreator extends DIVPaper
     protected static void generateOnlineWorkload() throws Exception
     {
         random = new Random();
-        
-        int median = workload.size() / 2;
-        List<SQLStatement> sqlFirst = new ArrayList<SQLStatement>();
-        List<SQLStatement> sqlSecond = new ArrayList<SQLStatement>();
-        
-        for (int i = 0; i < workload.size(); i++)
-            if (i < median)
-                sqlFirst.add(workload.get(i));
-            else 
-                sqlSecond.add(workload.get(i));
+        // create sqlFirst, sqlSecond
+        clusterStatements();
         
         int numPhase = 4;
         int lengthTransition = 10;
@@ -67,8 +69,8 @@ public class OnlineWorkloadCreator extends DIVPaper
             transitions.add(transitionPhase(workload, lengthTransition, id));
         
         // main phase
-        int numFirsts[] = {4, 1, 4, 1};
-        int total = 5;
+        int numFirsts[] = {10, 0, 10, 0};
+        int total = 10;
         
         for (int id = 0; id < numPhase; id++){
             mains.add(mainPhase(sqlFirst, sqlSecond, numFirsts[id], 
@@ -79,8 +81,10 @@ public class OnlineWorkloadCreator extends DIVPaper
         StringBuilder sb = new StringBuilder();
         for (int id = 0; id < numPhase; id++){
             // transition and then main
-            sb.append(transitions.get(id).toString());
             sb.append(mains.get(id).toString());
+            //sb.append(transitions.get(id).toString());
+            Rt.p(" main phase " + id + " = " + mains.get(id).sqls.size());
+            //Rt.p(" transition phase " + id + " = " + transitions.get(id).sqls.size());
         }
         
         // write to file
@@ -92,6 +96,43 @@ public class OnlineWorkloadCreator extends DIVPaper
         PrintWriter out = new PrintWriter(new FileWriter(newDir + "/workload.sql"), false);
         out.println(sb.toString());
         out.close();
+    }
+    
+    /**
+     * Cluster statements have the same cost
+     */
+    protected static void clusterStatements() throws Exception
+    {
+        List<Double> costs;
+        List<SortablePairObject> objects = new 
+                    ArrayList<SortablePairObject>();
+        Rt.p("COMPUTE COST IN INUM");
+        costs = computeQueryCostsInum(workload, candidates);
+        Rt.p(" Start to cluster QUERIES");
+        for (int id = 0; id < costs.size(); id++){
+            SortablePairObject obj = new SortablePairObject
+                            (id, costs.get(id));
+            objects.add(obj);
+        }
+        
+        Collections.sort(objects);
+        int median = objects.size() / 2;
+        int id;
+        
+        sqlFirst = new ArrayList<SQLStatement>();
+        sqlSecond = new ArrayList<SQLStatement>();
+        
+        for (int i = 0; i < objects.size(); i++) {
+            id = objects.get(i).getId();
+            if (i < median) {
+                Rt.p(" FIRST partition " + objects.get(i));
+                sqlFirst.add(workload.get(id));
+            }
+            else {
+                Rt.p(" SECOND partition " + objects.get(i));
+                sqlSecond.add(workload.get(id));
+            }  
+        }       
     }
     
     /**
@@ -140,17 +181,8 @@ public class OnlineWorkloadCreator extends DIVPaper
     
     protected static void partitionWorkload() throws Exception
     {
-        int median = workload.size() / 2;
-        List<SQLStatement> sqls1 = new ArrayList<SQLStatement>();
-        List<SQLStatement> sqls2 = new ArrayList<SQLStatement>();
-        
-        for (int i = 0; i < workload.size(); i++)
-            if (i < median)
-                sqls1.add(workload.get(i));
-            else 
-                sqls2.add(workload.get(i));
-        
-        testCost(new Workload(sqls1), new Workload(sqls2));
+        clusterStatements();
+        testCost(new Workload(sqlFirst), new Workload(sqlSecond));
     }
     
     /**
@@ -192,7 +224,7 @@ public class OnlineWorkloadCreator extends DIVPaper
         double wl1FTS = computeWorkloadCostDB2(wl1, new HashSet<Index>());
         showCostInfo(wl1Right, wl1Opposite, wl1FTS);
         
-        // 1. for the second workload
+        // 2. for the second workload
         Rt.p(" The second workload ---------------------");
         double wl2Right = computeWorkloadCostDB2(wl2, candidates2);
         double wl2Opposite = computeWorkloadCostDB2(wl2, candidates1);

@@ -22,27 +22,30 @@ public class DB2DivgDesignTest extends DIVPaper
         // wl names
         initialize();
         
-        // 2. special data structures for this class
-        entries = new HashMap<DivPaperEntry, Double>();
-        designFile = new File(rawDataDir, DESIGN_DB2_FILE);
-        
         long start = System.currentTimeMillis();
         
-        // 3. for each (dbname, wlname) derive 
-        // the UNIF cost
-        for (int i = 0; i < dbNames.length; i++) 
-            testDivgDesignDB2(dbNames[i], wlNames[i]);
+        // 3. 
+        detailEntries = new HashMap<DivPaperEntryDetail, Double>();
+        testDivgDesignDB2();
         
         long end = System.currentTimeMillis();
         long totalTimes= (end - start) / 1000; // in secs
         Rt.p(" Total running time" + totalTimes
                 + " avg: " + totalTimes / (listBudgets.size() * listNumberReplicas.size()));
-        // store in the serialize file
-        serializeDivResult(entries, designFile);
         
-        // test the result
-        entries = readDivResult(designFile);
-        Rt.p(" result " + entries);
+        // not to draw graph
+        resetParameterNotDrawingGraph();
+    }
+    
+    protected static void storeResult() throws Exception
+    {
+        designFile = new File(rawDataDir, wlName + "_" + DESIGN_DETAIL_DB2_FILE);
+        designFile.delete();
+        designFile = new File(rawDataDir, wlName + "_" + DESIGN_DETAIL_DB2_FILE);
+        designFile.createNewFile();
+        
+        // store in the serialize file
+        serializeDivResultDetail(detailEntries, designFile);
     }
     
 
@@ -55,15 +58,13 @@ public class DB2DivgDesignTest extends DIVPaper
      *      Workload
      * @throws Exception
      */
-    public static void testDivgDesignDB2(String dbName, String wlName)
-                throws Exception
+    public static void testDivgDesignDB2() throws Exception
     {   
         // 1. Read common parameter
-        getEnvironmentParameters(dbName, wlName);
-        
-        // 2. set parameter for DivBIP()
+        getEnvironmentParameters();
         setParameters();
         
+        // 2. Run algorithms
         Optimizer io = db.getOptimizer();
         DB2Optimizer db2Opt = (DB2Optimizer) io.getDelegate();
         design = new DB2DivgDesign(db2Advis, db2Opt);
@@ -74,10 +75,15 @@ public class DB2DivgDesignTest extends DIVPaper
             for (int n : listNumberReplicas) {
                 costDiv = testDivgDesign(n, B);
                 budget = convertBudgetToMB(B);
-                DivPaperEntry entry = new DivPaperEntry
-                        (dbName, wlName, n, budget);
+                DivPaperEntryDetail entry = new DivPaperEntryDetail
+                        (dbName, wlName, n, budget, divConf);
+                entry.queryCost = design.getQueryCost();
+                entry.updateCost = design.getUpdateCost();
                 
-                entries.put(entry, costDiv);
+                detailEntries.put(entry, costDiv);
+                // since it is expensive
+                // store after one result is obtained
+                storeResult();
             }
     }
     
@@ -104,6 +110,11 @@ public class DB2DivgDesignTest extends DIVPaper
             totalCost +=  design.getTotalCost();
         }
         
+        divConf = design.getRecommendation();
+        Rt.p("DESIGN cost: n = " + n + " B = " + B
+                + " average cost = " + (totalCost / numIters));
+        Rt.p(" Number of indexes in each replica = "
+                + divConf.indexAtReplicaInfo());
         return totalCost / numIters;
     }
 }

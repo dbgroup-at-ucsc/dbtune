@@ -41,6 +41,7 @@ public class DivVariablePool extends AbstractBIPVariablePool
      */
     public void clear()
     {
+        super.clear();
         mapHighDimensionVar.clear();
     }
     

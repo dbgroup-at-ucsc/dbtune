@@ -21,6 +21,7 @@ import edu.ucsc.dbtune.optimizer.plan.InterestingOrder;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
@@ -176,7 +177,7 @@ For example,find out where Q6.O_ORDERDATE(A) comes from
                         s=s.trim();
                         if (s.length()==0)
                             continue;
-                        String[] ss2=s.split(" = | < | > | <= | >= | <> | LIKE ");
+                        String[] ss2=s.split(" = ");//| < | > | <= | >= | <> | LIKE ");
                         if (ss2.length!=2)
                             continue;
                         InumInterestingOrder[] orders=new InumInterestingOrder[ss2.length];
@@ -231,7 +232,7 @@ For example,find out where Q6.O_ORDERDATE(A) comes from
             // no need to explore more
             return;
 
-        Set<? extends Index> indexes;
+        Set<InumInterestingOrder> indexes;
         if (overrideInumSpacePopulateIndexSet!=null)
             indexes=overrideInumSpacePopulateIndexSet;
         else {
@@ -244,6 +245,19 @@ For example,find out where Q6.O_ORDERDATE(A) comes from
 //                Rt.error(e.getClass().getName()+": "+e.getMessage());
                 indexes=extractInterestingOrderFromDB(statement,delegate);
 //            }
+        }
+        
+        for (TableAccessSlot slot : templateForEmpty.getSlots()) {
+            if (slot.getIndex() instanceof FullTableScanIndex) {
+                Operator parent = templateForEmpty.getParent(slot);
+                if (parent != null && parent.name.equals("HASH.JOIN")
+                        &&(slot.rawPredicateList==null||slot.rawPredicateList.size()==0)
+                        ) {
+                    InterestingOrder order=slot.getColumnsFetched();
+                    if (order.size()>1)
+                        indexes.add(new InumInterestingOrder(order));
+                }
+            }
         }
         
         // obtain plans for all the extracted interesting orders

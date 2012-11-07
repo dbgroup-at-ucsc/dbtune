@@ -4,12 +4,20 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Test;
+
+import edu.ucsc.dbtune.bip.div.DivConfiguration;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Rt;
 
+import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
+
 public class UNIFDB2AdvisorTest extends DIVPaper 
-{   
+{
+    public static String fileName;
+    
     @Test
     public void main() throws Exception
     {
@@ -17,25 +25,15 @@ public class UNIFDB2AdvisorTest extends DIVPaper
         // wl names
         initialize();
         
-        // 2. special data structures for this class
-        entries = new HashMap<DivPaperEntry, Double>();
-        unifFile = new File(rawDataDir, UNIF_DB2_FILE);
-        unifFile.delete();
-        unifFile = new File(rawDataDir, UNIF_DB2_FILE);
-        unifFile.createNewFile();
-        
-        
         // 3. for each (dbname, wlname) derive 
         // the UNIF cost
-        for (int i = 0; i < dbNames.length; i++) 
-            testUNIFDB2(dbNames[i], wlNames[i]);
+        getEnvironmentParameters();
+        setParameters();
+        fileName = wlName + "_" + UNIF_DETAIL_DB2_FILE;
+        testUNIFDB2();
         
-        // store in the serialize file
-        serializeDivResult(entries, unifFile);
-        
-        // test the result
-        entries = readDivResult(unifFile);
-        Rt.p(" result " + entries);
+        // not to draw graph
+        resetParameterNotDrawingGraph();
     }
     
 
@@ -48,28 +46,38 @@ public class UNIFDB2AdvisorTest extends DIVPaper
      *      Workload
      * @throws Exception
      */
-    public static void testUNIFDB2(String dbName, String workloadName)
-                throws Exception
-    {   
-        // 1. Read common parameter
-        getEnvironmentParameters(dbName, workloadName);
-        
-        // 2. set parameter for DivBIP()
-        setParameters();        
-        List<Double> totalCosts;
+    public static void testUNIFDB2() throws Exception
+    {         
+        List<WorkloadCostDetail> wcs;
         long budget;
+        detailEntries = new HashMap<DivPaperEntryDetail, Double>();
+        
         for (double B1 : listBudgets) { 
-            totalCosts = testUniformDB2Advis(listNumberReplicas, B1);
-            Rt.p(" space budget = " + B1 + " " + totalCosts);
+            wcs = testUniformDB2Advis(listNumberReplicas, B1);
+            Rt.p(" space budget = " + B1 + " " + wcs);
             
             for (int i = 0; i < listNumberReplicas.size(); i++){
                 budget = convertBudgetToMB(B1);
-                DivPaperEntry entry = new DivPaperEntry
-                (dbName, workloadName, listNumberReplicas.get(i), budget);
+                DivPaperEntryDetail entry = new DivPaperEntryDetail
+                (dbName, wlName, listNumberReplicas.get(i), budget, divConf);
+                entry.queryCost = wcs.get(i).queryCost;
+                entry.updateCost = wcs.get(i).updateCost;
                 
-                entries.put(entry, totalCosts.get(i));
+                detailEntries.put(entry, wcs.get(i).totalCost);
             }
+            
+            Rt.p(" store in file name = " + fileName);
+            unifFile = new File(rawDataDir, fileName);
+            unifFile.delete();
+            unifFile = new File(rawDataDir, fileName);
+            unifFile.createNewFile();
+            
+            // store in the serialize file
+            serializeDivResultDetail(detailEntries, unifFile);
         }
+        
+        Rt.p(" The design is in object divConf ");
+        Rt.p("Detail = " + divConf);
     }
     
     /**
@@ -84,20 +92,40 @@ public class UNIFDB2AdvisorTest extends DIVPaper
      *      List of total cost for each replica
      * @throws Exception
      */
-    public static List<Double> testUniformDB2Advis(List<Integer> listNReplicas, double B1)
+    public static List<WorkloadCostDetail> testUniformDB2Advis(List<Integer> listNReplicas, double B1)
             throws Exception
-    {
-        List<Double> costs = new ArrayList<Double>();
-        double totalCost = 0.0;
+    {   
         db2Advis.process(workload);
         int budget = (int) (B1 / Math.pow(2, 20));
-        for (double cost : computeQueryCostsDB2(workload, db2Advis.getRecommendation(budget)))
-            totalCost += cost;
+        Set<Index> recommendation = db2Advis.getRecommendation(budget);
         
-        for (int i=0; i<listNReplicas.size(); i++)
-            costs.add(totalCost);
-        Rt.p("UNIF uing DB2Advis, space budget = " + B1
-                + " UNIF = " + costs);
-        return costs;
+        // create a configuration
+        divConf = new DivConfiguration(1, 1);
+        for (Index index : recommendation)
+            divConf.addIndexReplica(0, index);
+        
+        List<Double> costs = computeCostsDB2(workload, recommendation);
+        double queryCost = 0.0;
+        double updateCost = 0.0;
+        
+        for (int i = 0; i < workload.size(); i++)
+            if (workload.get(i).getSQLCategory().isSame(SELECT))
+                queryCost += costs.get(i) * workload.get(i).getStatementWeight();
+            else
+                updateCost += costs.get(i) * workload.get(i).getStatementWeight();
+        
+         
+        List<WorkloadCostDetail> wcs = new
+                ArrayList<WorkloadCostDetail>();
+        WorkloadCostDetail wc;
+        for (int i=0; i < listNReplicas.size(); i++) {
+            wc = new WorkloadCostDetail();
+            wc.queryCost = queryCost;
+            wc.updateCost = listNReplicas.get(i) * updateCost;
+            wc.totalCost = wc.queryCost + wc.updateCost;
+            wcs.add(wc);
+        }
+        
+        return wcs;
     }
 }

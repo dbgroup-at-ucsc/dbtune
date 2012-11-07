@@ -1,14 +1,17 @@
 package edu.ucsc.dbtune.bip.indexadvisor;
 
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.bip.core.BIPSolver;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
+import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.Workload;
 
 public class CoPhy implements BIPSolver, ConstraintIndexAdvisor 
@@ -19,9 +22,19 @@ public class CoPhy implements BIPSolver, ConstraintIndexAdvisor
     private double     B;
     private LogListener logger;
     private double      objVal;
+    private List<QueryPlanDesc> descs;
     
     protected boolean communicateInumOnTheFly = false;
         
+    /**
+     * Set list of query plan descriptions
+     * @param descs
+     */
+    public void setQueryPlanDesc(List<QueryPlanDesc> descs)
+    {
+        this.descs = descs;
+    }
+    
     @Override
     public void setCandidateIndexes(Set<Index> candidateIndexes) 
     {
@@ -87,17 +100,20 @@ public class CoPhy implements BIPSolver, ConstraintIndexAdvisor
         div.setLoadBalanceFactor(1);
         div.setSpaceBudget(B);
         div.setLogListenter(logger);
-        div.setCommunicatingInumOnTheFly(communicateInumOnTheFly);
+        div.setQueryPlanDesc(descs);
         
         DivConfiguration output = (DivConfiguration) div.solve();
         Set<Index> recommended = null;
         IndexTuningOutput result = null;
-        
+       
         if (output != null) {
             recommended = output.indexesAtReplica(0);
             result = new IndexTuningOutput();
             result.setIndexes(recommended);
             objVal = div.getObjValue();
+        } else {
+            Rt.p(" NO SOLUTION BY COPHY");
+            System.exit(1);
         }
         
         return result;

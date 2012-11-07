@@ -61,12 +61,11 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
      *      A set of candidate indexes
      * @throws Exception
      */
-    public static Set<Index> readCandidateIndexes(DB2Advisor db2Advis) 
+    public static Set<Index> readCandidateIndexes(String folder, DB2Advisor db2Advis) 
             throws Exception
     {        
         // test candidate generation
-        String fileName = "";
-        fileName = folder  + "/candidates.bin";
+        String fileName = folder  + "/candidates.bin";
         Rt.p(" file name containing indexes: " + fileName);
         File file = new File(fileName);        
         if (!file.exists()) {
@@ -91,8 +90,10 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
         
         // temporary get only SELECT statements
         List<SQLStatement> sqls = new ArrayList<SQLStatement>();
+        List<SQLStatement> sqlUpdate = new ArrayList<SQLStatement>();
         Map<String, Integer> mapSQL = new HashMap<String, Integer>();
         
+        // TODO: generate for UPDATE separately
         for (SQLStatement sql : workload)
             if (sql.getSQLCategory().isSame(SELECT)) {
                 // remove duplicate query
@@ -101,11 +102,18 @@ public class CandidateGeneratorFunctionalTest extends DivTestSetting
                     sqls.add(sql);
                     mapSQL.put(sql.getSQL(), 1);
                 }
-            }
-        
+            } 
+            else
+                sqlUpdate.add(sql);
+                    
         Workload wlCandidate = new Workload(sqls);
         Rt.p(" size of wl candidates: " + wlCandidate.size());
         candidates = candGen.generate(wlCandidate);
+        Workload wlUpdate = new Workload(sqlUpdate);
+        for (Index index : candGen.generate(wlUpdate)){
+            Rt.p(" index for update = " + index);
+            candidates.add(index);
+        }
         
         // Calculate the total size (for solely information)
         long totalSize = 0;

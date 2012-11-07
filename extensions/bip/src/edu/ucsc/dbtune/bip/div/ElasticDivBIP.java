@@ -78,6 +78,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             nReplicas = nDeploys;
     }
     
+    
     @Override
     protected void buildBIP()  
     {
@@ -98,7 +99,7 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             super.usedIndexConstraints();
             
             // 5. Top-m best cost 
-            super.topMBestCostConstraints();    
+            super.routingMultiplicityConstraints();    
         
             // 6. space constraints
             super.spaceConstraints();
@@ -112,6 +113,9 @@ public class ElasticDivBIP extends DivBIP implements ElasticDivergent
             }           
         }
         catch (IloException e) {
+            e.printStackTrace();
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
     }

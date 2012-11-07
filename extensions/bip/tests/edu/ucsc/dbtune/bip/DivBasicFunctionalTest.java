@@ -1,24 +1,23 @@
 package edu.ucsc.dbtune.bip;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
-import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
+
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.DB2Optimizer;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
-
-import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
@@ -42,6 +41,27 @@ public class DivBasicFunctionalTest extends DivTestSetting
         // 2. set parameter for DivBIP()
         setParameters();
         
+        // to be remove
+        DB2Optimizer db2Optimizer = (DB2Optimizer) db.getOptimizer()
+                        .getDelegate();
+        Rt.p(" to be removed");
+        for (SQLStatement sql : workload){
+            if (sql.getSQLCategory().isSame(NOT_SELECT)) {
+                ExplainedSQLStatement explain = 
+                            db2Optimizer.explain(sql, candidates);
+                Rt.p("BASE table update cost "
+                        + explain.getBaseTableUpdateCost());
+                Rt.p("----------");
+                for (Index index : candidates)
+                    Rt.p(" index defined on relation "
+                            + index.getTable().getName()
+                            + " update cost = "
+                            + explain.getUpdateCost(index));
+                System.exit(1);
+            }
+        }
+        Rt.p(" end to be removed");
+        
         if (!(io instanceof InumOptimizer))
             return;
         
@@ -50,10 +70,11 @@ public class DivBasicFunctionalTest extends DivTestSetting
         if (file.exists())
             file.delete();
         
-        file = new File(folder + "/candidate-optimizer.bin");
+        file = new File(folder + "/candidates.bin");
         if (file.exists())
             file.delete();
         
+        /*
         // reset the counter in Index class
         int maxID = -1;
         for (Index index : candidates)
@@ -62,6 +83,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
         
         Index.IN_MEMORY_ID = new AtomicInteger(maxID + 1);
         // ----------------------------------------------------
+        */
         
         B = listBudgets.get(0);
         nReplicas = listNumberReplicas.get(0);
@@ -82,8 +104,9 @@ public class DivBasicFunctionalTest extends DivTestSetting
      */
     private static void testDiv() throws Exception
     {
+        /*
         List<Double> inumOpt= computeQueryCostsInum(workload, candidates);
-        List<Double> db2Opt= computeQueryCostsDB2(workload, candidates);
+        List<Double> db2Opt= computeCostsDB2(workload, candidates);
         double inumTotal = 0.0, db2Total = 0.0;
         
         Rt.p("---TPCH10GB, 22 queries, OPTIMAL indexes");
@@ -99,7 +122,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
                 + " INUM / DB2 = " + (inumTotal / db2Total));
         
         List<Double> inumFTS= computeQueryCostsInum(workload, new HashSet<Index>());
-        List<Double> db2FTS= computeQueryCostsDB2(workload, new HashSet<Index>());
+        List<Double> db2FTS= computeCostsDB2(workload, new HashSet<Index>());
         double inumFTSTotal = 0.0, db2FTSTotal = 0.0;
         
         Rt.p("TPCH10GB, 22 queries, FULL TABLE SCAN indexes");
@@ -114,6 +137,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
                 + " DB2 (FTS indexes): " + db2FTSTotal
                 + " INUM / DB2 = " + (inumFTSTotal / db2FTSTotal));
         System.exit(1);
+        */
         
         div = new DivBIP();
         
@@ -143,6 +167,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
             // add the update-base-table-constant costs
             totalCostBIP = div.getObjValue() ; // +div.getTotalBaseTableUpdateCost();            
             Rt.p(" TOTAL COST(INUM): " + totalCostBIP);
+            Rt.p("NODE IMBALANCE = " + div.getNodeImbalance());
             
             Set<Index> conf;
             DivConfiguration divConf = (DivConfiguration) output;
@@ -163,7 +188,7 @@ public class DivBasicFunctionalTest extends DivTestSetting
                 Rt.p("-----------");
                 
                 costInum = computeQueryCostsInum(workload, conf);
-                costDB2 = computeQueryCostsDB2(workload, conf);
+                costDB2 = computeCostsDB2(workload, conf);
                 costCplex = div.getQueryCostReplicaByCplex(r);
                 
                 for (int q = 0; q < costCplex.size(); q++) {

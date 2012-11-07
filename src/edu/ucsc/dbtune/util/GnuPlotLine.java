@@ -148,10 +148,12 @@ public class GnuPlotLine {
         if (xtics != null) {
             ps.print("set xtics (");
             for (int i = 0; i < xtics.length; i++) {
-                if (i > 0)
-                    ps.print(",");
-                ps.print("\"" + xtics[i] + "\" "
-                        + (uniform ? i : xticsValues[i]));
+                if (!xtics[i].equals("null")){
+                    if (i > 0)
+                        ps.print(",");
+                    ps.print("\"" + xtics[i] + "\" "
+                            + (uniform ? i : xticsValues[i]));
+                }
             }
             ps.println(")");
         } else {

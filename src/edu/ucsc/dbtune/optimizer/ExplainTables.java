@@ -77,12 +77,12 @@ public class ExplainTables {
 
     public static void dumpExplainTables(Connection connection)
             throws SQLException {
-        // dumpTable(connection, "systools.EXPLAIN_INSTANCE", "*");
-        // dumpTable(connection, "systools.EXPLAIN_STATEMENT", "*");
-        // dumpTable(connection, "systools.EXPLAIN_ARGUMENT", "*");
-        // dumpTable(connection, "systools.EXPLAIN_OBJECT", "*");
-        // dumpTable(connection, "systools.EXPLAIN_OPERATOR", "*");
-        // dumpTable(connection, "systools.EXPLAIN_STREAM", "*");
+//         dumpTable(connection, "systools.EXPLAIN_INSTANCE", "*");
+//         dumpTable(connection, "systools.EXPLAIN_STATEMENT", "*");
+//         dumpTable(connection, "systools.EXPLAIN_ARGUMENT", "*");
+//         dumpTable(connection, "systools.EXPLAIN_OBJECT", "*");
+//         dumpTable(connection, "systools.EXPLAIN_OPERATOR", "*");
+//         dumpTable(connection, "systools.EXPLAIN_STREAM", "*");
         // System.exit(0);
         dumpTable(connection, "systools.EXPLAIN_ARGUMENT",
                 "OPERATOR_ID,ARGUMENT_TYPE,ARGUMENT_VALUE");
@@ -98,16 +98,18 @@ public class ExplainTables {
                 "SOURCE_ID,TARGET_ID,STREAM_COUNT,COLUMN_COUNT,COLUMN_NAMES,object_schema,object_name");
         dumpTable(connection, "systools.advise_index",
                 "TBNAME,COLNAMES,COLCOUNT");
+        dumpTable(connection, "systools.EXPLAIN_OBJECT", 
+                "OBJECT_SCHEMA,OBJECT_NAME,OBJECT_TYPE,COLUMN_COUNT,ROW_COUNT,WIDTH,PAGES,OVERHEAD");
 
-        // dumpTable(connection, "systools.EXPLAIN_DIAGNOSTIC");
-        // dumpTable(connection, "systools.EXPLAIN_DIAGNOSTIC_DATA");
-        // dumpTable(connection, "systools.OBJECT_METRICS");
-        // dumpTable(connection, "systools.ADVISE_INSTANCE");
-        // dumpTable(connection, "systools.ADVISE_INDEX");
-        // dumpTable(connection, "systools.ADVISE_WORKLOAD");
-        // dumpTable(connection, "systools.ADVISE_MQT");
-        // dumpTable(connection, "systools.ADVISE_PARTITION");
-        // dumpTable(connection, "systools.ADVISE_TABLE");
+        // dumpTable(connection, "systools.EXPLAIN_DIAGNOSTIC", "*");
+        // dumpTable(connection, "systools.EXPLAIN_DIAGNOSTIC_DATA", "*");
+        // dumpTable(connection, "systools.OBJECT_METRICS", "*");
+        // dumpTable(connection, "systools.ADVISE_INSTANCE", "*");
+        // dumpTable(connection, "systools.ADVISE_INDEX", "*");
+        // dumpTable(connection, "systools.ADVISE_WORKLOAD", "*");
+        // dumpTable(connection, "systools.ADVISE_MQT", "*");
+        // dumpTable(connection, "systools.ADVISE_PARTITION", "*");
+        // dumpTable(connection, "systools.ADVISE_TABLE", "*");
     }
 
     public ExplainTables() {
@@ -125,6 +127,7 @@ public class ExplainTables {
             stmt.execute("SET CURRENT QUERY OPTIMIZATION " + optimizationLevel);
         stmt.execute("SET CURRENT EXPLAIN MODE = EVALUATE INDEXES");
         try {
+//            Rt.p(sql.getSQL());
             stmt.execute(sql.getSQL());
         } catch (SQLException e) {
             Rt.p(sql.getSQL());
@@ -370,8 +373,10 @@ public class ExplainTables {
             else
                 sum += operator.accumulatedCost;
         }
-        if (problemNodes > 1)
+        if (problemNodes > 1) {
+            Rt.error(plan);
             throw new SQLException("Invalid plan, too many invalid nodes");
+        }
         if (problemNodes == 1) {
             for (Operator operator : children) {
                 if (operator.accumulatedCost > node.accumulatedCost) {

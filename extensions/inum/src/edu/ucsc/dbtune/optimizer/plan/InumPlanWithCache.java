@@ -59,6 +59,7 @@ public class InumPlanWithCache extends InumPlan
             op=new Operator(cachedOperator);
             op.cardinalityNLJ = slot.cardinalityNLJ;
             op.coefficient=slot.coefficient;
+            op.joinInput=slot.joinInput;
             for (DatabaseObject o : cachedOperator.getDatabaseObjects())
                 op.add(o);
         } else {

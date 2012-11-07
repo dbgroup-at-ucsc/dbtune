@@ -1,35 +1,26 @@
 package edu.ucsc.dbtune.divgdesign;
 
-
-import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
-
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
+import org.junit.Test;
 
 import edu.ucsc.dbtune.divgdesign.CoPhyDivgDesign;
 
-import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
-import edu.ucsc.dbtune.advisor.candidategeneration.OptimizerCandidateGenerator;
-import edu.ucsc.dbtune.bip.DivTestSetting;
-import edu.ucsc.dbtune.bip.util.LogListener;
-import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.optimizer.InumOptimizer;
-import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
-import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
+import edu.ucsc.dbtune.bip.DIVPaper;
+import edu.ucsc.dbtune.bip.DivBIPFunctionalTest;
+import edu.ucsc.dbtune.bip.core.QueryPlanDesc;
+import edu.ucsc.dbtune.bip.util.LogListener;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
+import edu.ucsc.dbtune.util.Rt;
+
 
 /**
  * Test the usage of CoPhy in DivgDesign
@@ -37,26 +28,69 @@ import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
  * @author Quoc Trung Tran
  *
  */
-public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
+public class CoPhyDivgDesignFunctionalTest extends DIVPaper
 {   
     private static int maxIters;
-    private static Map<SQLStatement, Set<Index>> recommendedIndexStmt;
+    private static List<QueryPlanDesc> descs;
     private static CoPhyDivgDesign divg;
     
-    static class StatementCandidates implements Serializable
+    @Test
+    public void main() throws Exception
     {
-        private static final long serialVersionUID = 1L;
+        // 1. initialize data structures, like database names
+        // wl names
+        initialize();
         
-        SQLStatement sql;
-        Set<Index> candidates;
-     
-        StatementCandidates(SQLStatement _sql, Set<Index> _candidates)
-        {
-            sql = _sql;
-            candidates = new HashSet<Index>(_candidates);
-        }
+        // 2. special data structures for this class
+        entries = new HashMap<DivPaperEntry, Double>();
+        isCoPhyDesign = true;
+        
+        // Run algorithms
+        testDivgDesignCoPhy();
+        
+        resetParameterNotDrawingGraph();
     }
     
+
+    /**
+     * Run UNIFDB2 on the given databaes and workload
+     * 
+     * @param dbName
+     *      Database
+     * @param wlName
+     *      Workload
+     * @throws Exception
+     */
+    public static void testDivgDesignCoPhy() throws Exception
+    {   
+        /*
+        // 1. Read common parameter
+        getEnvironmentParameters();
+        setParameters();
+        readQueryPlanDescs();
+        
+        // 2. Run algorithms
+        double costDiv;
+        long budget;
+        for (double B : listBudgets) 
+            for (int n : listNumberReplicas) {
+                costDiv = testDivgDesign(n, B);
+                budget = convertBudgetToMB(B);
+                DivPaperEntry entry = new DivPaperEntry
+                        (dbName, wlName, n, budget, divConf);
+                
+                entries.put(entry, costDiv);
+                
+                designCoPhyFile = new File(rawDataDir, wlName + "_" + DESIGN_COPHY_FILE);
+                designCoPhyFile.delete();
+                designCoPhyFile = new File(rawDataDir, wlName + "_" + DESIGN_COPHY_FILE);
+                designCoPhyFile.createNewFile();
+                
+                // store in the serialize file
+                serializeDivResult(entries, designCoPhyFile);
+            }
+            */
+    }
     
     
     /**
@@ -66,9 +100,9 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
      */
     public static double testDivgDesign(int _n, double _B) throws Exception
     {
-        // 1. Generate candidate indexes
-        generateOptimalCandidatesCoPhy();
-        maxIters = 5;
+        Rt.p("TEST DIVGDESIGN COPHY, n = " + _n 
+             + " space = " + _B);
+        maxIters = 3;
         
         B = _B;
         nReplicas = _n;
@@ -80,16 +114,13 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
         int minPosition = -1;
         double minCost = -1;
         double avgReplicaImbalance = 0.0;
-        double avgQueryImbalance = 0.0;
-        double avgFailureImbalance = 0.0;
         
         for (int iter = 0; iter < maxIters; iter++) {
-            
             logger = LogListener.getInstance();
-            divg = new CoPhyDivgDesign(db, (InumOptimizer) io, logger, recommendedIndexStmt);
+            divg = new CoPhyDivgDesign(db, (InumOptimizer) io, logger, descs);
             divg.recommend(workload, nReplicas, loadfactor, B);
-            
             divgs.add(divg);
+            //costDivgDB2 = convertToDB2Cost(divg);
             
             if (iter == 0 || minCost > divg.getTotalCost()) {
                 minPosition = iter;
@@ -97,13 +128,9 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
             } 
             
             avgReplicaImbalance += divg.getImbalanceReplica();
-            avgQueryImbalance += divg.getImbalanceQuery();
-            avgFailureImbalance += divg.getFailureImbalance();
         }
         
         avgReplicaImbalance /= maxIters;
-        avgQueryImbalance /= maxIters;
-        avgFailureImbalance /= maxIters;
         
         // get the best among these runs
         double timeAnalysis = 0.0;
@@ -111,111 +138,63 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
         for (CoPhyDivgDesign div : divgs) {
             timeInum += div.getInumTime();
             timeAnalysis += div.getAnalysisTime();
-            System.out.println("cost: " + div.getTotalCost()
+            Rt.p("cost INUM = " + div.getTotalCost()
+                    + " QUERY cost = " + div.getQueryCost() 
                             + " Number of iterations: " + div.getNumberOfIterations()
                             + " INUM time : " + div.getInumTime()
                             + " Analysis time: " + div.getAnalysisTime());
             
         }
         
-        System.out.println(" min iteration: " + minPosition + " cost: " + minCost);
         divg = divgs.get(minPosition);
+        divConf = divg.getRecommendation();
+        // compute minCost in terms of DB2 cost
+        minCost = convertToDB2Cost(divg);
         
-        System.out.println("CoPhy Divergent Design \n"
+        Rt.p("CoPhy Divergent Design \n"
                             + " INUM time: " + timeInum + "\n"
                             + " ANALYSIS time: " + timeAnalysis + "\n"
                             + " TOTAL running time: " + (timeInum + timeAnalysis) + "\n"
-                            + " The objective value: " + divg.getTotalCost() + "\n"
-                            + "      QUERY cost:    " + divg.getQueryCost()  + "\n"
-                            + "      UPDATE cost:   " + divg.getUpdateCost() + "\n"
+                            + " The objective value: " + minCost + "\n"
                             + " REPLICA IMBALANCE: " + avgReplicaImbalance + "\n"
-                            + " QUERY IMBALANCE: " + avgQueryImbalance + "\n"
-                            + " FAILURE IMBALANCE: " + avgFailureImbalance + "\n"
                              );
         
-        return divg.getTotalCost();
+        return minCost;
     }
     
     /**
-     * Generate optimal candidate indexes for each statement
-     * 
-     * @throws Exception
+     * convert into db2 cost
+     * @param divg
+     * @return
      */
-    @SuppressWarnings("unchecked")
-    protected static void generateOptimalCandidatesCoPhy() throws Exception
+    public static double convertToDB2Cost(CoPhyDivgDesign divg) throws Exception
     {
-        String fileName = folder + "/candidate-divg-design.bin";
-        File file = new File(fileName); 
+        double queryCost = DivBIPFunctionalTest.getDB2QueryCostDivConf(divg.getRecommendation());
+        return (queryCost + divg.getUpdateCost());        
+    }
+    
+    @SuppressWarnings("unchecked")
+    protected static void readQueryPlanDescs() throws Exception
+    {
+        String fileName = en.getWorkloadsFoldername() + "/query-plan-desc.bin";
+        File file = new File(fileName);
+        ObjectInputStream in;
         
-        if (!file.exists()) {
+        try {
+            FileInputStream fileIn = new FileInputStream(file);
+            in = new ObjectInputStream(fileIn);
+            descs = (List<QueryPlanDesc>) in.readObject();
+            
+            // reassign the statement with the corresponding weight
+            for (int i = 0; i < descs.size(); i++)
+                descs.get(i).setStatement(workload.get(i));
         
-            List<StatementCandidates> candidateCoPhy
-                = new ArrayList<StatementCandidates>();
-            
-            Set<Index> candidates;
-            Workload wl;
-            CandidateGenerator candGen =
-                new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
-            
-            recommendedIndexStmt = new HashMap<SQLStatement, Set<Index>>();
-            List<SQLStatement> sqls;
-            
-            for (SQLStatement sql : workload) {
-            
-                sqls = new ArrayList<SQLStatement>();
-                sqls.add(sql);
-                
-                wl = new Workload(sqls);
-                
-                if (sql.getSQLCategory().isSame(SELECT))
-                    candidates = candGen.generate(wl);
-                else 
-                    candidates = new HashSet<Index>();
-                
-                recommendedIndexStmt.put(sql, candidates);                
-                candidateCoPhy.add(new StatementCandidates(sql, candidates));
-            }
-            
-            // write to file
-            ObjectOutputStream write;
-            
-            try {
-                FileOutputStream fileOut = new FileOutputStream(file);
-                write = new ObjectOutputStream(fileOut);
-                write.writeObject(candidateCoPhy);
-                write.close();
-                fileOut.close();
-            } catch(IOException e) {
-                throw new SQLException(e);
-            }
+            in.close();
+            fileIn.close();
+        } catch(IOException e) {
+            throw new SQLException(e);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException(e);
         }
-        else {
-            // read from file
-            ObjectInputStream in;
-            List<StatementCandidates> candidateCoPhy
-                    = new ArrayList<StatementCandidates>();
-            
-            try {
-                FileInputStream fileIn = new FileInputStream(file);
-                in = new ObjectInputStream(fileIn);
-                candidateCoPhy = (List<StatementCandidates>) in.readObject();
-                
-                in.close();
-                fileIn.close();            
-            } catch(IOException e) {
-                throw new SQLException(e);
-            } catch (ClassNotFoundException e) {
-                throw new SQLException(e);
-            }
-            
-            recommendedIndexStmt = new HashMap<SQLStatement, Set<Index>>();
-            Map<String, Set<Index>> tempCandidates = new HashMap<String, Set<Index>>();
-            for (StatementCandidates sc : candidateCoPhy)
-                tempCandidates.put(sc.sql.getSQL(), sc.candidates);
-            
-            for (SQLStatement stmt : workload) 
-                recommendedIndexStmt.put(stmt, tempCandidates.get(stmt.getSQL()));
-        }
-        
     }
 }
