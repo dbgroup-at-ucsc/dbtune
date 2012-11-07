@@ -34,8 +34,6 @@ import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class InumTestSuite {
-    public static boolean OPT_INDEX_ONLY = false;
-
     static class Result {
         int id;
         boolean timeout = false;
@@ -168,15 +166,10 @@ public class InumTestSuite {
         }
 
         public void createIndex(Environment en) throws SQLException {
-            if (OPT_INDEX_ONLY) {
-                indexSets = new IndexSet[1];
-                indexSets[0] = new IndexSet(this, "U-OPT");
-            } else {
-                indexSets = new IndexSet[3];
-                indexSets[0] = new IndexSet(this, "U-OPT");
-                indexSets[1] = new IndexSet(this, "powerset");
-                indexSets[2] = new IndexSet(this, "one-column-index");
-            }
+            indexSets = new IndexSet[3];
+            indexSets[0] = new IndexSet(this, "U-OPT");
+            indexSets[1] = new IndexSet(this, "powerset");
+            indexSets[2] = new IndexSet(this, "one-column-index");
         }
 
         public void save(Rx rx) {
@@ -432,8 +425,7 @@ public class InumTestSuite {
         ps.println("</table>");
     }
 
-    public static int IBGTIMEOUT = 15000;
-
+    public static int IBGTIMEOUT=15000;
     void compareWorkload(Workload workload, IndexSet set) throws Exception {
         IBGSpaceComputation.maxTime = IBGTIMEOUT;
         for (int i = 0; i < workload.workload.size(); i++) {
@@ -471,13 +463,11 @@ public class InumTestSuite {
                 set.results[i].timeout = false;
                 set.results[i].error = null;
             } catch (SQLException e) {
-                Rt.error(e.getClass().getName() + ": " + e.getMessage());
                 if ("IBG timeout".equals(e.getMessage())) {
+                    Rt.error(e.getClass().getName() + ": " + e.getMessage());
                     set.results[i].timeout = true;
-                } else {
-                    set.results[i].error=e.getClass().getName() + ": " + e.getMessage();
-//                    throw e;
-                }
+                } else
+                    throw e;
             } catch (Exception e) {
                 e.printStackTrace();
                 Rt.error(e.getClass().getName() + ": " + e.getMessage());
@@ -495,7 +485,6 @@ public class InumTestSuite {
     static void exportAccurateQueris(Workload[] workloads, File outputDir)
             throws Exception {
         InumTestSuite suite = new InumTestSuite(workloads, true);
-        suite.compare();
         for (Workload workload : workloads) {
             // suite.showCompactResult(workload,System.out,false);
             // suite.showResultWithCosts(workload, System.out);
@@ -559,16 +548,13 @@ public class InumTestSuite {
     }
 
     public static void main(String[] args) throws Exception {
-        OPT_INDEX_ONLY=true;
         Workload[] workloads = {//
-        // new Workload("tpch10g_22", "tpch10g", "TPC-H",
-        // "resources/workloads/db2/tpch/complete.sql"),
-        // new Workload("tpcds10g_99", "test", "TPCDS",
-        // "resources/workloads/db2/tpcds/db2.sql"),
-        // new Workload("online-benchmark-100", "test", "OTAB",
-        // "resources/workloads/db2/online-benchmark-100/workload.sql"),
-        new Workload("iplant", "iplant", "iplant",
-                "resources/workloads/db2/iplant/workload.sql"),
+                new Workload("tpch10g_22", "tpch10g", "TPC-H",
+                        "resources/workloads/db2/tpch/complete.sql"),
+                new Workload("tpcds10g_99", "test", "TPCDS",
+                        "resources/workloads/db2/tpcds/db2.sql"),
+                new Workload("online-benchmark-100", "test", "OTAB",
+                        "resources/workloads/db2/online-benchmark-100/workload.sql"),
         // new Workload("test", "TPCDS 39",
         // "resources/workloads/db2/tpcds/39.sql"),
         };

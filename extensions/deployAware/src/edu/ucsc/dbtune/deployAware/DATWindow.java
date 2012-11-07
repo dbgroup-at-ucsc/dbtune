@@ -95,6 +95,14 @@ public class DATWindow {
                 n++;
         return n;
     }
+    
+    public int getPresent(CPlexWrapper cplex) throws IloException {
+        int n = 0;
+        for (int i = 0; i < totalIndices; i++)
+            if (cplex.getValue(this.present[i]) == 1)
+                n++;
+        return n;
+    }
 
     public void addConstriant(CPlexWrapper cplex, double spaceConstraint,
             int maxIndexCreatedPerWindow) throws IloException {
@@ -112,33 +120,37 @@ public class DATWindow {
         // if (showFormulas)
         // Rt.p(expr.toString() + "<=" + costModel.storageConstraint);
 
-        expr = cplex.linearNumExpr();
-        for (int i = 0; i < totalIndices; i++) {
-            expr.addTerm(costModel.indices.get(i).createCost, this.create[i]);
-        }
-        cplex.addLe(expr, this.costConstraint);
-        if (DAT.showFormulas)
-            Rt.p(expr.toString() + "<=" + this.costConstraint);
-
-        expr = cplex.linearNumExpr();
-        for (int i = 0; i < totalIndices; i++) {
-            expr.addTerm(costModel.indices.get(i).storageCost, this.present[i]);
-        }
-        if (spaceConstraint > 1E-5) {
-            cplex.addLe(expr, spaceConstraint);
-            if (DAT.showFormulas)
-                Rt.p(expr.toString() + "<=" + spaceConstraint);
-        }
-
-        if (maxIndexCreatedPerWindow > 0) {
+        if (totalIndices > 0) {
             expr = cplex.linearNumExpr();
             for (int i = 0; i < totalIndices; i++) {
-                expr.addTerm(1, this.create[i]);
+                expr.addTerm(costModel.indices.get(i).createCost,
+                        this.create[i]);
             }
-            cplex.addLe(expr, maxIndexCreatedPerWindow);
+            cplex.addLe(expr, this.costConstraint);
             if (DAT.showFormulas)
-                Rt.p(expr.toString() + "<=" + maxIndexCreatedPerWindow);
+                Rt.p(expr.toString() + "<=" + this.costConstraint);
+            expr = cplex.linearNumExpr();
+            for (int i = 0; i < totalIndices; i++) {
+                expr.addTerm(costModel.indices.get(i).storageCost,
+                        this.present[i]);
+            }
+            if (spaceConstraint > 1E-5) {
+                cplex.addLe(expr, spaceConstraint);
+                if (DAT.showFormulas)
+                    Rt.p(expr.toString() + "<=" + spaceConstraint);
+            }
+
+            if (maxIndexCreatedPerWindow > 0) {
+                expr = cplex.linearNumExpr();
+                for (int i = 0; i < totalIndices; i++) {
+                    expr.addTerm(1, this.create[i]);
+                }
+                cplex.addLe(expr, maxIndexCreatedPerWindow);
+                if (DAT.showFormulas)
+                    Rt.p(expr.toString() + "<=" + maxIndexCreatedPerWindow);
+            }
         }
+
         // index can't be created and droped at the same step
         for (int i = 0; i < totalIndices; i++) {
             expr = cplex.linearNumExpr();

@@ -61,6 +61,8 @@ public class GnuPlot2 {
     public void setPlotNames(String[] plotNames) {
         this.plotNames = plotNames;
     }
+    
+    public boolean usePercentage=false;
 
     public void finish() throws IOException {
         if (current.size() > 0)
@@ -107,6 +109,10 @@ public class GnuPlot2 {
         double factor = Math.pow(10, power);
         if (factor < 0.000001)
             factor = 1;
+        if (usePercentage) {
+            power=0;
+            factor=1;
+        }
         PrintStream ps = new PrintStream(dataFile);
         ps.print("x");
         for (int i = 0; i < plotNames.length; i++) {
@@ -155,6 +161,8 @@ public class GnuPlot2 {
         ps.print("set ylabel offset 2,0 \"" + yName);
         if (power > 0)
             ps.print("(10^{" + power + "})");
+        if ( usePercentage)
+            ps.print(" %");
         ps.println("\"");
         ps.println("set nomxtics");
         ps.println("set mytics -1");

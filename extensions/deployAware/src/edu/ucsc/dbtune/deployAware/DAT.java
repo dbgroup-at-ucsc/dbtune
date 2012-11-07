@@ -106,9 +106,12 @@ public class DAT {
                 double c2 = DATWindow.costWithIndex(param.costModel,
                         output.ws[i].indexUsed);
                 PerfTest.addTimer("dat verify");
+                Rt.p("DAT Window %d: %,.0f\t%,.0f\tusedIndexes=%d", i, c2,
+                        output.ws[i].cost, windows[i].getPresent(cplex));
                 if (Math.abs(output.ws[i].cost - c2) / c2 > 0.1) {
-                    Rt.error("ERROR: verify failed "+output.ws[i].cost + " " + c2);
-                    output.ws[i].cost=c2;
+                    Rt.error("ERROR: verify failed " + output.ws[i].cost + " "
+                            + c2);
+                    output.ws[i].cost = c2;
                 }
                 if (i == output.ws.length - 1)
                     totalCost += param.beta * output.ws[i].cost;

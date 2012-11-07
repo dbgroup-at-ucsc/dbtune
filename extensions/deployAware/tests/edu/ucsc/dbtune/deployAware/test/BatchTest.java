@@ -20,11 +20,11 @@ public class BatchTest {
         PrintStream ps = new PrintStream(outputFile);
         TestSet[] sets = {
                 new TestSet("14 TPC-H queries", "tpch10g", "deployAware",
-                        "TPCH14.sql", 10 * gigbytes, "TPCH14"),
+                        "TPCH14.sql", 10 * gigbytes, "TPCH14",0),
                 new TestSet("55 TPCDS queries", "test", "deployAware",
-                        "TPCDS55.sql", 10 * gigbytes, "TPCDS55"),
+                        "TPCDS55.sql", 10 * gigbytes, "TPCDS55",0),
                 new TestSet("81 OTAB queries", "test", "deployAware",
-                        "OTAB81.sql", 10 * gigbytes, "OTAB81"),
+                        "OTAB81.sql", 10 * gigbytes, "OTAB81",0),
 
         // new TestSet("170 OST queries", "test", "OST", 10 * gigbytes),
 //        new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum", "workload.sql",

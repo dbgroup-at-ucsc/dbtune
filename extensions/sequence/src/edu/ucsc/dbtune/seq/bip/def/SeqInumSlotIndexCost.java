@@ -14,6 +14,31 @@ public class SeqInumSlotIndexCost implements Serializable {
     public SeqInumSlotIndexCost() {
     }
 
+    public void times(double d) {
+        cost *= d;
+//        updateCost *= d;
+    }
+
+    public boolean equals(SeqInumSlotIndexCost s2) {
+        if (index != s2.index)
+            return false;
+        if (Math.abs(cost - s2.cost) > SeqInumPlan.maxAllowedError)
+            return false;
+        if (Math.abs(updateCost - s2.updateCost) > SeqInumPlan.maxAllowedError)
+            return false;
+        return true;
+    }
+
+    public boolean isCoveredBy(SeqInumSlotIndexCost s2) {
+        if (index != s2.index)
+            return false;
+        if (cost < s2.cost - SeqInumPlan.maxAllowedError)
+            return false;
+        if (updateCost < s2.updateCost - SeqInumPlan.maxAllowedError)
+            return false;
+        return true;
+    }
+
     public void save(Rx rx) {
         rx.setAttribute("indexId", index.id);
         rx.setAttribute("indexName", index.name);

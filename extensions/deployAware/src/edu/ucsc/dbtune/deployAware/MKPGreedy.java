@@ -47,12 +47,11 @@ public class MKPGreedy {
     public MKPGreedy(double[] bins, double[] binWeights, double[] items,
             double[] profits, boolean useRatio, int maxItemsPerBin) {
         this.bins = Arrays.copyOf(bins, bins.length);
-        ;
         this.binWeights = binWeights;
         this.items = items;
         this.profits = profits;
         this.belongs = new int[items.length];
-        this.binCounts = new int[items.length];
+        this.binCounts = new int[bins.length];
         Arrays.fill(belongs, -1);
         Arrays.fill(binCounts, 0);
         is = new Item[items.length];
@@ -65,7 +64,9 @@ public class MKPGreedy {
         }
         Arrays.sort(is, useRatio ? Item.comparator : Item.comparator2);
         for (Item item : is) {
+//            Rt.p("item "+item.weight);
             for (int i = 0; i < this.bins.length; i++) {
+//                Rt.p("bin "+i+" "+bins[i]);
                 if ((maxItemsPerBin == 0 || binCounts[i] < maxItemsPerBin)
                         && item.weight <= this.bins[i]) {
                     belongs[item.index] = i;

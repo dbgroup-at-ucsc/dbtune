@@ -39,6 +39,7 @@ public class WorkloadLoader {
     public Environment en;
     public int querySize = 0;
     public int indexSize = 0;
+    public int spaceMB = 0;
     public String dbName = "test";
     public String workloadName = "tpch-500-counts";
     public String fileName = "tpch-500-counts";
@@ -97,7 +98,8 @@ public class WorkloadLoader {
         File dir = new File("/home/wangrui/dbtune/paper/cache/index/" + dbName
                 + "/" + workloadName);
         dir.mkdirs();
-        File cacheFile = new File(dir,  this.fileName+"_"+generateIndexMethod + ".xml");
+        File cacheFile = new File(dir, this.fileName + "_"
+                + generateIndexMethod + "_" + spaceMB + ".xml");
         Set<Index> indexes = new HashSet<Index>();
         if (cacheFile.exists()) {
             Rx root = Rx.findRoot(Rt.readFile(cacheFile));
@@ -122,11 +124,17 @@ public class WorkloadLoader {
         } else {
             if ("recommend".equals(generateIndexMethod)) {
                 DB2Advisor db2Advis = new DB2Advisor(db);
-                DB2AdvisorCandidateGenerator candGen = new 
-                    DB2AdvisorCandidateGenerator(db2Advis);
-//                CandidateGenerator candGen = new OptimizerCandidateGenerator(
-//                        getBaseOptimizer(db.getOptimizer()));
-                indexes = candGen.generate(workload);
+//                 CandidateGenerator candGen = new OptimizerCandidateGenerator(
+//                 getBaseOptimizer(db.getOptimizer()));
+//                 indexes = candGen.generate(workload);
+                if (spaceMB == 0) {
+                    DB2AdvisorCandidateGenerator candGen = new DB2AdvisorCandidateGenerator(
+                            db2Advis);
+                    indexes = candGen.generate(workload);
+                } else {
+                    db2Advis.process(workload);
+                    indexes = db2Advis.getRecommendation(spaceMB);
+                }
             } else if (generateIndexMethod.startsWith("powerset")) {
                 int size = Integer.parseInt(generateIndexMethod.substring(
                         "powerset".length()).trim());
@@ -189,7 +197,8 @@ public class WorkloadLoader {
         File dir = new File("/home/wangrui/dbtune/paper/cache/"
                 + generateIndexMethod + "/" + dbName + "/" + workloadName);
         dir.mkdirs();
-        File file = new File(dir, fileName+"_"+querySize + "_" + indexSize + ".xml");
+        File file = new File(dir, fileName + "_" + querySize + "_" + indexSize
+                + (spaceMB == 0 ? "" : "_" + spaceMB) + ".xml");
         SeqInumCost cost = null;
         Workload workload = getWorkload();
         if (file.exists()) {
@@ -245,8 +254,8 @@ public class WorkloadLoader {
                     new boolean[cost.indexCount()]);
             cost.costWithoutIndex = costWithoutIndex;
             for (SeqInumIndex index : cost.indices) {
-                Rt.p("index benefit " + index.id);
                 if (index.indexBenefit < 0.01) {
+                    Rt.p("index benefit " + index.id);
                     index.indexBenefit = costWithoutIndex
                             - DATWindow.costWithIndex(cost, index.id);
                     cost.save(file);
@@ -269,8 +278,8 @@ public class WorkloadLoader {
             cost.costWithAllIndex = costWithAllIndex;
             cost.save(file);
         }
-//        while (cost.queries.size()>6)
-//            cost.queries.remove(cost.queries.size()-1);
+        // while (cost.queries.size()>6)
+        // cost.queries.remove(cost.queries.size()-1);
 
         return cost;
     }

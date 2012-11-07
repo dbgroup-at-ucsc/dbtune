@@ -261,8 +261,8 @@ public class DATTest2 {
     }
 
     public static StringBuilder sb = new StringBuilder();
-    
-    public static double windowSizeParameter=20;
+
+    public static double windowSizeParameter = 5;
 
     static void batch(String[] args) throws Exception {
         int pos = 0;
@@ -288,12 +288,15 @@ public class DATTest2 {
         boolean runMKP = input.getChildBooleanContent("runMKP", true);
         int dupWorkloadNTimes = input.getChildIntContent("dupWorkloadNTimes");
         File outputFile = new File(args[pos++]);
+        WorkloadLoader loaderBaseline = new WorkloadLoader(dbName,
+                workloadName, fileName, generateIndexMethod);
+        loaderBaseline.spaceMB = (int) (space / 1024 / 1024);
 
         SeqInumCost cost = loader.loadCost();
         if (dupWorkloadNTimes > 1)
             cost = cost.dup(dupWorkloadNTimes);
 
-        Rt.np("queryCount=%d\tindexCount", cost.queries.size(), cost.indices
+        Rt.np("queryCount=%d\tindexCount=%d", cost.queries.size(), cost.indices
                 .size());
         Rt.np("alpha=%.2f\tbeta=%.2f", alpha, beta);
         Rt.np("m=%d\tl=%d", m, l);
@@ -322,7 +325,7 @@ public class DATTest2 {
                     total += params.costModel.indices.get(i).createCost;
                 }
             }
-            windowSize = total / m * windowSizeParameter;
+            windowSize = 3600*3000;//total / m * windowSizeParameter;
             Arrays.fill(params.windowConstraints, windowSize);
             Rt.p("total=%,.0f m=%d", total, m);
             Rt
@@ -357,6 +360,8 @@ public class DATTest2 {
             for (SeqInumQuery query : params.costModel.queries)
                 query.save(q.createChild("query"));
         }
+//        runDAT=false;
+//         runGreedy=false;
         if (runDAT) {
             try {
                 DAT dat = new DAT();
@@ -415,7 +420,11 @@ public class DATTest2 {
 
         double bipCost = 0;
         if (runMKP) {
-            DATOutput bip = (DATOutput) DATBaselines.baseline2(params, "bip",
+            SeqInumCost cost2 = loaderBaseline.loadCost();
+            DATParameter params2 = new DATParameter(cost2, windowConstraints, alpha,
+                    beta, l);
+            params2.intermediateConstraint = intermediateConstraint;
+            DATOutput bip = (DATOutput) DATBaselines.baseline2(params2, "db2",
                     debug);
             bipCost = bip.totalCost;
             root.createChild("bip", bipCost);
@@ -431,11 +440,13 @@ public class DATTest2 {
         long time2 = timer.get();
         Rt.p("TIME " + time1 + " " + time2 + " " + (double) time2 / time1);
 
-        Rt.p(datCost);
-        Rt.p(greedyCost);
+        Rt.p("DAT: %,.0f",datCost);
+        Rt.p("GREEDY: %,.0f",greedyCost);
+        Rt.p("DB2: %,.0f",bipCost);
         double result = datCost / bipCost * 100;
+        Rt.p("DAT/DB2="+result + "%");
         result = datCost / greedyCost * 100;
-        Rt.p(result + "%");
+        Rt.p("DAT/GREEDY="+result + "%");
 
         Rt.write(outputFile, root.getXml());
         if (perfReportFile != null)

@@ -159,31 +159,36 @@ public class DATSeparateProcess {
         String[] envp = new String[] {
                 "ILOG_LICENSE_FILE=/data/cplex/access.ilm",
                 "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/home/db2inst1/sqllib/bin:/home/db2inst1/sqllib/adm:/home/db2inst1/sqllib/misc", };
-        Process process = Runtime.getRuntime().exec(sb.toString(), envp,
-                new File("."));
-        sb = new StringBuilder();
-        new Thread("memory checker") {
-            public void run() {
-                try {
-                    while (!exitFlag) {
-                        long mem = getProcessMemory(cmd);
-                        if (mem > memoryUsed)
-                            memoryUsed = mem;
-                        synchronized (sync) {
-                            sync.wait(500);
+        String cmdLine=sb.toString();
+        for (int ti = 0; ti < 20; ti++) {
+            Process process = Runtime.getRuntime().exec(cmdLine, envp,
+                    new File("."));
+            sb = new StringBuilder();
+            new Thread("memory checker") {
+                public void run() {
+                    try {
+                        while (!exitFlag) {
+                            long mem = getProcessMemory(cmd);
+                            if (mem > memoryUsed)
+                                memoryUsed = mem;
+                            synchronized (sync) {
+                                sync.wait(500);
+                            }
                         }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            };
-        }.start();
-        showInputStream(process.getInputStream(), sb);
-        showInputStream(process.getErrorStream(), sb);
-        try {
-            process.waitFor();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+                };
+            }.start();
+            showInputStream(process.getInputStream(), sb);
+            showInputStream(process.getErrorStream(), sb);
+            try {
+                process.waitFor();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (tmpFile.exists())
+                break;
         }
         Rx root = Rx.findRoot(Rt.readFile(tmpFile));
         dat = root.getChildDoubleContent("dat");

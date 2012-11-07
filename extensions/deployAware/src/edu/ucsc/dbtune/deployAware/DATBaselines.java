@@ -1,23 +1,34 @@
 package edu.ucsc.dbtune.deployAware;
 
+import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloObjective;
 
+import java.io.File;
+import java.io.StringReader;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.Vector;
 
+import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.advisor.candidategeneration.DB2AdvisorCandidateGenerator;
+import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
+import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Rx;
+import edu.ucsc.dbtune.workload.Workload;
 
 public class DATBaselines {
-    public static boolean[] cophy(DATParameter param, double total,
+    public static boolean[] cophy(DATParameter param, double totalCreateCost,
             double maxIndexCost, int maxIndices) throws IloException {
         CPlexWrapper cplex = new CPlexWrapper();
-        DATWindow window = new DATWindow(param.costModel, cplex, 0, true, total);
+        DATWindow window = new DATWindow(param.costModel, cplex, 0, true,
+                totalCreateCost);
         IloLinearNumExpr expr = cplex.linearNumExpr();
         window.addObjective(expr, 1);
         IloObjective obj = cplex.minimize(expr);
@@ -26,14 +37,18 @@ public class DATBaselines {
             Rt.p("Obj: " + expr.toString());
         window.addConstriant(cplex, param.spaceConstraint, maxIndices);
         for (int k = 0; k < param.costModel.indexCount(); k++) {
-            if (param.costModel.indices.get(k).createCost >= maxIndexCost)
+            if (param.costModel.indices.get(k).createCost >= maxIndexCost) {
                 cplex.addEq(window.create[k], 0);
-            expr = cplex.linearNumExpr();
-            expr.addTerm(1, window.create[k]);
-            expr.addTerm(-1, window.drop[k]);
-            if (DAT.showFormulas)
-                Rt.p(expr.toString() + "=" + window.present[k]);
-            cplex.addEq(expr, window.present[k]);
+                cplex.addEq(window.drop[k], 0);
+                cplex.addEq(window.present[k], 0);
+            } else {
+                expr = cplex.linearNumExpr();
+                expr.addTerm(1, window.create[k]);
+                expr.addTerm(-1, window.drop[k]);
+                if (DAT.showFormulas)
+                    Rt.p(expr.toString() + "=" + window.present[k]);
+                cplex.addEq(expr, window.present[k]);
+            }
         }
         if (!cplex.solve())
             throw new Error();
@@ -121,9 +136,23 @@ public class DATBaselines {
             // double costWithoutIndex = costWithIndex(new
             // boolean[totalIndices]);
             while (true) {
-                boolean[] indexPresent = cophy(param, total, maxIndexCost,
-                        param.maxIndexCreatedPerWindow
-                                * param.windowConstraints.length);
+                boolean[] indexPresent;
+                if (method.startsWith("db2")) {
+                    indexPresent = new boolean[param.costModel.indexCount()];
+                    Arrays.fill(indexPresent, true);
+                } else {
+//                    Rt.p("total=" + total);
+//                    Rt.p("maxIndexCost=" + maxIndexCost);
+//                    Rt.p("numOfIndexes=" + param.maxIndexCreatedPerWindow
+//                            * param.windowConstraints.length);
+//                    for (SeqInumIndex index : param.costModel.indices) {
+//                        Rt.np(index.id + " " + index.createCost + " "
+//                                + index.storageCost);
+//                    }
+                    indexPresent = cophy(param, total, maxIndexCost,
+                            param.maxIndexCreatedPerWindow
+                                    * param.windowConstraints.length);
+                }
                 // Rt.p(this.costWithIndex(indexPresent));
                 Vector<SeqInumIndex> usedIndex = new Vector<SeqInumIndex>();
                 for (int i = 0; i < indexPresent.length; i++) {
@@ -163,6 +192,7 @@ public class DATBaselines {
                     }
                     belongs = m.maxBelongs;
                 } else if (method.startsWith("greedy")) {
+//                    Rt.p(method + " total indexes: " + usedIndex.size());
                     MKPGreedy m = new MKPGreedy(bins, binWeights, items,
                             profits, method.equals("greedyRatio"),
                             param.maxIndexCreatedPerWindow);
@@ -187,6 +217,10 @@ public class DATBaselines {
                         total *= 0.9;
                         continue;
                     }
+                    belongs = m.belongs;
+                } else if (method.startsWith("db2")) {
+                    MKPGreedy m = new MKPGreedy(bins, binWeights, items,
+                            profits, false, param.maxIndexCreatedPerWindow);
                     belongs = m.belongs;
                 } else {
                     throw new Error(method);
@@ -278,7 +312,10 @@ public class DATBaselines {
                     Rt.p("Obj: " + expr.toString());
                 windows[i].addConstriant(cplex, param.spaceConstraint,
                         param.maxIndexCreatedPerWindow);
+                int totalUsedIndexes = 0;
                 for (int k = 0; k < totalIndices; k++) {
+                    if (indexPresents[i][k])
+                        totalUsedIndexes++;
                     cplex.addEq(windows[i].present[k], indexPresents[i][k] ? 1
                             : 0);
                     cplex.addEq(windows[i].create[k], 0);
@@ -288,6 +325,8 @@ public class DATBaselines {
                     throw new Error();
                 windows[i].getValues(cplex);
                 costs[i] = windows[i].getCost(cplex);// cplex.getObjValue();
+                Rt.p("%s Window %d: %,.0f\tusedIndexes=%d", method, i,
+                        costs[i], totalUsedIndexes);
                 if (i < param.windowConstraints.length - 1)
                     totalCost += costs[i] * param.alpha;
                 else
