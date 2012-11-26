@@ -4,6 +4,7 @@ import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInsta
 
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Hashtable;
 import java.util.List;
@@ -40,6 +41,12 @@ public class PrunableInumSlot extends TableAccessSlot {
                     && !(index instanceof FullTableScanIndex)) {
 
                 double cost = plan.plug(slot, index);
+                if (cost > 8908026 && cost < 8908027) {
+                    Rt.p(cost + " " + index);
+                    cost = plan.plug(slot, index);
+                    Rt.p(plan);
+                    Rt.p(plan.orgPlan);
+                }
 
                 // if the cost is INF ==> the index
                 // is not used in this slot of this particular
@@ -62,19 +69,20 @@ public class PrunableInumSlot extends TableAccessSlot {
 
         if (!Double.isInfinite(ftsCost))
             usable = true;
-        
+
         if (ftsCost < minCost)
             minCost = ftsCost;
         if (ftsCost > maxCost)
             maxCost = ftsCost;
-//        Rt.p(ftsCost);
-//        Rt.p(maxCost);
-        name=getIndex().toString();
+        // Rt.p(ftsCost);
+        // Rt.p(maxCost);
+        name = getIndex().toString();
         if ("[]".equals(name))
-            name=getTable().toString();
+            name = getTable().toString();
     }
 
-    public PrunableInumSlot(PrunableInumPlan plan,Rx rx, Map<String, Index> map) throws SQLException {
+    public PrunableInumSlot(PrunableInumPlan plan, Rx rx, Map<String, Index> map)
+            throws SQLException {
         super(plan.getSlotById(rx.getIntAttribute("id")));
         minCost = rx.getChildDoubleContent("minCost");
         maxCost = rx.getChildDoubleContent("maxCost");
@@ -89,9 +97,9 @@ public class PrunableInumSlot extends TableAccessSlot {
             indexes.add(index);
             accessCost.put(index, cost);
         }
-        name=getIndex().toString();
+        name = getIndex().toString();
         if ("[]".equals(name))
-            name=getTable().toString();
+            name = getTable().toString();
     }
 
     public int numOfIndex() {
@@ -124,6 +132,49 @@ public class PrunableInumSlot extends TableAccessSlot {
             if (c2 == null)
                 return false;
             if (Math.abs(c1 - c2) > 1E-5)
+                return false;
+        }
+        return true;
+    }
+
+    static class C {
+        public static Comparator<C> c = new Comparator<C>() {
+            @Override
+            public int compare(C o1, C o2) {
+                if (o1.cost > o2.cost)
+                    return 1;
+                if (o1.cost < o2.cost)
+                    return 1;
+                return 0;
+            }
+        };
+        String name;
+        double cost;
+
+        public C(String name, double cost) {
+            this.name = name;
+            this.cost = cost;
+        }
+    }
+
+    public boolean sameOrder(PrunableInumSlot s2) {
+        if (accessCost.size() != s2.accessCost.size())
+            return false;
+        Vector<C> cs = new Vector<C>();
+        cs.add(new C("FTS", ftsCost));
+        for (Index i : indexes)
+            cs.add(new C(i.toString(), accessCost.get(i)));
+
+        Vector<C> cs2 = new Vector<C>();
+        cs2.add(new C("FTS", s2.ftsCost));
+        for (Index i : s2.indexes)
+            cs2.add(new C(i.toString(), s2.accessCost.get(i)));
+
+        Collections.sort(cs, C.c);
+        Collections.sort(cs2, C.c);
+
+        for (int i = 0; i < cs.size(); i++) {
+            if (!cs.get(i).name.equals(cs2.get(i).name))
                 return false;
         }
         return true;
@@ -185,11 +236,11 @@ public class PrunableInumSlot extends TableAccessSlot {
             return ftsCost;
         Double cost = accessCost.get(index);
         if (cost == null) {
-//            for (Index index2 : accessCost.keySet()) {
-//                Rt.p(index2.toString());
-//            }
+            // for (Index index2 : accessCost.keySet()) {
+            // Rt.p(index2.toString());
+            // }
             return ftsCost;
-//            throw new SQLException("Haven't seen " + index + " before");
+            // throw new SQLException("Haven't seen " + index + " before");
         }
         return cost;
     }

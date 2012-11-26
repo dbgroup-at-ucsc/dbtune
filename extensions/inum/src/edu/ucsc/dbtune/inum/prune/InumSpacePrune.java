@@ -5,6 +5,7 @@ import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInsta
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Set;
@@ -87,10 +88,11 @@ public class InumSpacePrune {
             throws SQLException {
         PrunableInumPlan[] ps = getPrunableInumSpace(space, candidates);
         ps = prune(ps, candidates);
-        space.clear();
-        for (PrunableInumPlan p : ps)
-            space.add(p);
-        return space;
+        HashSet<InumPlan> space2=new HashSet<InumPlan>();
+        for (PrunableInumPlan p : ps) {
+            space2.add(p);
+        }
+        return space2;
     }
 
     public static PrunableInumPlan[] prune(PrunableInumPlan[] ps,
@@ -124,6 +126,36 @@ public class InumSpacePrune {
         Vector<PrunableInumPlan> v = new Vector<PrunableInumPlan>();
         for (PrunableInumPlan p : ps) {
             p.removeDupIndexes();
+            v.add(p);
+        }
+        return v.toArray(new PrunableInumPlan[v.size()]);
+    }
+
+    public static PrunableInumPlan[] removeUselessIndexAccessCosts(
+            PrunableInumPlan[] ps, Set<Index> candidates) throws SQLException {
+        Vector<PrunableInumPlan> v = new Vector<PrunableInumPlan>();
+        for (PrunableInumPlan p : ps) {
+            p.removeUselessIndexAccessCosts();
+            v.add(p);
+        }
+        return v.toArray(new PrunableInumPlan[v.size()]);
+    }
+
+    public static PrunableInumPlan[] mergeSameSlots(PrunableInumPlan[] ps,
+            Set<Index> candidates) throws SQLException {
+        Vector<PrunableInumPlan> v = new Vector<PrunableInumPlan>();
+        for (PrunableInumPlan p : ps) {
+            p.mergeSameSlots();
+            v.add(p);
+        }
+        return v.toArray(new PrunableInumPlan[v.size()]);
+    }
+
+    public static PrunableInumPlan[] mergeSameOrderSlots(PrunableInumPlan[] ps,
+            Set<Index> candidates) throws SQLException {
+        Vector<PrunableInumPlan> v = new Vector<PrunableInumPlan>();
+        for (PrunableInumPlan p : ps) {
+            p.mergeSameOrderSlots();
             v.add(p);
         }
         return v.toArray(new PrunableInumPlan[v.size()]);

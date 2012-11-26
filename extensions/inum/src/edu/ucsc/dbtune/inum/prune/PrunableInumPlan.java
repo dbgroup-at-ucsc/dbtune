@@ -91,6 +91,11 @@ public class PrunableInumPlan extends InumPlan {
     }
 
     public void removeDupIndexes() {
+        removeUselessIndexAccessCosts();
+        mergeSameSlots();
+    }
+
+    public void removeUselessIndexAccessCosts() {
         Vector<PrunableInumSlot> v = new Vector<PrunableInumSlot>();
         for (PrunableInumSlot slot : slots) {
             slot.removeDupIndexes();
@@ -101,7 +106,10 @@ public class PrunableInumPlan extends InumPlan {
         }
         slots.clear();
         slots.addAll(v);
-        v.clear();
+    }
+
+    public void mergeSameSlots() {
+        Vector<PrunableInumSlot> v = new Vector<PrunableInumSlot>();
         BitSet bs = new BitSet();
         for (int i = 0; i < slots.size(); i++) {
             if (bs.get(i))
@@ -117,6 +125,38 @@ public class PrunableInumPlan extends InumPlan {
             if (dup > 1)
                 slots.get(i).times(dup);
             v.add(slots.get(i));
+        }
+        slots = v;
+    }
+
+    public void mergeSameOrderSlots() {
+        Vector<PrunableInumSlot> v = new Vector<PrunableInumSlot>();
+        BitSet bs = new BitSet();
+        for (int slotId = 0; slotId < slots.size(); slotId++) {
+            if (bs.get(slotId))
+                continue;
+            PrunableInumSlot src = slots.get(slotId);
+            Vector<PrunableInumSlot> sameOrder = new Vector<PrunableInumSlot>();
+            for (int j = slotId + 1; j < slots.size(); j++) {
+                if (src.sameOrder(slots.get(j))) {
+                    sameOrder.add(slots.get(j));
+                    bs.set(j);
+                    break;
+                }
+            }
+            if (sameOrder.size() > 0) {
+                for (PrunableInumSlot s : sameOrder) {
+                    src.ftsCost += s.ftsCost;
+                }
+                for (Index index : src.indexes) {
+                    double d = src.accessCost.get(index);
+                    for (PrunableInumSlot s : sameOrder) {
+                        d += s.accessCost.get(index);
+                    }
+                    src.accessCost.put(index, d);
+                }
+            }
+            v.add(src);
         }
         slots = v;
     }
