@@ -57,70 +57,23 @@ public class SeqWhatIfTest2 {
             SeqMerge merge = new SeqMerge(cost, split.groups);
         }
         RTimerN timer = new RTimerN();
-//        Environment en = Environment.getInstance();
-//        en.setProperty("optimizer", "dbms");
-//        en.setProperty("optimizer", "inum");
-//        DatabaseSystem db = DatabaseSystem.newDatabaseSystem(en);
-//        Optimizer optimizer = db.getOptimizer();
-
-        // Workload workload = BipTest2.getWorkload(en);
-        // Set<Index> indexes = BipTest2.getIndexes(workload, db);
-
-        // List<Set<Index>> indexesPerTable;
-        // DerbyInterestingOrdersExtractor interestingOrdersExtractor;
-        //
-        // interestingOrdersExtractor = new DerbyInterestingOrdersExtractor(db
-        // .getCatalog(), true);
-        // indexesPerTable = interestingOrdersExtractor
-        // .extract(new SQLStatement(
-        // "select\n"
-        // + "            n_name as nation,\n"
-        // + "            year(o_orderdate) as o_year,\n"
-        // +
-        // "            l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount\n"
-        // + "        from\n" + "            tpch.part,\n"
-        // + "            tpch.supplier,\n"
-        // + "            tpch.lineitem,\n"
-        // + "            tpch.partsupp,\n"
-        // + "            tpch.orders,\n"
-        // + "            tpch.nation\n"
-        // + "        where\n"
-        // + "            s_suppkey = l_suppkey\n"
-        // + "            and ps_suppkey = l_suppkey\n"
-        // + "            and ps_partkey = l_partkey\n"
-        // + "            and p_partkey = l_partkey\n"
-        // + "            and o_orderkey = l_orderkey\n"
-        // + "            and s_nationkey = n_nationkey\n"
-        // + "            and p_name like '%thistle%'"));
-        // HashSet<Index> allIndex = new HashSet<Index>();
-        // for (Set<Index> set : indexesPerTable)
-        // for (Index index : set)
-        // allIndex.add(index);
-
-        // timer.finish("loading");
-        timer.reset();
-
-        // Index[] indices = indexes.toArray(new Index[indexes.size()]);
-        // cost = SeqCost.fromOptimizer(db, optimizer, workload, indices);
         WorkloadLoader loader = new WorkloadLoader("tpch10g", "deployAware",
                 "TPCH16.sql", "recommend");
+        loader = new WorkloadLoader("test", "deployAware", "TPCDS63.sql",
+                "recommend");
+
         cost = SeqCost.fromInum(loader.loadCost());
-        cost.storageConstraint = Double.MAX_VALUE;//2000;
-//        for (SeqIndex index : cost.indicesV)
-//            index.createCost=10;
-        if (false) {
-            int n = 0;
-            for (SeqQuery query : cost.sequence) {
-                System.out.println((n++) + " " + query);
-            }
-            n = 0;
-            for (SeqIndex index : cost.indicesV) {
-                index.storageCost = 1000;
-                System.out.println((n++) + " " + index);
-            }
-        }
-        // timer.finish("calculating create index cost");
-        // timer.reset();
+        cost = cost.copy(1);
+        cost = cost.dupQuery(500);
+        // 1 1.177
+        // 2 0.539
+        //10    0.640
+        //100   1.856
+        //500   5.893
+        cost.storageConstraint = Double.MAX_VALUE;
+        // cost.storageConstraint = 2000;
+        for (SeqIndex index : cost.indicesV)
+            index.createCost = 10;
 
         SeqGreedySeq greedySeq = new SeqGreedySeq(cost, cost.sequence,
                 cost.indicesV.toArray(new SeqIndex[cost.indicesV.size()]));
@@ -156,7 +109,7 @@ public class SeqWhatIfTest2 {
         // Rt.np("\t" + step.costUtilThisStep);
         // }
 
-//        db.getConnection().close();
+        // db.getConnection().close();
     }
 
     public static double perf_cost;

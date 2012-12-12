@@ -41,6 +41,44 @@ public class SeqCost {
     private SeqCost() {
     }
 
+    public SeqCost dupQuery(int times) {
+        SeqCost c2 = new SeqCost();
+        Vector<SeqQuery> queries = new Vector<SeqQuery>();
+        for (int i = 0; i < times; i++) {
+            for (SeqQuery q : sequence) {
+                queries.add(q);
+            }
+        }
+        c2.indices = new Hashtable<String, SeqIndex>(indices);
+        c2.indicesV = new Vector<SeqIndex>(indicesV);
+        c2.source = source.clone();
+        c2.destination = destination.clone();
+        c2.storageConstraint = storageConstraint;
+        c2.sequence = queries.toArray(new SeqQuery[queries.size()]);
+        for (int i = 0; i < c2.sequence.length; i++) {
+            c2.queries.put("Q" + i, c2.sequence[i]);
+        }
+        return c2;
+    }
+
+    public SeqCost copy(int size) {
+        SeqCost c2 = new SeqCost();
+        Vector<SeqQuery> queries = new Vector<SeqQuery>();
+        for (int i = 0; i < size; i++) {
+            queries.add(sequence[i]);
+        }
+        c2.indices = new Hashtable<String, SeqIndex>(indices);
+        c2.indicesV = new Vector<SeqIndex>(indicesV);
+        c2.source = source.clone();
+        c2.destination = destination.clone();
+        c2.storageConstraint = storageConstraint;
+        c2.sequence = queries.toArray(new SeqQuery[queries.size()]);
+        for (int i = 0; i < c2.sequence.length; i++) {
+            c2.queries.put("Q" + i, c2.sequence[i]);
+        }
+        return c2;
+    }
+
     public static SeqCost fromFile(String table) {
         SeqCost cost = new SeqCost();
         boolean readingCost = false;
