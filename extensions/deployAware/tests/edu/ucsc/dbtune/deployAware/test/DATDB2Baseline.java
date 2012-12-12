@@ -107,7 +107,7 @@ public class DATDB2Baseline {
                 win.createChild("index", index.toString());
             }
         }
-        double[] total = new double[windows.length];
+        double[] total = new double[windows.length + 1];
         for (int i = 0; i < workload.size(); i++) {
             Rx a = rx.createChild("query");
             a.setAttribute("id", i);
@@ -119,12 +119,22 @@ public class DATDB2Baseline {
                 Rx b = a.createChild("window", db2index);
                 b.setAttribute("id", w);
             }
+            ExplainedSQLStatement db2plan = db2optimizer.explain(workload
+                    .get(i));
+            double db2index = db2plan.getTotalCost();
+            a.createChild("fts", db2index);
+            total[total.length - 1] += db2index;
         }
+
         Rx a = rx.createChild("total");
         for (int w = 0; w < windows.length; w++) {
             Rx b = a.createChild("window", total[w]);
             b.setAttribute("id", w);
+            Rt.np("verify window %d:\t%d\t%,.0f", w, windows[w].size(),
+                    total[w]);
         }
+        Rt.np("fts %,.0f", total[total.length - 1]);
+         System.exit(0);
         Rt.write(output2, rx.getXml().getBytes());
     }
 
@@ -141,7 +151,7 @@ public class DATDB2Baseline {
 
     void runDat(String dbName, File file, long loaderSpaceBudget,
             long spaceBudget, int m, double windowSize, double alpha,
-            double beta, File output) throws Exception {
+            double beta, File output, Set<Index> indexes) throws Exception {
         HashSet<Index>[] windows = new HashSet[m];
         for (int i = 0; i < windows.length; i++) {
             windows[i] = new HashSet<Index>();
@@ -151,19 +161,29 @@ public class DATDB2Baseline {
                 .getName(), file.getName(), "recommend");
         if (loaderSpaceBudget > 0)
             loader.spaceMB = (int) (loaderSpaceBudget / 1024 / 1024);
+        loader.overrideIndexes = indexes;
         SeqInumCost cost = loader.loadCost();
         Rt.p("total index: " + cost.indexCount());
-        cost.storageConstraint = spaceBudget;
+        cost.storageConstraint = spaceBudget * 1000;
         double[] windowConstraints = new double[m];
         for (int i = 0; i < windowConstraints.length; i++)
-            windowConstraints[i] = windowSize;
+            windowConstraints[i] = windowSize * 100;
+        Rt.np("windowSize: " + windowSize);
         int l = 1000;
         DATParameter params = new DATParameter(cost, windowConstraints, alpha,
                 beta, l);
         DAT dat = new DAT();
+//         DAT.showFormulas=true;
         DATOutput datOutput = dat.runDAT(params);
         for (int i = 0; i < windows.length; i++) {
             windows[i].clear();
+            // if (i < 2)
+            // continue;
+            // else {
+            // for (int j = 0; j < cost.indexCount(); j++) {
+            // windows[i].add(cost.indices.get(j).loadIndex(db));
+            // }
+            // }
             double size = 0;
             for (int j = 0; j < datOutput.ws[i].indexUsed.length; j++) {
                 if (datOutput.ws[i].indexUsed[j]) {
@@ -190,7 +210,7 @@ public class DATDB2Baseline {
             size += cost.indices.get(i).storageCost;
         }
         Rt.p("index size: %,d", size);
-        // System.exit(0);
+//        System.exit(0);
         String tpch = Rt.readFile(file);
         Workload workload = new Workload("", new StringReader(tpch));
         verify(db, workload, windows, output);
@@ -273,11 +293,19 @@ public class DATDB2Baseline {
         }
         if (!outputDatResult.exists()) {
             runDat(dbName, file, 0, spaceBudget, m, windowSize, alpha, beta,
-                    outputDatResult);
+                    outputDatResult, null);
         }
-        if (!outputDatResultS.exists()) {
+        if (true || !outputDatResultS.exists()) {
+            HashSet<Index> hash = new HashSet<Index>();
+            for (I i : indexes) {
+                Index index = InumTest2.createIndex(getDb(dbName), i.name);
+                index.benefit = i.benefit;
+                index.setCreationCost(i.createCost);
+                index.setBytes(i.bytes);
+                hash.add(index);
+            }
             runDat(dbName, file, spaceBudget, spaceBudget, m, windowSize,
-                    alpha, beta, outputDatResultS);
+                    alpha, beta, outputDatResultS, hash);
         }
         double[] db2 = loadTotalCosts(outputDb2Result);
         double[] dat = loadTotalCosts(outputDatResult);
@@ -322,7 +350,7 @@ public class DATDB2Baseline {
                 + "" + "");
         params.scale = "0.6";
         for (TestSet set : sets) {
-            for (int i = 0; i < params.spaceFactor_set.length; i++) {
+            for (int i = 3; i < params.spaceFactor_set.length; i++) {
                 double spaceFactor = params.spaceFactor_set[i];
                 String spaceName = params.spaceFactor_names[i];
                 // spaceFactor =

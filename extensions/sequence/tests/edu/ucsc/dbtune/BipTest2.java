@@ -63,6 +63,7 @@ public class BipTest2 {
         String file = "/tpch/workload_bip_seq.sql";
         file = "/tpch-small/workload.sql";
         file = "/tpcds-small/workload.sql";
+        file = "/tpch/workload.sql";
         Workload workload = new Workload("", new FileReader(en
                 .getWorkloadsFoldername()
                 + file));
@@ -120,6 +121,11 @@ public class BipTest2 {
         RTimerN timer = new RTimerN();
 
         en = Environment.getInstance();
+        en.setProperty("username", "db2inst1");
+        en.setProperty("password", "db2inst1admin");
+        en.setProperty("workloads.dir", "resources/workloads/db2");
+        String dbName = "test";
+        en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
         db = newDatabaseSystem(en);
 
         Workload workload = BipTest2.getWorkload(en);
@@ -129,7 +135,8 @@ public class BipTest2 {
         DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
         // timer.finish("loading");
         timer.reset();
-        SeqInumCost cost = SeqInumCost.fromInum(db,optimizer, workload, indexes);
+        SeqInumCost cost = SeqInumCost.fromInum(db, optimizer, workload,
+                indexes);
         if (false) {
             for (int i = 0; i < cost.queries.size(); i++) {
                 Rt.p("Q" + i + ": ");
@@ -263,6 +270,7 @@ public class BipTest2 {
 
     public static void main(String[] args) throws Exception {
         // WfitTest2.testBIP();
+        args=new String[] {"1","100","bip"};
         times = Integer.parseInt(args[0]);
         indexSize = Integer.parseInt(args[1]);
         if ("bip".equals(args[2]))

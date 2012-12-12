@@ -143,6 +143,8 @@ public class DATPaper {
     }
 
     public static void main(String[] args) throws Exception {
+        InumPaper.main(args);
+        System.exit(0);
         boolean exp = true; // rerun experiment
         boolean scalabilityTest = true;
         exp = false;

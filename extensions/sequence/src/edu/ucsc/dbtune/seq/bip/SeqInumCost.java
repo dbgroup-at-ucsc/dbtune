@@ -31,6 +31,7 @@ import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
 import edu.ucsc.dbtune.seq.SeqCost;
 import edu.ucsc.dbtune.seq.bip.def.*;
 import edu.ucsc.dbtune.seq.utils.PerfTest;
+import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Rx;
@@ -67,6 +68,27 @@ public class SeqInumCost implements Serializable {
 
     public int indexCount() {
         return indices.size();
+    }
+
+    public int totalIndexAccessCosts() {
+        int n = 0;
+        for (SeqInumQuery p : queries)
+            n += p.totalIndexes();
+        return n;
+    }
+
+    public int totalSlots() {
+        int n = 0;
+        for (SeqInumQuery p : queries)
+            n += p.totalSlots();
+        return n;
+    }
+
+    public int totalPlans() {
+        int n = 0;
+        for (SeqInumQuery p : queries)
+            n += p.plans.length;
+        return n;
     }
 
     public void save(File file) throws Exception {
@@ -166,10 +188,17 @@ public class SeqInumCost implements Serializable {
                     plugInCount++;
                     // Rt.p("%f %f",timer.getSecondElapse(),plugInTime);
                 }
+                Vector<SeqInumSlotIndexCost> costs = new Vector<SeqInumSlotIndexCost>();
+                for (SeqInumSlotIndexCost cost : slot.costs) {
+                    if (cost.cost < slot.fullTableScanCost)
+                        costs.add(cost);
+                }
+                slot.costs = costs;
                 plan.slots[slotId] = slot;
             }
             q.plans[planId] = plan;
         }
+        Rt.p(q.totalIndexes());
         PerfTest.addTimer("inumRest");
         return q;
     }

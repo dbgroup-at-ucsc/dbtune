@@ -29,12 +29,14 @@ import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.utils.PerfTest;
+import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
 public class WorkloadLoader {
+    public static File cacheRoot = new File("/home/wangrui/dbtune/paper/cache");
     public DatabaseSystem db;
     public Environment en;
     public int querySize = 0;
@@ -95,8 +97,7 @@ public class WorkloadLoader {
         // HashSet<Index> set=new HashSet<Index>();
         // for (int i = 0; i <= 9; i++) {
         // Rt.runAndShowCommand("db2 set current query optimization = "+i);
-        File dir = new File("/home/wangrui/dbtune/paper/cache/index/" + dbName
-                + "/" + workloadName);
+        File dir = new File(cacheRoot, "index/" + dbName + "/" + workloadName);
         dir.mkdirs();
         File cacheFile = new File(dir, this.fileName + "_"
                 + generateIndexMethod + "_" + spaceMB + ".xml");
@@ -124,9 +125,9 @@ public class WorkloadLoader {
         } else {
             if ("recommend".equals(generateIndexMethod)) {
                 DB2Advisor db2Advis = new DB2Advisor(db);
-//                 CandidateGenerator candGen = new OptimizerCandidateGenerator(
-//                 getBaseOptimizer(db.getOptimizer()));
-//                 indexes = candGen.generate(workload);
+                // CandidateGenerator candGen = new OptimizerCandidateGenerator(
+                // getBaseOptimizer(db.getOptimizer()));
+                // indexes = candGen.generate(workload);
                 if (spaceMB == 0) {
                     DB2AdvisorCandidateGenerator candGen = new DB2AdvisorCandidateGenerator(
                             db2Advis);
@@ -193,9 +194,11 @@ public class WorkloadLoader {
         return getIndexes(workload, db);
     }
 
+    public Set<Index> overrideIndexes;
+
     public SeqInumCost loadCost() throws Exception {
-        File dir = new File("/home/wangrui/dbtune/paper/cache/"
-                + generateIndexMethod + "/" + dbName + "/" + workloadName);
+        File dir = new File(cacheRoot, generateIndexMethod + "/" + dbName + "/"
+                + workloadName);
         dir.mkdirs();
         File file = new File(dir, fileName + "_" + querySize + "_" + indexSize
                 + (spaceMB == 0 ? "" : "_" + spaceMB) + ".xml");
@@ -209,7 +212,10 @@ public class WorkloadLoader {
             if (db == null)
                 db = newDatabaseSystem(en);
 
-            Set<Index> indexes = getIndexes(workload, db);
+            RTimer timer = new RTimer();
+            Set<Index> indexes = overrideIndexes != null ? overrideIndexes
+                    : getIndexes(workload, db);
+            timer.finish("recommend indexes");
 
             InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
             DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
@@ -233,11 +239,14 @@ public class WorkloadLoader {
                     cost.indexToInumIndex.put(index.index, index);
                 }
             }
+
+            RTimer timer = new RTimer();
             for (int i = cost.queries.size(); i < workload.size(); i++) {
                 Rt.p("building inum space for query " + i);
                 cost.addQuery(workload.get(i));
                 cost.save(file);
             }
+            timer.finish("populate inum space and calculate index access cost");
 
             for (int i = 0; i < cost.queries.size(); i++) {
                 // cost.queries.get(i).sql = null;
@@ -253,12 +262,15 @@ public class WorkloadLoader {
             double costWithoutIndex = DATWindow.costWithIndex(cost,
                     new boolean[cost.indexCount()]);
             cost.costWithoutIndex = costWithoutIndex;
-            for (SeqInumIndex index : cost.indices) {
-                if (index.indexBenefit < 0.01) {
-                    Rt.p("index benefit " + index.id);
-                    index.indexBenefit = costWithoutIndex
-                            - DATWindow.costWithIndex(cost, index.id);
-                    cost.save(file);
+            Rt.error("skip index benefit ERROR");
+            if (false) {
+                for (SeqInumIndex index : cost.indices) {
+                    if (index.indexBenefit < 0.01) {
+                        Rt.p("index benefit " + index.id);
+                        index.indexBenefit = costWithoutIndex
+                                - DATWindow.costWithIndex(cost, index.id);
+                        cost.save(file);
+                    }
                 }
             }
             PerfTest.addTimer("calculate index benefit");

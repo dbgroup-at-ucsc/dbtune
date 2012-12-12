@@ -25,6 +25,20 @@ public class SeqInumQuery implements Serializable {
         this.id = id;
     }
 
+    public int totalIndexes() {
+        int n = 0;
+        for (SeqInumPlan p : plans)
+            n += p.totalIndexes();
+        return n;
+    }
+
+    public int totalSlots() {
+        int n = 0;
+        for (SeqInumPlan p : plans)
+            n += p.slots.length;
+        return n;
+    }
+
     public void save(Rx rx) {
         rx.setAttribute("id", id);
         rx.setAttribute("name", name);

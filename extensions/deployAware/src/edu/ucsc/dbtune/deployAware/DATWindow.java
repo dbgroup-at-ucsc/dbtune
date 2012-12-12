@@ -95,7 +95,7 @@ public class DATWindow {
                 n++;
         return n;
     }
-    
+
     public int getPresent(CPlexWrapper cplex) throws IloException {
         int n = 0;
         for (int i = 0; i < totalIndices; i++)
@@ -121,14 +121,16 @@ public class DATWindow {
         // Rt.p(expr.toString() + "<=" + costModel.storageConstraint);
 
         if (totalIndices > 0) {
-            expr = cplex.linearNumExpr();
-            for (int i = 0; i < totalIndices; i++) {
-                expr.addTerm(costModel.indices.get(i).createCost,
-                        this.create[i]);
+            if (this.costConstraint<Double.MAX_VALUE) {
+                expr = cplex.linearNumExpr();
+                for (int i = 0; i < totalIndices; i++) {
+                    expr.addTerm(costModel.indices.get(i).createCost,
+                            this.create[i]);
+                }
+                cplex.addLe(expr, this.costConstraint);
+                if (DAT.showFormulas)
+                    Rt.p(expr.toString() + "<=" + this.costConstraint);
             }
-            cplex.addLe(expr, this.costConstraint);
-            if (DAT.showFormulas)
-                Rt.p(expr.toString() + "<=" + this.costConstraint);
             expr = cplex.linearNumExpr();
             for (int i = 0; i < totalIndices; i++) {
                 expr.addTerm(costModel.indices.get(i).storageCost,
@@ -159,7 +161,9 @@ public class DATWindow {
             cplex.addLe(expr, 1);
             if (DAT.showFormulas)
                 Rt.p(expr.toString() + "<=1");
+//            cplex.addEq(this.present[i], 1);
         }
+        
     }
 
     public void getValues(CPlexWrapper cplex) throws UnknownObjectException,

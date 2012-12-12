@@ -85,6 +85,9 @@ public class DAT {
             }
         }
 
+        Rt.p("varCount: "+cplex.varCount);
+        Rt.p("constraintCount: "+cplex.constraintCount);
+//        System.exit(0);
         PerfTest.startTimer();
         if (!cplex.solve())
             throw new Error("Can't solve bip");
