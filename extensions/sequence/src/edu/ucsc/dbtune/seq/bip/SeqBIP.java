@@ -24,11 +24,12 @@ import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
+import edu.ucsc.dbtune.deployAware.CPlexWrapper;
 
 /**
  * @author Rui Wang
  */
-public class SeqBIP extends AbstractBIPSolver {
+public class SeqBIP {
     class Slot {
         InumPlan plan;
         SeqInumSlot s;
@@ -41,7 +42,7 @@ public class SeqBIP extends AbstractBIPSolver {
             useIndex = new IloNumVar[s.costs.size() + 1];
             indexes = new SeqInumIndex[s.costs.size()];
             for (int i = 0; i < useIndex.length; i++) {
-                useIndex[i] = createBinaryVar();
+                useIndex[i] = cplex.createBinaryVar();
                 String name = "INDEX_" + s.plan.query.id + "_" + s.plan.id;
                 if (i < s.costs.size()) {
                     indexes[i] = s.costs.get(i).index;
@@ -50,7 +51,6 @@ public class SeqBIP extends AbstractBIPSolver {
                     name += "_FTS";
                 useIndex[i].setName(name);
             }
-            addVars(useIndex);
         }
 
         public void addObjective(IloLinearNumExpr expr) throws IloException {
@@ -87,9 +87,8 @@ public class SeqBIP extends AbstractBIPSolver {
         public InumPlan(Query query, SeqInumPlan p) throws IloException {
             this.query = query;
             this.p = p;
-            this.active = createBinaryVar();
+            this.active = cplex.createBinaryVar();
             active.setName("PLAN_" + p.query.id + "_" + p.id);
-            addVar(active);
             slots = new Slot[p.slots.length];
             for (int i = 0; i < slots.length; i++) {
                 slots[i] = new Slot(this, p.slots[i]);
@@ -116,9 +115,9 @@ public class SeqBIP extends AbstractBIPSolver {
 
         public Query(SeqInumQuery q) throws IloException {
             this.q = q;
-            this.create = createBinaryVars(totalIndices);
-            this.drop = createBinaryVars(totalIndices);
-            this.present = createBinaryVars(totalIndices);
+            this.create = cplex.createBinaryVars(totalIndices);
+            this.drop = cplex.createBinaryVars(totalIndices);
+            this.present = cplex.createBinaryVars(totalIndices);
             for (int i = 0; i < totalIndices; i++) {
                 this.create[i].setName("CREATE_" + q.id + "_"
                         + cost.indices.get(i).id);
@@ -128,9 +127,6 @@ public class SeqBIP extends AbstractBIPSolver {
                         + cost.indices.get(i).id);
                 index2present.put(cost.indices.get(i), present[i]);
             }
-            addVars(create);
-            addVars(drop);
-            addVars(present);
             plans = new InumPlan[q.plans.length];
             for (int i = 0; i < plans.length; i++) {
                 plans[i] = new InumPlan(this, q.plans[i]);
@@ -181,6 +177,7 @@ public class SeqBIP extends AbstractBIPSolver {
         }
     }
 
+    CPlexWrapper cplex = new CPlexWrapper();
     public static boolean showFormulas = false;
     SeqInumCost cost;
     IloNumVar[] iloVar = new IloNumVar[0];
@@ -195,19 +192,12 @@ public class SeqBIP extends AbstractBIPSolver {
         this.totalIndices = cost.indices.size();
     }
 
-    @Override
-    protected final void buildBIP() {
-        if (false) {
-            buildBIPOneByOne();
-            return;
-        }
-        super.numConstraints = 0;
+    public SebBIPOutput solve() {
         try {
             this.queries = new Query[totalQueires];
             for (int i = 0; i < totalQueires; i++) {
                 this.queries[i] = new Query(cost.queries.get(i));
             }
-            cplex.add(iloVar);
 
             IloLinearNumExpr expr = cplex.linearNumExpr();
             for (int i = 0; i < totalQueires; i++) {
@@ -236,22 +226,38 @@ public class SeqBIP extends AbstractBIPSolver {
                 }
             }
 
-            cplexVar = new Vector<IloNumVar>();
-            for (IloNumVar var : iloVar)
-                cplexVar.add(var);
+            cplex.solve();
         } catch (IloException e) {
             e.printStackTrace();
         }
+
+        SebBIPOutput output = new SebBIPOutput();
+        try {
+            output.indexUsed = new Vector[cost.queries.size()];
+            for (int i = 0; i < output.indexUsed.length; i++)
+                output.indexUsed[i] = new Vector<SeqInumIndex>();
+            for (int i = 0; i < queries.length; i++) {
+                Query q = queries[i];
+                for (int j = 0; j < queries[i].present.length; j++) {
+                    int a = cplex.getValue(queries[i].present[j]);
+                    if (a == 1)
+                        output.indexUsed[i].add(cost.indices.get(j));
+                }
+                // cost.queries.get(i).selectedPlan = cost.queries
+                // .get(i).plans[planId];
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return output;
     }
 
     protected final void buildBIPOneByOne() {
-        super.numConstraints = 0;
         try {
             this.queries = new Query[totalQueires];
             for (int i = 0; i < totalQueires; i++) {
                 this.queries[i] = new Query(cost.queries.get(i));
             }
-            cplex.add(iloVar);
 
             IloLinearNumExpr exprObj = cplex.linearNumExpr();
             for (int i = 0; i < totalQueires; i++) {
@@ -280,103 +286,16 @@ public class SeqBIP extends AbstractBIPSolver {
                 cplex.solve();
                 Rt.np("queries=%d time=%.3f cost=%.2f", i, timer
                         .getSecondElapse(), cplex.getObjValue());
-                if (i < totalQueires - 1)
-                    cplex.remove(obj);
+                // if (i < totalQueires - 1)
+                // cplex.remove(obj);
             }
 
-            cplexVar = new Vector<IloNumVar>();
-            for (IloNumVar var : iloVar)
-                cplexVar.add(var);
         } catch (IloException e) {
             e.printStackTrace();
         }
     }
 
-    @Override
-    protected IndexTuningOutput getOutput() {
-        SebBIPOutput output = new SebBIPOutput();
-        try {
-            output.indexUsed = new Vector[cost.queries.size()];
-            for (int i = 0; i < output.indexUsed.length; i++)
-                output.indexUsed[i] = new Vector<SeqInumIndex>();
-            double[] xval = cplex.getValues(iloVar);
-            for (int i = 0; i < xval.length; i++) {
-                String name = iloVar[i].getName();
-                if (name.startsWith("PRESENT")) {
-                    String[] ss = name.split("_");
-                    int queryId = Integer.parseInt(ss[1]);
-                    int indexId = Integer.parseInt(ss[2]);
-                    if (Math.abs(valVar[i] - 1) < 1E-5)
-                        output.indexUsed[queryId].add(cost.indices
-                                .get(indexId));
-                } else if (name.startsWith("PLAN")) {
-                    String[] ss = name.split("_");
-                    int queryId = Integer.parseInt(ss[1]);
-                    int planId = Integer.parseInt(ss[2]);
-                    if (Math.abs(valVar[i] - 1) < 1E-5)
-                        cost.queries.get(queryId).selectedPlan = cost.queries.get(queryId).plans[planId];
-                } else if (name.startsWith("INDEX")) {
-                    String[] ss = name.split("_");
-                    int queryId = Integer.parseInt(ss[1]);
-                    int planId = Integer.parseInt(ss[2]);
-                    if (!"FTS".equals(ss[3])) {
-                        int indexId = Integer.parseInt(ss[3]);
-                        if (Math.abs(valVar[i] - 1) < 1E-5) {
-                            for (SeqInumSlot slot : cost.queries.get(queryId).plans[planId].slots) {
-                                for (SeqInumSlotIndexCost c : slot.costs) {
-                                    if (c.index.id == indexId)
-                                        slot.selectedIndex = c;
-                                }
-                            }
-                        }
-                    }
-                } else if (name.startsWith("CREATE")) {
-                    String[] ss = name.split("_");
-                    int queryId = Integer.parseInt(ss[1]);
-                    int indexId = Integer.parseInt(ss[2]);
-                    if (Math.abs(valVar[i] - 1) < 1E-5) {
-                        cost.queries.get(queryId).transitionCost += cost.indices
-                                .get(indexId).createCost;
-                    }
-                }
-                // Rt.p("%.0f %s", xval[i], name);
-                if (Math.abs(valVar[i] - 1) < 1E-5) {
-                } else if (Math.abs(valVar[i]) < 1E-5) {
-                } else {
-                    throw new Error("Not binary " + valVar[i]);
-                }
-            }
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-        return output;
-    }
-
-    private void addVar(IloNumVar var) {
-        int size = iloVar.length;
-        iloVar = Arrays.copyOf(iloVar, size + 1);
-        iloVar[size] = var;
-    }
-
-    private void addVars(IloNumVar[] vars) {
-        int size = iloVar.length;
-        iloVar = Arrays.copyOf(iloVar, size + vars.length);
-        System.arraycopy(vars, 0, iloVar, size, vars.length);
-    }
-
-    public IloNumVar createBinaryVar() throws IloException {
-        return cplex.intVar(0, 1);
-    }
-
-    public IloNumVar[] createBinaryVars(int size) throws IloException {
-        IloNumVarType[] type = new IloNumVarType[size];
-        double[] lb = new double[size];
-        double[] ub = new double[size];
-        for (int i = 0; i < size; i++) {
-            type[i] = IloNumVarType.Int;
-            lb[i] = 0.0;
-            ub[i] = 1.0;
-        }
-        return cplex.numVarArray(size, lb, ub, type);
+    public double getObjValue() throws IloException {
+        return cplex.getObjValue();
     }
 }

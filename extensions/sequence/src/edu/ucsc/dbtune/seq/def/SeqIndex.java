@@ -3,12 +3,14 @@ package edu.ucsc.dbtune.seq.def;
 import java.util.HashSet;
 
 import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 
 public class SeqIndex {
     public String name;
     public Index index;
     public double createCost, dropCost;
-    public long storageCost;
+    public double storageCost;
+    public SeqInumIndex inumIndex;
 
     // used for split
     public boolean markUsed = false;

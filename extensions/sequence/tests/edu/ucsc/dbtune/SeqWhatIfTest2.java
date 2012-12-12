@@ -26,6 +26,7 @@ import edu.ucsc.dbtune.seq.SeqMerge;
 import edu.ucsc.dbtune.seq.SeqOptimal;
 import edu.ucsc.dbtune.seq.SeqSplit;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
 import edu.ucsc.dbtune.seq.def.*;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
@@ -56,14 +57,14 @@ public class SeqWhatIfTest2 {
             SeqMerge merge = new SeqMerge(cost, split.groups);
         }
         RTimerN timer = new RTimerN();
-        Environment en = Environment.getInstance();
-        en.setProperty("optimizer", "dbms");
-        en.setProperty("optimizer", "inum");
-        DatabaseSystem db = DatabaseSystem.newDatabaseSystem(en);
-        Optimizer optimizer = db.getOptimizer();
+//        Environment en = Environment.getInstance();
+//        en.setProperty("optimizer", "dbms");
+//        en.setProperty("optimizer", "inum");
+//        DatabaseSystem db = DatabaseSystem.newDatabaseSystem(en);
+//        Optimizer optimizer = db.getOptimizer();
 
-        Workload workload = BipTest2.getWorkload(en);
-        Set<Index> indexes = BipTest2.getIndexes(workload, db);
+        // Workload workload = BipTest2.getWorkload(en);
+        // Set<Index> indexes = BipTest2.getIndexes(workload, db);
 
         // List<Set<Index>> indexesPerTable;
         // DerbyInterestingOrdersExtractor interestingOrdersExtractor;
@@ -99,11 +100,14 @@ public class SeqWhatIfTest2 {
         // timer.finish("loading");
         timer.reset();
 
-        Index[] indices = indexes.toArray(new Index[indexes.size()]);
-        cost = SeqCost.fromOptimizer(db, optimizer, workload, indices);
-        cost.storageConstraint = 2000;
-        for (SeqIndex index : cost.indicesV)
-            index.storageCost = 1000;
+        // Index[] indices = indexes.toArray(new Index[indexes.size()]);
+        // cost = SeqCost.fromOptimizer(db, optimizer, workload, indices);
+        WorkloadLoader loader = new WorkloadLoader("tpch10g", "deployAware",
+                "TPCH16.sql", "recommend");
+        cost = SeqCost.fromInum(loader.loadCost());
+        cost.storageConstraint = Double.MAX_VALUE;//2000;
+//        for (SeqIndex index : cost.indicesV)
+//            index.createCost=10;
         if (false) {
             int n = 0;
             for (SeqQuery query : cost.sequence) {
@@ -152,7 +156,7 @@ public class SeqWhatIfTest2 {
         // Rt.np("\t" + step.costUtilThisStep);
         // }
 
-        db.getConnection().close();
+//        db.getConnection().close();
     }
 
     public static double perf_cost;

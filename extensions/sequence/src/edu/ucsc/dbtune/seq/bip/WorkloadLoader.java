@@ -1,4 +1,4 @@
-package edu.ucsc.dbtune.deployAware.test;
+package edu.ucsc.dbtune.seq.bip;
 
 import static edu.ucsc.dbtune.DatabaseSystem.newDatabaseSystem;
 import static edu.ucsc.dbtune.util.TestUtils.getBaseOptimizer;
@@ -26,7 +26,6 @@ import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
-import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.utils.PerfTest;
 import edu.ucsc.dbtune.seq.utils.RTimer;
@@ -42,9 +41,9 @@ public class WorkloadLoader {
     public int querySize = 0;
     public int indexSize = 0;
     public int spaceMB = 0;
-    public String dbName = "test";
-    public String workloadName = "tpch-500-counts";
-    public String fileName = "tpch-500-counts";
+    public String dbName;
+    public String workloadName;
+    public String fileName;
     public String generateIndexMethod = "recommend";
 
     public WorkloadLoader(String dbName, String workloadName, String fileName,

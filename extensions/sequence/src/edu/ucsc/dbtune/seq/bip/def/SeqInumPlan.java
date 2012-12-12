@@ -25,6 +25,14 @@ public class SeqInumPlan implements Serializable {
         this.id = id;
     }
 
+    public double cost(SeqInumIndex[] indexes) {
+        double cost = internalCost;
+        for (SeqInumSlot slot : slots) {
+            cost += slot.cost(indexes);
+        }
+        return cost;
+    }
+
     public int totalIndexes() {
         int n = 0;
         for (SeqInumSlot slot : slots)
@@ -43,11 +51,11 @@ public class SeqInumPlan implements Serializable {
         }
         slots = v.toArray(new SeqInumSlot[v.size()]);
         v.clear();
-        BitSet bs=new BitSet();
+        BitSet bs = new BitSet();
         for (int i = 0; i < slots.length; i++) {
             if (bs.get(i))
                 continue;
-            int dup=1;
+            int dup = 1;
             for (int j = i + 1; j < slots.length; j++) {
                 if (slots[i].equals(slots[j])) {
                     dup++;
@@ -55,7 +63,7 @@ public class SeqInumPlan implements Serializable {
                     break;
                 }
             }
-            if (dup>1)
+            if (dup > 1)
                 slots[i].times(dup);
             v.add(slots[i]);
         }

@@ -19,7 +19,9 @@ import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
 import edu.ucsc.dbtune.seq.def.*;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
@@ -34,7 +36,7 @@ public class SeqCost {
     public SeqQuery[] sequence;
     public SeqIndex[] source;
     public SeqIndex[] destination;
-    public int storageConstraint;
+    public double storageConstraint;
 
     private SeqCost() {
     }
@@ -280,6 +282,39 @@ public class SeqCost {
         return costModel;
     }
 
+    public static SeqCost fromInum(SeqInumCost cost) throws SQLException {
+        SeqCost costModel = new SeqCost();
+        int indexId = 0;
+        for (SeqInumIndex a : cost.indices) {
+            SeqIndex index = new SeqIndex();
+            index.name = "I" + indexId;
+            // index.index = a.loadIndex(db);
+            index.createCost = a.createCost;
+            index.dropCost = 0;
+            index.storageCost = a.storageCost;
+            index.inumIndex = a;
+            if (costModel.indices.put(index.name, index) != null)
+                throw new Error("duplicate index");
+            costModel.indicesV.add(index);
+            indexId++;
+        }
+
+        costModel.sequence = new SeqQuery[cost.queries.size()];
+        for (int queryId = 0; queryId < cost.queries.size(); queryId++) {
+            SeqQuery q = new SeqQuery(queryId);
+            q.name = "Q" + queryId;
+            q.inumCached = cost.queries.get(queryId);
+            q.sql = q.inumCached.sql;
+            q.costWithoutIndex = q.inumCached.cost(new SeqInumIndex[0]);
+            costModel.queries.put(q.name, q);
+            costModel.sequence[queryId] = q;
+        }
+
+        costModel.source = new SeqIndex[0];
+        costModel.destination = new SeqIndex[0];
+        return costModel;
+    }
+
     public SeqConfiguration[] getAllConfigurations(Vector<SeqIndex> indices) {
         return getAllConfigurations(indices
                 .toArray(new SeqIndex[indices.size()]));
@@ -343,7 +378,13 @@ public class SeqCost {
         if (d != null)
             return d;
         double cost = 0;
-        if (optimizer != null) {
+        if (q.inumCached != null) {
+            SeqInumIndex[] indexes = new SeqInumIndex[conf.indices.length];
+            for (int i = 0; i < conf.indices.length; i++) {
+                indexes[i] = conf.indices[i].inumIndex;
+            }
+            cost = q.inumCached.cost(indexes);
+        } else if (optimizer != null) {
             HashSet<Index> allIndexes = new HashSet<Index>();
             for (SeqIndex i : conf.indices)
                 allIndexes.add(i.index);

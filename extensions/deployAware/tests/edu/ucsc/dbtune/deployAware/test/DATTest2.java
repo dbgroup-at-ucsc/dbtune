@@ -40,6 +40,7 @@ import edu.ucsc.dbtune.seq.SeqCost;
 import edu.ucsc.dbtune.seq.bip.SebBIPOutput;
 import edu.ucsc.dbtune.seq.bip.SeqBIP;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumPlan;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;

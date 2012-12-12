@@ -14,9 +14,17 @@ public class SeqInumSlotIndexCost implements Serializable {
     public SeqInumSlotIndexCost() {
     }
 
+    public double cost(SeqInumIndex[] indexes) {
+        for (SeqInumIndex index : indexes) {
+            if (index == this.index)
+                return cost;
+        }
+        return Double.MAX_VALUE;
+    }
+
     public void times(double d) {
         cost *= d;
-//        updateCost *= d;
+        // updateCost *= d;
     }
 
     public boolean equals(SeqInumSlotIndexCost s2) {

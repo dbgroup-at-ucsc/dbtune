@@ -29,8 +29,6 @@ public class BipSeqFunctionalTest2 {
                     SeqInumCost.class, "inum.txt"));
             SeqBIP bip = new SeqBIP(cost);
             LogListener logger = LogListener.getInstance();
-            bip.setLogListenter(logger);
-            bip.setWorkload(new Workload("", new StringReader("")));
             SebBIPOutput output= (SebBIPOutput)bip.solve();
             for (int i=0;i<output.indexUsed.length;i++) {
                 System.out.print("Query "+i+":");

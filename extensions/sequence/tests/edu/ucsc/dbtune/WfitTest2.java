@@ -29,31 +29,16 @@ import edu.ucsc.dbtune.workload.Workload;
 
 public class WfitTest2 {
     public static void testBIP() throws Exception {
-        BipTest2.times = 10;
-//        BipTest2.times = 1;
-//        BipTest2.indexSize = 40;
-        BipTest2.indexSize = 10;
         RTimerN timer = new RTimerN();
-        BipTest2.en = Environment.getInstance();
-        BipTest2.db = newDatabaseSystem(BipTest2.en);
 
-        Workload workload = BipTest2.getWorkload(BipTest2.en);
-        Set<Index> indexes = BipTest2.getIndexes(workload, BipTest2.db);
 
-        InumOptimizer optimizer = (InumOptimizer) BipTest2.db.getOptimizer();
-        DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
         timer.reset();
-        SeqInumCost cost = SeqInumCost.fromInum(BipTest2.db,optimizer, null, indexes);
-        Rt.p("%d x %d", workload.size(), cost.indices.size());
+        SeqInumCost cost = null;
         Wfit wfit = new Wfit(cost);
-        wfit.setOptimizer(optimizer);
-        LogListener logger = LogListener.getInstance();
-        wfit.setLogListenter(logger);
-        wfit.setWorkload(new Workload("", new StringReader("")));
         SebBIPOutput output = (SebBIPOutput) wfit.solve();
-        for (int i = 0; i < workload.size(); i++) {
-            wfit.addQuery(workload.get(i));
-        }
+//        for (int i = 0; i < workload.size(); i++) {
+//            wfit.addQuery(workload.get(i));
+//        }
         wfit.allPossibility();
         System.exit(0);
     }

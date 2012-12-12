@@ -7,6 +7,7 @@ import edu.ucsc.dbtune.deployAware.DAT;
 import edu.ucsc.dbtune.deployAware.DATOutput;
 import edu.ucsc.dbtune.deployAware.DATParameter;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.util.Rt;

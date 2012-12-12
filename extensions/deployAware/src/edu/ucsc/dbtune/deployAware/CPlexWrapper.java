@@ -51,15 +51,16 @@ public class CPlexWrapper {
         }
     }
 
-    int varCount=0;
-    int constraintCount=0;
+    int varCount = 0;
+    int constraintCount = 0;
+
     public IloNumVar createBinaryVar() throws IloException {
         varCount++;
         return cplex.intVar(0, 1);
     }
 
     public IloNumVar[] createBinaryVars(int size) throws IloException {
-        varCount+=size;
+        varCount += size;
         IloNumVarType[] type = new IloNumVarType[size];
         double[] lb = new double[size];
         double[] ub = new double[size];
@@ -105,6 +106,10 @@ public class CPlexWrapper {
 
     public void add(IloObjective arg0) throws IloException {
         cplex.add(arg0);
+    }
+
+    public double getObjValue() throws IloException {
+        return cplex.getObjValue();
     }
 
     public boolean solve() throws IloException {

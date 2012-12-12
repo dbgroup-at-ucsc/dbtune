@@ -1,9 +1,11 @@
 package edu.ucsc.dbtune.seq.bip.def;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.util.Rx;
 import edu.ucsc.dbtune.workload.SQLStatement;
@@ -21,8 +23,21 @@ public class SeqInumQuery implements Serializable {
     public SeqInumPlan selectedPlan;
     public double transitionCost = 0;
 
+    // performance variables
+    public double timeUsedToLoad;
+
     public SeqInumQuery(int id) {
         this.id = id;
+    }
+
+    public double cost(SeqInumIndex[] indexes) {
+        double min = Double.MAX_VALUE;
+        for (SeqInumPlan plan : plans) {
+            double cost = plan.cost(indexes);
+            if (cost < min)
+                min = cost;
+        }
+        return min;
     }
 
     public int totalIndexes() {
@@ -43,6 +58,7 @@ public class SeqInumQuery implements Serializable {
         rx.setAttribute("id", id);
         rx.setAttribute("name", name);
         rx.createChild("sql", sql.getSQL());
+        rx.createChild("timeUsedToLoad", timeUsedToLoad);
         rx.setAttribute("baseTableUpdateCost", baseTableUpdateCost);
         for (SeqInumPlan plan : plans) {
             plan.save(rx.createChild("plan"));
@@ -53,6 +69,7 @@ public class SeqInumQuery implements Serializable {
         id = rx.getIntAttribute("id");
         name = rx.getAttribute("name");
         sql = new SQLStatement(rx.getChildText("sql"));
+        timeUsedToLoad = rx.getChildDoubleContent("timeUsedToLoad");
         Rx[] rs = rx.findChilds("plan");
         Vector<SeqInumPlan> vs = new Vector<SeqInumPlan>();
         for (int i = 0; i < rs.length; i++) {

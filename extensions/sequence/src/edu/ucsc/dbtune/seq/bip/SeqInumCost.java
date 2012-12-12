@@ -164,7 +164,7 @@ public class SeqInumCost implements Serializable {
                 SeqInumSlot slot = new SeqInumSlot(plan, slotId);
                 slot.fullTableScanCost = Double.MAX_VALUE;
                 for (Index index : desc.getIndexesAtSlot(planId, slotId)) {
-                    timer = new RTimerN();
+                    // timer = new RTimerN();
                     if (index instanceof FullTableScanIndex) {
                         slot.fullTableScanCost = desc.getAccessCost(planId,
                                 slotId, index);
@@ -198,7 +198,7 @@ public class SeqInumCost implements Serializable {
             }
             q.plans[planId] = plan;
         }
-        Rt.p(q.totalIndexes());
+//        Rt.p(q.totalIndexes());
         PerfTest.addTimer("inumRest");
         return q;
     }
@@ -287,10 +287,20 @@ public class SeqInumCost implements Serializable {
             }
             q.plans[k] = plan;
         }
+        q.timeUsedToLoad = timer.getSecondElapse();
         PerfTest.addTimer("inumRest");
         return q;
     }
 
+//    public SeqInumIndex[] getIndexes(HashSet<Index> indexes) {
+//        SeqInumIndex[] a2=new SeqInumIndex[indexes.size()];
+//        int n=0;
+//        for (Index index : indexes) {
+//            for (SeqInumIndex a : indices) {
+//                if 
+//            }
+//        }
+//    }
     public static SeqInumCost fromInum(DatabaseSystem db,
             InumOptimizer optimizer, Workload workload, Set<Index> indexes)
             throws SQLException {
@@ -302,6 +312,8 @@ public class SeqInumCost implements Serializable {
             SeqInumIndex q = new SeqInumIndex(i);
             q.name = "I" + i;
             q.index = indexs[i];
+            q.indexStr = q.index.toString();
+            q.indexStr = q.indexStr.substring(1, q.indexStr.length() - 1);
             cost.indexToInumIndex.put(indexs[i], q);
             cost.indexHash.put(q.name, q);
             cost.indices.add(q);

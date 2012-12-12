@@ -16,6 +16,7 @@ import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumPlan;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumSlot;

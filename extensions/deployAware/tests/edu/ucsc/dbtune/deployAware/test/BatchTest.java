@@ -6,6 +6,7 @@ import java.io.PrintStream;
 
 import edu.ucsc.dbtune.deployAware.test.DATPaper.TestSet;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Rx;

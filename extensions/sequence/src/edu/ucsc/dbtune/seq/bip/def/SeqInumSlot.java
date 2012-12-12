@@ -26,6 +26,16 @@ public class SeqInumSlot implements Serializable {
         this.id = id;
     }
 
+    public double cost(SeqInumIndex[] indexes) {
+        double min = fullTableScanCost;
+        for (SeqInumSlotIndexCost cost : costs) {
+            double c = cost.cost(indexes);
+            if (c < min)
+                min = c;
+        }
+        return min;
+    }
+
     public void times(double d) {
         fullTableScanCost *= d;
         for (SeqInumSlotIndexCost cost : costs) {

@@ -26,7 +26,7 @@ public class SeqInumIndex implements Serializable {
 
     public double indexBenefit; // with this index - with no index
     public double indexBenefit2; // with all index - without this index
-    
+
     public String indexStr;
 
     public SeqInumIndex(int id) {
@@ -97,25 +97,17 @@ public class SeqInumIndex implements Serializable {
         indexBenefit2 = rx.getChildDoubleContent("indexBenefit2");
         Rx rx2 = rx.findChild("index");
         indexRx = rx2;
-        if (rx2 != null && db != null) {
-            // String name=rx2.getChildText("name");
-            // String tableName=rx2.getChildText("table");
-            // String[] st=tableName.ssplit("\\.");
-            // Schema schema=(Schema)db.getCatalog().find(st[0]);
-            // Table table= schema.findTable(st[1]);
-            loadIndex(db);
-        } else {
-            indexRx = rx2;
-            Rx[] columns = indexRx.findChilds("column");
-            StringBuilder sb=new StringBuilder();
-            for (int i = 0; i < columns.length; i++) {
-                String s = columns[i].getText();
-                if (i>0)
-                    s=s.substring(s.lastIndexOf('.')+1);
-                sb.append("+"+s);
-            }
-            indexStr=sb.toString();
+        Rx[] columns = indexRx.findChilds("column");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < columns.length; i++) {
+            String s = columns[i].getText();
+            if (i > 0)
+                s = s.substring(s.lastIndexOf('.') + 1);
+            sb.append("+" + s);
         }
+        indexStr = sb.toString();
+        if (rx2 != null && db != null)
+            loadIndex(db);
     }
 
     public Index loadIndex(DatabaseSystem db) throws SQLException {
