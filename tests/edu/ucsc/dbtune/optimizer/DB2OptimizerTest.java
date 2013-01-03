@@ -88,7 +88,6 @@ public class DB2OptimizerTest
      *      if the creation of the mock fails
      */
     @Test
-    @SuppressWarnings("unchecked")
     public void testNodeParsing() throws Exception
     {
         // CHECKSTYLE:OFF
@@ -167,7 +166,6 @@ public class DB2OptimizerTest
      *      if the creation of the mock fails
      */
     @Test
-    @SuppressWarnings("unchecked")
     public void testPlanParsing() throws Exception
     {
         // CHECKSTYLE:OFF
@@ -223,7 +221,6 @@ public class DB2OptimizerTest
      *      if the creation of the mock fails
      */
     @Test
-    @SuppressWarnings("unchecked")
     public void testMoreThanOneParent() throws Exception
     {
         // CHECKSTYLE:OFF

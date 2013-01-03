@@ -631,6 +631,8 @@ public final class MetadataUtils
 
             indexes.add(db.newIndex(ColumnOrdering.newOrdering(db.getCatalog(), line)));
         }
+        
+        f.close();
 
         return indexes;
     }

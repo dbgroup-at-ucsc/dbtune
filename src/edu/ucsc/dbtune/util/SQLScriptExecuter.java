@@ -58,6 +58,7 @@ public class SQLScriptExecuter
             if (counter % batchSize == 0)
             {
                 statement.executeBatch();
+                statement.close();
                 connection.commit();
                 statement  = connection.createStatement();
             }

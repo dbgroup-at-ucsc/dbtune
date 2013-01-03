@@ -9,7 +9,6 @@ import edu.ucsc.dbtune.metadata.ColumnOrdering;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
 
-import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.junit.Before;
@@ -55,7 +54,7 @@ public class SQLStatementPlanTest
         one = new Operator("SeqScan", 190.50, 2202);
         two = new Operator("IndexScan", 1.50, 924);
         three = new Operator("SeqScan", 234.50, 88);
-        sql = new SQLStatement("select * from test", SQLCategory.SELECT);
+        sql = new SQLStatement("select * from test");
 
         catalog = configureCatalog();
         tbl1 = catalog.<Table>findByName("schema_0.table_1");

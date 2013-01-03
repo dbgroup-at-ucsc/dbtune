@@ -18,7 +18,7 @@ public class SQLStatementTest
     {
         SQLStatement sql;
         
-        sql = new SQLStatement("select * from tbl", SQLCategory.SELECT);
+        sql = new SQLStatement("select * from tbl");
         assertThat(sql.getSQL(), is("select * from tbl"));
         assertThat(sql.getSQLCategory(), is(SQLCategory.SELECT));
 
