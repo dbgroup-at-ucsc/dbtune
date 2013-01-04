@@ -65,8 +65,8 @@ public class SeqWhatIfTest2 {
         cost = SeqCost.fromInum(loader.loadCost());
         cost = cost.copy(1);
         cost = cost.dupQuery(500);
-        // 1 1.177
-        // 2 0.539
+        // 1    1.177
+        // 2    0.539
         //10    0.640
         //100   1.856
         //500   5.893

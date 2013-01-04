@@ -12,11 +12,11 @@ public class SeqCostBasedPruning {
 	public SeqOptimal[] pruningResults;
 	public SeqIndex[] pruningIndices;
 
-	public SeqCostBasedPruning(SeqCost cost, SeqQuery[] queries, Vector<SeqIndex> indices) throws SQLException {
+	public SeqCostBasedPruning(SeqCost cost, SeqQuerySet[] queries, Vector<SeqIndex> indices) throws SQLException {
 		this(cost, queries, indices.toArray(new SeqIndex[indices.size()]));
 	}
 
-	public SeqCostBasedPruning(SeqCost cost, SeqQuery[] queries, SeqIndex[] indices) throws SQLException {
+	public SeqCostBasedPruning(SeqCost cost, SeqQuerySet[] queries, SeqIndex[] indices) throws SQLException {
 		int n = queries.length;
 		SeqIndex[] index = new SeqIndex[1];
         @SuppressWarnings({"unchecked"})

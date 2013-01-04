@@ -30,10 +30,10 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
 public class SeqCost {
-    public Hashtable<String, SeqQuery> queries = new Hashtable<String, SeqQuery>();
+    public Hashtable<String, SeqQuerySet> queries = new Hashtable<String, SeqQuerySet>();
     public Hashtable<String, SeqIndex> indices = new Hashtable<String, SeqIndex>();
     public Vector<SeqIndex> indicesV = new Vector<SeqIndex>();
-    public SeqQuery[] sequence;
+    public SeqQuerySet[] sequence;
     public SeqIndex[] source;
     public SeqIndex[] destination;
     public double storageConstraint;
@@ -43,9 +43,9 @@ public class SeqCost {
 
     public SeqCost dupQuery(int times) {
         SeqCost c2 = new SeqCost();
-        Vector<SeqQuery> queries = new Vector<SeqQuery>();
+        Vector<SeqQuerySet> queries = new Vector<SeqQuerySet>();
         for (int i = 0; i < times; i++) {
-            for (SeqQuery q : sequence) {
+            for (SeqQuerySet q : sequence) {
                 queries.add(q);
             }
         }
@@ -54,7 +54,7 @@ public class SeqCost {
         c2.source = source.clone();
         c2.destination = destination.clone();
         c2.storageConstraint = storageConstraint;
-        c2.sequence = queries.toArray(new SeqQuery[queries.size()]);
+        c2.sequence = queries.toArray(new SeqQuerySet[queries.size()]);
         for (int i = 0; i < c2.sequence.length; i++) {
             c2.queries.put("Q" + i, c2.sequence[i]);
         }
@@ -63,7 +63,7 @@ public class SeqCost {
 
     public SeqCost copy(int size) {
         SeqCost c2 = new SeqCost();
-        Vector<SeqQuery> queries = new Vector<SeqQuery>();
+        Vector<SeqQuerySet> queries = new Vector<SeqQuerySet>();
         for (int i = 0; i < size; i++) {
             queries.add(sequence[i]);
         }
@@ -72,7 +72,7 @@ public class SeqCost {
         c2.source = source.clone();
         c2.destination = destination.clone();
         c2.storageConstraint = storageConstraint;
-        c2.sequence = queries.toArray(new SeqQuery[queries.size()]);
+        c2.sequence = queries.toArray(new SeqQuerySet[queries.size()]);
         for (int i = 0; i < c2.sequence.length; i++) {
             c2.queries.put("Q" + i, c2.sequence[i]);
         }
@@ -112,12 +112,15 @@ public class SeqCost {
                             throw new Error("index not found");
                         q.relevantIndices[i] = index;
                     }
-                    cost.queries.put(q.name, q);
+                    SeqQuerySet set = new SeqQuerySet();
+                    set.name = ss[0];
+                    set.queries = new SeqQuery[] { q };
+                    cost.queries.put(set.name, set);
                 } else if ("SEQ".equals(ss[0])) {
                     String[] rs = ss[1].split(",");
-                    cost.sequence = new SeqQuery[rs.length];
+                    cost.sequence = new SeqQuerySet[rs.length];
                     for (int i = 0; i < rs.length; i++) {
-                        SeqQuery q = cost.queries.get(rs[i]);
+                        SeqQuerySet q = cost.queries.get(rs[i]);
                         if (q == null)
                             throw new Error("query not found");
                         cost.sequence[i] = q;
@@ -154,7 +157,7 @@ public class SeqCost {
                     readingCost = true;
                 }
             } else {
-                SeqQuery q = cost.queries.get(ss[0]);
+                SeqQuerySet q = cost.queries.get(ss[0]);
                 if (q == null)
                     throw new Error("query not found");
                 SeqQueryCostWithIndex queryCost = new SeqQueryCostWithIndex();
@@ -167,7 +170,7 @@ public class SeqCost {
                     queryCost.indices[i] = index;
                 }
                 queryCost.cost = Integer.parseInt(ss[2]);
-                q.costsWithIndices.add(queryCost);
+                q.queries[0].costsWithIndices.add(queryCost);
             }
         }
         return cost;
@@ -262,7 +265,7 @@ public class SeqCost {
             indexId++;
         }
 
-        costModel.sequence = new SeqQuery[workload.size()];
+        costModel.sequence = new SeqQuerySet[workload.size()];
         for (int queryId = 0; queryId < workload.size(); queryId++) {
             SeqQuery q = new SeqQuery(queryId);
             q.name = "Q" + queryId;
@@ -311,8 +314,11 @@ public class SeqCost {
             // throw new Error("index not found");
             // q.relevantIndices[i] = index;
             // }
-            costModel.queries.put(q.name, q);
-            costModel.sequence[queryId] = q;
+            SeqQuerySet set = new SeqQuerySet();
+            set.name = q.name;
+            set.queries = new SeqQuery[] { q };
+            costModel.queries.put(set.name, set);
+            costModel.sequence[queryId] = set;
         }
 
         costModel.source = new SeqIndex[0];
@@ -337,15 +343,18 @@ public class SeqCost {
             indexId++;
         }
 
-        costModel.sequence = new SeqQuery[cost.queries.size()];
+        costModel.sequence = new SeqQuerySet[cost.queries.size()];
         for (int queryId = 0; queryId < cost.queries.size(); queryId++) {
             SeqQuery q = new SeqQuery(queryId);
             q.name = "Q" + queryId;
             q.inumCached = cost.queries.get(queryId);
             q.sql = q.inumCached.sql;
             q.costWithoutIndex = q.inumCached.cost(new SeqInumIndex[0]);
-            costModel.queries.put(q.name, q);
-            costModel.sequence[queryId] = q;
+            SeqQuerySet set = new SeqQuerySet();
+            set.name = q.name;
+            set.queries = new SeqQuery[] { q };
+            costModel.queries.put(set.name, set);
+            costModel.sequence[queryId] = set;
         }
 
         costModel.source = new SeqIndex[0];
@@ -407,6 +416,14 @@ public class SeqCost {
             if (!h.contains(i))
                 cost += i.dropCost;
         from.transitionCostCache.put(to, cost);
+        return cost;
+    }
+
+    public double getCost(SeqQuerySet queries, SeqConfiguration conf)
+            throws SQLException {
+        double cost = 0;
+        for (SeqQuery q : queries.queries)
+            cost += getCost(q, conf);
         return cost;
     }
 

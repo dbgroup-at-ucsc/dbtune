@@ -7,14 +7,15 @@ import edu.ucsc.dbtune.seq.def.*;
 public class SeqSplit {
 	public SeqSplitGroup[] groups;
 
-	public SeqSplit(SeqCost cost, SeqQuery[] queries) {
+	public SeqSplit(SeqCost cost, SeqQuerySet[] queries) {
 		for (SeqIndex i : cost.indicesV) {
 			i.sameGroup.clear();
 			i.usedByQuery.clear();
 			i.markUsed = false;
 			i.groupId = -1;
 		}
-		for (SeqQuery q : queries) {
+		for (SeqQuerySet set : queries) {
+		    SeqQuery q=set.queries[0];
 			q.groupId = -1;
 			for (SeqIndex i : q.relevantIndices) {
 				i.usedByQuery.add(q);
@@ -61,15 +62,17 @@ public class SeqSplit {
 		groups = new SeqSplitGroup[groupId];
 		for (int i = 1; i <= groupId; i++) {
 			Vector<SeqQuery> qs = new Vector<SeqQuery>();
-			for (SeqQuery q : queries)
+			for (SeqQuerySet set : queries) {
+			    SeqQuery q=set.queries[0];
 				if (q.groupId == i)
 					qs.add(q);
+			}
 			Vector<SeqIndex> is = new Vector<SeqIndex>();
 			for (SeqIndex index : cost.indicesV)
 				if (index.groupId == i)
 					is.add(index);
 			SeqSplitGroup g = new SeqSplitGroup();
-			g.queries = qs.toArray(new SeqQuery[qs.size()]);
+			g.queries = qs.toArray(new SeqQuerySet[qs.size()]);
 			g.indices = is.toArray(new SeqIndex[is.size()]);
 			groups[i - 1] = g;
 		}

@@ -7,18 +7,19 @@ import java.util.Vector;
 import edu.ucsc.dbtune.seq.def.SeqConfiguration;
 import edu.ucsc.dbtune.seq.def.SeqIndex;
 import edu.ucsc.dbtune.seq.def.SeqQuery;
+import edu.ucsc.dbtune.seq.def.SeqQuerySet;
 import edu.ucsc.dbtune.seq.def.SeqStep;
 import edu.ucsc.dbtune.seq.def.SeqStepConf;
 
 public class SeqGreedySeq {
 	SeqCost cost;
-	SeqQuery[] queries;
+	SeqQuerySet[] queries;
 	public Vector<SeqStepConf[]> P = new Vector<SeqStepConf[]>();
 	public HashSet<SeqConfiguration>[] C;
 	public SeqStepConf[] r, s, t;
 
     @SuppressWarnings({"unchecked"})
-	public SeqGreedySeq(SeqCost cost, SeqQuery[] queries, SeqIndex[] indices) throws SQLException {
+	public SeqGreedySeq(SeqCost cost, SeqQuerySet[] queries, SeqIndex[] indices) throws SQLException {
 		this.cost = cost;
 		this.queries = queries;
 		SeqIndex[] index = new SeqIndex[1];

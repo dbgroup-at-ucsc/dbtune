@@ -8,7 +8,7 @@ public class SeqOptimal {
     public SeqStep[] steps;
 
     public static SeqStep[] getOptimalSteps(SeqIndex[] source,
-            SeqIndex[] destination, SeqQuery[] sequence,
+            SeqIndex[] destination, SeqQuerySet[] sequence,
             SeqConfiguration[] allConfigurations) {
         int n = sequence.length;
         SeqStep[] steps = new SeqStep[n + 2];
@@ -21,13 +21,13 @@ public class SeqOptimal {
     }
 
     public SeqOptimal(SeqCost cost, SeqIndex[] source, SeqIndex[] destination,
-            SeqQuery[] sequence, SeqStep[] steps) throws SQLException {
+            SeqQuerySet[] sequence, SeqStep[] steps) throws SQLException {
         int n = sequence.length;
         this.steps = steps;
         for (int iStep = 0; iStep < n + 1; iStep++) {
             SeqStep prev = steps[iStep];
             SeqStep cur = steps[iStep + 1];
-            SeqQuery query = iStep < n ? sequence[iStep] : null;
+            SeqQuerySet query = iStep < n ? sequence[iStep] : null;
             for (int i = 0; i < cur.configurations.length; i++) {
                 SeqStepConf curConf = cur.configurations[i];
                 double minCost = Double.MAX_VALUE;
@@ -80,7 +80,7 @@ public class SeqOptimal {
             String[] ss = new String[step.configurations.length + 1];
             tb[y++] = ss;
             int x = 0;
-            ss[x++] = step.query != null ? step.query.toString() : "&nbsp;";
+            ss[x++] = step.queries != null ? step.queries.toString() : "&nbsp;";
             for (SeqStepConf conf : step.configurations) {
                 StringBuilder sb = new StringBuilder();
                 if (conf.isBestPath)
@@ -97,7 +97,7 @@ public class SeqOptimal {
                             + "<br /></font>");
                 }
                 sb.append("<b>{" + conf.configuration + "}</b> ");
-                if (step.query != null) {
+                if (step.queries != null) {
                     sb.append(String.format("%.0f", conf.queryCost));
                 }
                 sb.append("<br />");
@@ -142,8 +142,8 @@ public class SeqOptimal {
             if (sb.length() > 0)
                 sb.append("-> ");
             sb.append("<b>{" + c.configuration + "}</b> ");
-            if (c.step.query != null)
-                sb.append("<b>" + c.step.query + "</b>");
+            if (c.step.queries != null)
+                sb.append("<b>" + c.step.queries + "</b>");
             sb.append("(" + String.format("%.0f", c.costUtilThisStep) + ")");
         }
         return sb.toString();
@@ -155,8 +155,8 @@ public class SeqOptimal {
             if (sb.length() > 0)
                 sb.append("-> ");
             sb.append("{" + c.configuration + "} ");
-            if (c.step.query != null)
-                sb.append("" + c.step.query.name + "");
+            if (c.step.queries != null)
+                sb.append("" + c.step.queries.name + "");
             sb.append("("
                     + String.format("q=%,.0f t=%,.0f sum=%,.0f", c.queryCost,
                             c.transitionCost, c.costUtilThisStep) + ")\r\n");

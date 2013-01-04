@@ -9,13 +9,13 @@ public class SeqUnionPair {
 	public SeqStep[] steps;
 	public SeqStepConf[] bestPath;
 
-	public SeqUnionPair(SeqCost cost, SeqQuery[] queries, SeqStepConf[] a, SeqStepConf[] b) throws SQLException {
+	public SeqUnionPair(SeqCost cost, SeqQuerySet[] queries, SeqStepConf[] a, SeqStepConf[] b) throws SQLException {
 		int n = queries.length;
 		steps = new SeqStep[n + 2];
 		steps[0] = new SeqStep(null, cost.source);
 		steps[steps.length - 1] = new SeqStep(null, cost.destination);
 		for (int i = 0; i < n; i++) {
-			if (!a[i+1].step.query.equals(b[i+1].step.query))
+			if (!a[i+1].step.queries.equals(b[i+1].step.queries))
 				throw new Error();
 			Vector<SeqConfiguration> cs = new Vector<SeqConfiguration>();
 			cs.add(a[i+1].configuration);

@@ -56,9 +56,9 @@ public class SeqTest {
         SeqOptimal optimal = new SeqOptimal(cost, cost.source,
                 cost.destination, cost.sequence, steps);
         for (SeqStepConf step : optimal.getBestSteps()) {
-            if (step.step.query != null)
-                Rt.np(step.step.query.name + ": "
-                        + step.step.query.sql.getSQL().trim());
+            if (step.step.queries != null)
+                Rt.np(step.step.queries.name + ": "
+                        + step.step.queries.queries[0].sql.getSQL().trim());
             Rt.np("\t" + step.configuration);
             Rt.np("\t" + step.costUtilThisStep);
         }
