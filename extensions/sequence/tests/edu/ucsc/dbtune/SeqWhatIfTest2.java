@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,21 +60,29 @@ public class SeqWhatIfTest2 {
         RTimerN timer = new RTimerN();
         WorkloadLoader loader = new WorkloadLoader("tpch10g", "deployAware",
                 "TPCH16.sql", "recommend");
-        loader = new WorkloadLoader("test", "deployAware", "TPCDS63.sql",
-                "recommend");
+        // loader = new WorkloadLoader("test", "deployAware", "TPCDS63.sql",
+        // "recommend");
 
-        cost = SeqCost.fromInum(loader.loadCost());
-        cost = cost.copy(1);
-        cost = cost.dupQuery(500);
-        // 1    1.177
-        // 2    0.539
-        //10    0.640
-        //100   1.856
-        //500   5.893
+        int windows = 3;
+        cost = SeqCost.multiWindows(loader.loadCost(), windows);
+        cost.stepBoost = new double[windows + 1];
+        Arrays.fill(cost.stepBoost, 1);
+        cost.stepBoost[3] = 10000;
+        // cost = cost.copy(1);
+        // cost = cost.dupQuery(500);
+        // 1 1.177
+        // 2 0.539
+        // 10 0.640
+        // 100 1.856
+        // 500 5.893
         cost.storageConstraint = Double.MAX_VALUE;
-        // cost.storageConstraint = 2000;
+        // cost.storageConstraint = 20;
+        cost.maxTransitionCost = 50;
+        cost.maxIndexes = 10;
         for (SeqIndex index : cost.indicesV)
             index.createCost = 10;
+        for (SeqIndex index : cost.indicesV)
+            index.storageCost = 10;
 
         SeqGreedySeq greedySeq = new SeqGreedySeq(cost, cost.sequence,
                 cost.indicesV.toArray(new SeqIndex[cost.indicesV.size()]));

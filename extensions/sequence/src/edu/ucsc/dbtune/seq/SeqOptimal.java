@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.seq;
 import java.sql.SQLException;
 
 import edu.ucsc.dbtune.seq.def.*;
+import edu.ucsc.dbtune.util.Rt;
 
 public class SeqOptimal {
     public SeqStep[] steps;
@@ -39,11 +40,18 @@ public class SeqOptimal {
                     double c = prevConf.costUtilThisStep;
                     double tc = cost.getCost(prevConf.configuration,
                             curConf.configuration);
-                    c += tc;
+                    if (cost.maxTransitionCost > 0
+                            && tc > cost.maxTransitionCost)
+                        continue;
+                    double stepCost = tc;
                     double qc = 0;
                     if (query != null)
                         qc = cost.getCost(query, curConf.configuration);
-                    c += qc;
+                    stepCost += qc;
+                    if (cost.stepBoost == null)
+                        c += stepCost;
+                    else
+                        c += stepCost * cost.stepBoost[iStep];
                     if (c < minCost) {
                         minCost = c;
                         minConf = prevConf;
@@ -51,12 +59,18 @@ public class SeqOptimal {
                         queryCost = qc;
                     }
                 }
-                if (minConf == null)
-                    throw new Error("minConf is null");
-                curConf.costUtilThisStep = minCost;
-                curConf.bestPreviousConfiguration = minConf;
-                curConf.transitionCost = transitionCost;
-                curConf.queryCost = queryCost;
+                if (minConf == null) {
+                    // throw new Error("minConf is null");
+                    curConf.costUtilThisStep = Double.MAX_VALUE;
+                    curConf.bestPreviousConfiguration = null;
+                    curConf.transitionCost = Double.MAX_VALUE;
+                    curConf.queryCost = Double.MAX_VALUE;
+                } else {
+                    curConf.costUtilThisStep = minCost;
+                    curConf.bestPreviousConfiguration = minConf;
+                    curConf.transitionCost = transitionCost;
+                    curConf.queryCost = queryCost;
+                }
             }
         }
     }

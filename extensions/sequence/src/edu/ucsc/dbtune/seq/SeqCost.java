@@ -36,7 +36,10 @@ public class SeqCost {
     public SeqQuerySet[] sequence;
     public SeqIndex[] source;
     public SeqIndex[] destination;
-    public double storageConstraint;
+    public double storageConstraint = Double.MAX_VALUE;
+    public double maxTransitionCost = Double.MAX_VALUE;
+    public int maxIndexes = Integer.MAX_VALUE;
+    public double[] stepBoost;
 
     private SeqCost() {
     }
@@ -362,6 +365,46 @@ public class SeqCost {
         return costModel;
     }
 
+    public static SeqCost multiWindows(SeqInumCost cost, int windows)
+            throws SQLException {
+        SeqCost costModel = new SeqCost();
+        int indexId = 0;
+        for (SeqInumIndex a : cost.indices) {
+            SeqIndex index = new SeqIndex();
+            index.name = "I" + indexId;
+            // index.index = a.loadIndex(db);
+            index.createCost = a.createCost;
+            index.dropCost = 0;
+            index.storageCost = a.storageCost;
+            index.inumIndex = a;
+            if (costModel.indices.put(index.name, index) != null)
+                throw new Error("duplicate index");
+            costModel.indicesV.add(index);
+            indexId++;
+        }
+
+        costModel.sequence = new SeqQuerySet[windows];
+        for (int windowId = 0; windowId < windows; windowId++) {
+            SeqQuerySet set = new SeqQuerySet();
+            set.name = "W" + windowId;
+            set.queries = new SeqQuery[cost.queries.size()];
+            for (int queryId = 0; queryId < cost.queries.size(); queryId++) {
+                SeqQuery q = new SeqQuery(queryId);
+                q.name = "Q" + queryId;
+                q.inumCached = cost.queries.get(queryId);
+                q.sql = q.inumCached.sql;
+                q.costWithoutIndex = q.inumCached.cost(new SeqInumIndex[0]);
+                set.queries[queryId] = q;
+            }
+            costModel.queries.put(set.name, set);
+            costModel.sequence[windowId] = set;
+        }
+
+        costModel.source = new SeqIndex[0];
+        costModel.destination = new SeqIndex[0];
+        return costModel;
+    }
+
     public SeqConfiguration[] getAllConfigurations(Vector<SeqIndex> indices) {
         return getAllConfigurations(indices
                 .toArray(new SeqIndex[indices.size()]));
@@ -381,13 +424,16 @@ public class SeqCost {
         for (int i = 0; i < n; i++) {
             vs.clear();
             int storageCost = 0;
+            int numOfIndexes = 0;
             for (int j = 0; j < count; j++) {
                 if ((i & (1 << j)) != 0) {
                     vs.add(indices[j]);
                     storageCost += indices[j].storageCost;
+                    numOfIndexes++;
                 }
             }
-            if (storageConstraint <= 0 || storageCost <= storageConstraint) {
+            if ((storageConstraint <= 0 || storageCost <= storageConstraint)
+                    && (maxIndexes <= 0 || numOfIndexes <= maxIndexes)) {
                 if (vs.size() == 0)
                     cs.add(empty);
                 else
