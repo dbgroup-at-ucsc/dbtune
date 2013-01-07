@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.seq.def;
 public class SeqStepConf {
 	public SeqStep step;
 	public SeqConfiguration configuration;
+	public double costUtilThisStepBoost = 0;
 	public double costUtilThisStep = 0;
 	public SeqStepConf bestPreviousConfiguration;
 	public double transitionCost = 0;
@@ -22,6 +23,6 @@ public class SeqStepConf {
 	@Override
 	public String toString() {
 		return "{" + configuration + "} "
-				+ String.format("%.0f", costUtilThisStep);
+				+ String.format("%.0f", costUtilThisStepBoost);
 	}
 }

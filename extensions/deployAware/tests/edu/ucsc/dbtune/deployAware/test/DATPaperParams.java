@@ -3,8 +3,8 @@ package edu.ucsc.dbtune.deployAware.test;
 import java.io.File;
 
 public class DATPaperParams {
-    String latex = "/usr/local/texlive/2011/bin/i386-linux/xelatex";
-    String pdflatex = "/usr/local/texlive/2011/bin/i386-linux/pdflatex";
+    String latex = "/data/b/soft/texlive/2011/bin/i386-linux/xelatex";
+    String pdflatex = "/data/b/soft/texlive/2011/bin/i386-linux/pdflatex";
     File outputDir = new File("/home/wangrui/dbtune/paper");
     File figsDir = new File(outputDir, "figs");
     File skylineLatexFile = new File(outputDir, "skyline.tex");

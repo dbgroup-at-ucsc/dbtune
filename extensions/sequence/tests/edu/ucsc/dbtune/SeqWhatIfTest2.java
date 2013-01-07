@@ -67,7 +67,7 @@ public class SeqWhatIfTest2 {
         cost = SeqCost.multiWindows(loader.loadCost(), windows);
         cost.stepBoost = new double[windows + 1];
         Arrays.fill(cost.stepBoost, 1);
-        cost.stepBoost[3] = 10000;
+        // cost.stepBoost[2] = 10000;
         // cost = cost.copy(1);
         // cost = cost.dupQuery(500);
         // 1 1.177
@@ -84,6 +84,7 @@ public class SeqWhatIfTest2 {
         for (SeqIndex index : cost.indicesV)
             index.storageCost = 10;
 
+        SeqOptimal.noTransitionCost = true;
         SeqGreedySeq greedySeq = new SeqGreedySeq(cost, cost.sequence,
                 cost.indicesV.toArray(new SeqIndex[cost.indicesV.size()]));
         while (greedySeq.run())
@@ -91,12 +92,20 @@ public class SeqWhatIfTest2 {
         greedySeq.finish();
         if (true)
             Rt.np(SeqOptimal.formatBestPathPlain(greedySeq.bestPath));
+        for (int i = 0; i < windows; i++) {
+            Rt.p("window " + i + ": "
+                    + greedySeq.bestPath[i + 1].queryCost);
+        }
         Rt.p("%d x %d", cost.sequence.length, cost.indicesV.size());
         Rt
                 .p(
                         "GREEDY cost: %,.0f",
                         greedySeq.bestPath[greedySeq.bestPath.length - 1].costUtilThisStep);
-        perf_cost = greedySeq.bestPath[greedySeq.bestPath.length - 1].costUtilThisStep;
+        Rt
+                .p(
+                        "Obj value: %,.0f",
+                        greedySeq.bestPath[greedySeq.bestPath.length - 1].costUtilThisStepBoost);
+        perf_cost = greedySeq.bestPath[greedySeq.bestPath.length - 1].costUtilThisStepBoost;
         perf_allTime = timer.getSecondElapse();
         perf_algorithmTime = perf_allTime
                 - ((SeqCost.totalWhatIfNanoTime + SeqCost.totalCreateIndexNanoTime) / 1000000000.0);

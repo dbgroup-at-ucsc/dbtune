@@ -7,6 +7,7 @@ import edu.ucsc.dbtune.util.Rt;
 
 public class SeqOptimal {
     public SeqStep[] steps;
+    public static boolean noTransitionCost = false;
 
     public static SeqStep[] getOptimalSteps(SeqIndex[] source,
             SeqIndex[] destination, SeqQuerySet[] sequence,
@@ -32,27 +33,31 @@ public class SeqOptimal {
             for (int i = 0; i < cur.configurations.length; i++) {
                 SeqStepConf curConf = cur.configurations[i];
                 double minCost = Double.MAX_VALUE;
+                double minCostBoost = Double.MAX_VALUE;
                 SeqStepConf minConf = null;
                 double transitionCost = 0;
                 double queryCost = 0;
                 for (int j = 0; j < prev.configurations.length; j++) {
                     SeqStepConf prevConf = prev.configurations[j];
+                    double cb = prevConf.costUtilThisStepBoost;
                     double c = prevConf.costUtilThisStep;
                     double tc = cost.getCost(prevConf.configuration,
                             curConf.configuration);
                     if (cost.maxTransitionCost > 0
                             && tc > cost.maxTransitionCost)
                         continue;
-                    double stepCost = tc;
+                    double stepCost = noTransitionCost ? 0 : tc;
                     double qc = 0;
                     if (query != null)
                         qc = cost.getCost(query, curConf.configuration);
                     stepCost += qc;
+                    c += stepCost;
                     if (cost.stepBoost == null)
-                        c += stepCost;
+                        cb += stepCost;
                     else
-                        c += stepCost * cost.stepBoost[iStep];
-                    if (c < minCost) {
+                        cb += stepCost * cost.stepBoost[iStep];
+                    if (cb < minCostBoost) {
+                        minCostBoost = cb;
                         minCost = c;
                         minConf = prevConf;
                         transitionCost = tc;
@@ -61,11 +66,13 @@ public class SeqOptimal {
                 }
                 if (minConf == null) {
                     // throw new Error("minConf is null");
+                    curConf.costUtilThisStepBoost = Double.MAX_VALUE;
                     curConf.costUtilThisStep = Double.MAX_VALUE;
                     curConf.bestPreviousConfiguration = null;
                     curConf.transitionCost = Double.MAX_VALUE;
                     curConf.queryCost = Double.MAX_VALUE;
                 } else {
+                    curConf.costUtilThisStepBoost = minCostBoost;
                     curConf.costUtilThisStep = minCost;
                     curConf.bestPreviousConfiguration = minConf;
                     curConf.transitionCost = transitionCost;
@@ -103,8 +110,11 @@ public class SeqOptimal {
                     sb.append("<font size=\"-1\">{"
                             + conf.bestPreviousConfiguration.configuration
                             + "} ");
-                    sb.append(String.format("%.0f",
-                            conf.bestPreviousConfiguration.costUtilThisStep));
+                    sb
+                            .append(String
+                                    .format(
+                                            "%.0f",
+                                            conf.bestPreviousConfiguration.costUtilThisStepBoost));
                     sb.append("<br />");
                     sb.append("-> "
                             + String.format("%.0f", conf.transitionCost)
@@ -115,7 +125,8 @@ public class SeqOptimal {
                     sb.append(String.format("%.0f", conf.queryCost));
                 }
                 sb.append("<br />");
-                sb.append(String.format("<b>%.0f</b>", conf.costUtilThisStep));
+                sb.append(String.format("<b>%.0f</b>",
+                        conf.costUtilThisStepBoost));
                 ss[x++] = sb.toString();
             }
             if (x > height)
@@ -158,7 +169,8 @@ public class SeqOptimal {
             sb.append("<b>{" + c.configuration + "}</b> ");
             if (c.step.queries != null)
                 sb.append("<b>" + c.step.queries + "</b>");
-            sb.append("(" + String.format("%.0f", c.costUtilThisStep) + ")");
+            sb.append("(" + String.format("%.0f", c.costUtilThisStepBoost)
+                    + ")");
         }
         return sb.toString();
     }
@@ -173,7 +185,8 @@ public class SeqOptimal {
                 sb.append("" + c.step.queries.name + "");
             sb.append("("
                     + String.format("q=%,.0f t=%,.0f sum=%,.0f", c.queryCost,
-                            c.transitionCost, c.costUtilThisStep) + ")\r\n");
+                            c.transitionCost, c.costUtilThisStepBoost)
+                    + ")\r\n");
         }
         return sb.toString();
     }

@@ -201,10 +201,10 @@ public class GnuPlot2 {
         ps.print("plot \"" + name + ".data\" ");
         for (int i = 0; i < plotNames.length; i++) {
             if (i == 0) {
-                ps.print("using 2:xtic(1) fs solid 0.2 ti col");
+                ps.print("using 2:xtic(1) fs solid 0.2");
             } else {
                 ps
-                        .format(",'' u %d fs solid %.1f ti col", i + 2,
+                        .format(",'' u %d fs solid %.1f", i + 2,
                                 0.4 + i * 0.2);
             }
         }

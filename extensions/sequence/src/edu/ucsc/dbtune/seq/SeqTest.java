@@ -60,7 +60,7 @@ public class SeqTest {
                 Rt.np(step.step.queries.name + ": "
                         + step.step.queries.queries[0].sql.getSQL().trim());
             Rt.np("\t" + step.configuration);
-            Rt.np("\t" + step.costUtilThisStep);
+            Rt.np("\t" + step.costUtilThisStepBoost);
         }
     }
 
