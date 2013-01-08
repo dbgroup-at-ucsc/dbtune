@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.xml.sax.SAXException;
 
+import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Rx;
 
@@ -24,7 +25,7 @@ public class AnalyzeInumSpace {
 
     public static void main(String[] args) throws Exception {
         File dir = new File(
-                "/home/wangrui/dbtune/inum/tpch_inumspace_recommend");
+                WorkloadLoaderSettings.dataRoot+"/inum/tpch_inumspace_recommend");
         for (int i = 1; i <= 22; i++) {
             Rx rx = Rx.findRoot(Rt.readFile(new File(dir, i + ".xml")));
             Rx[] plans = rx.findChilds("plan");

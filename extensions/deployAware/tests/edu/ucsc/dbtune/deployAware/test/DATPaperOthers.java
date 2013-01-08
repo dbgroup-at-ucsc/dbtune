@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
 import edu.ucsc.dbtune.util.Environment;
@@ -126,7 +127,7 @@ public class DATPaperOthers {
             ps.println();
             for (int i = 0; i < sets[0].plotNames.size(); i++) {
                 File outputDir2 = new File(
-                        "/home/wangrui/dbtune/dbtune.papers/deployment_aware_tuning/figs");
+                        WorkloadLoaderSettings.dataRoot+"/dbtune.papers/deployment_aware_tuning/figs");
                 ps.println("\\begin{figure}\n" + "\\centering\n");
                 for (TestSet set : sets) {
                     ps
@@ -238,7 +239,7 @@ public class DATPaperOthers {
         SeqInumCost cost = loader.loadCost();
 
         PrintStream ps2 = new PrintStream(
-                "/home/wangrui/dbtune/scalability.txt");
+                WorkloadLoaderSettings.dataRoot+"/scalability.txt");
         int start = 1;
         int step = 1;
         int end = start + 100 * step;

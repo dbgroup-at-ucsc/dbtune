@@ -6,6 +6,7 @@ import java.io.InputStream;
 
 import javax.xml.transform.TransformerException;
 
+import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Rx;
 
@@ -101,9 +102,9 @@ public class DATSeparateProcess {
     }
 
     public void run() throws Exception {
-        File tmpInputFile = new File("/home/wangrui/dbtune/tmpInput.txt");
-        File tmpFile = new File("/home/wangrui/dbtune/tmp.txt");
-        File tmpPerfFile = new File("/home/wangrui/dbtune/tmpPerf.txt");
+        File tmpInputFile = new File(WorkloadLoaderSettings.dataRoot+"/tmpInput.txt");
+        File tmpFile = new File(WorkloadLoaderSettings.dataRoot+"/tmp.txt");
+        File tmpPerfFile = new File(WorkloadLoaderSettings.dataRoot+"/tmpPerf.txt");
         final String cmd = "/usr/lib/jvm/java-6-openjdk/bin/java"
                 + " -Djava.library.path=lib"
                 + " -Dfile.encoding=UTF-8"

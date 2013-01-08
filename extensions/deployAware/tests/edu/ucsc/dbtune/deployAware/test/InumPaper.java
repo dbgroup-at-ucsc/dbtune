@@ -8,6 +8,7 @@ import edu.ucsc.dbtune.deployAware.DATOutput;
 import edu.ucsc.dbtune.deployAware.DATParameter;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.util.Rt;
@@ -15,9 +16,9 @@ import edu.ucsc.dbtune.util.Rt;
 public class InumPaper {
     public static void main(String[] args) throws Exception {
         WorkloadLoader.cacheRoot = new File(
-                "/home/wangrui/dbtune/paper/cache/notprune");
-        WorkloadLoader.cacheRoot = new File("/home/wangrui/dbtune/paper/cache/__tmp");
-//        WorkloadLoader.cacheRoot = new File("/home/wangrui/dbtune/paper/cache/prune2");
+                WorkloadLoaderSettings.dataRoot+"/paper/cache/notprune");
+        WorkloadLoader.cacheRoot = new File(WorkloadLoaderSettings.dataRoot+"/paper/cache/__tmp");
+//        WorkloadLoader.cacheRoot = new File(WorkloadLoaderSettings.dataRoot+"/paper/cache/prune2");
         WorkloadLoader loader = new WorkloadLoader("test", "deployAware",
                 "TPCH16.sql", "recommend");
 //        WorkloadLoader loader = new WorkloadLoader("test", "deployAware",

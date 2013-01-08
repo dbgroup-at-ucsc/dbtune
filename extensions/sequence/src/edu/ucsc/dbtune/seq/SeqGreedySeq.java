@@ -10,6 +10,7 @@ import edu.ucsc.dbtune.seq.def.SeqQuery;
 import edu.ucsc.dbtune.seq.def.SeqQuerySet;
 import edu.ucsc.dbtune.seq.def.SeqStep;
 import edu.ucsc.dbtune.seq.def.SeqStepConf;
+import edu.ucsc.dbtune.util.Rt;
 
 public class SeqGreedySeq {
     SeqCost cost;
@@ -52,10 +53,12 @@ public class SeqGreedySeq {
     public boolean run() throws SQLException {
         double minCost = Double.MAX_VALUE;
         r = null;
+        double qc=0;
         for (SeqStepConf[] confs : P) {
             double cost = confs[confs.length - 1].costUtilThisStepBoost;
             if (cost < minCost) {
                 minCost = cost;
+                qc=confs[confs.length - 2].queryCost;
                 r = confs;
             }
         }
@@ -72,6 +75,7 @@ public class SeqGreedySeq {
             double cost = t1[t1.length - 1].costUtilThisStepBoost;
             if (cost < minCost) {
                 minCost = cost;
+                qc=t1[t1.length - 2].queryCost;
                 s = confs;
                 t = t1;
             }

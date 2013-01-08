@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import edu.ucsc.dbtune.deployAware.test.DATPaper.TestSet;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Rx;
@@ -14,22 +15,24 @@ import edu.ucsc.dbtune.util.Rx;
 public class BatchTest {
     public static void main(String[] args) throws Exception {
         String generateIndexMethod = "recommend";
-//        generateIndexMethod = "powerset 2";
+        // generateIndexMethod = "powerset 2";
 
         long gigbytes = 1024L * 1024L * 1024L;
-        File outputFile = new File("/home/wangrui/dbtune/batch.txt");
+        File outputFile = new File(WorkloadLoaderSettings.dataRoot
+                + "/batch.txt");
         PrintStream ps = new PrintStream(outputFile);
         TestSet[] sets = {
                 new TestSet("14 TPC-H queries", "tpch10g", "deployAware",
-                        "TPCH14.sql", 10 * gigbytes, "TPCH14",0),
+                        "TPCH14.sql", 10 * gigbytes, "TPCH14", 0),
                 new TestSet("55 TPCDS queries", "test", "deployAware",
-                        "TPCDS55.sql", 10 * gigbytes, "TPCDS55",0),
+                        "TPCDS55.sql", 10 * gigbytes, "TPCDS55", 0),
                 new TestSet("81 OTAB queries", "test", "deployAware",
-                        "OTAB81.sql", 10 * gigbytes, "OTAB81",0),
+                        "OTAB81.sql", 10 * gigbytes, "OTAB81", 0),
 
         // new TestSet("170 OST queries", "test", "OST", 10 * gigbytes),
-//        new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum", "workload.sql",
-//                10 * gigbytes, "tpch"),
+        // new TestSet("12 TPC-H queries", "tpch10g", "tpch-inum",
+        // "workload.sql",
+        // 10 * gigbytes, "tpch"),
         // new TestSet("12 TPC-H queries  \\& update stream RF1 and RF2",
         // "tpch10g", "tpch-benchmark-mix", 10 * gigbytes),
         // new TestSet("100 OTAB [5] queries", "test",

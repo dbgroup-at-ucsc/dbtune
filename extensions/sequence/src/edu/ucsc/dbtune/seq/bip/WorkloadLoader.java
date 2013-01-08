@@ -35,7 +35,7 @@ import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.Workload;
 
 public class WorkloadLoader {
-    public static File cacheRoot = new File("/home/wangrui/dbtune/paper/cache");
+    public static File cacheRoot = new File(WorkloadLoaderSettings.cacheRoot);
     public DatabaseSystem db;
     public Environment en;
     public int querySize = 0;
@@ -179,10 +179,10 @@ public class WorkloadLoader {
 
     public Workload getWorkload() throws Exception {
         en = Environment.getInstance();
-        en.setProperty("jdbc.url", "jdbc:db2://localhost:50000/" + dbName);
-        en.setProperty("username", "db2inst1");
-        en.setProperty("password", "db2inst1admin");
-        en.setProperty("workloads.dir", "resources/workloads/db2");
+        en.setProperty("jdbc.url", WorkloadLoaderSettings.jdbcUrl + dbName);
+        en.setProperty("username", WorkloadLoaderSettings.username);
+        en.setProperty("password", WorkloadLoaderSettings.password);
+        en.setProperty("workloads.dir", WorkloadLoaderSettings.workloadsDir);
         return getWorkload(en);
     }
 

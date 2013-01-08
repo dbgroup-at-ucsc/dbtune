@@ -85,9 +85,9 @@ public class DAT {
             }
         }
 
-        Rt.p("varCount: "+cplex.varCount);
-        Rt.p("constraintCount: "+cplex.constraintCount);
-//        System.exit(0);
+        Rt.p("varCount: " + cplex.varCount);
+        Rt.p("constraintCount: " + cplex.constraintCount);
+        // System.exit(0);
         PerfTest.startTimer();
         if (!cplex.solve())
             throw new Error("Can't solve bip");
@@ -106,16 +106,23 @@ public class DAT {
                 output.ws[i].drop = windows[i].getDropped(cplex);
                 // Rt.p(Rt.booleanToString(output.ws[i].indexUsed));
                 PerfTest.startTimer();
-                double c2 = DATWindow.costWithIndex(param.costModel,
-                        output.ws[i].indexUsed);
+                // double c2 = DATWindow.costWithIndex(param.costModel,
+                // output.ws[i].indexUsed);
                 PerfTest.addTimer("dat verify");
-                Rt.p("DAT Window %d: %,.0f\t%,.0f\tusedIndexes=%d", i, c2,
-                        output.ws[i].cost, windows[i].getPresent(cplex));
-                if (Math.abs(output.ws[i].cost - c2) / c2 > 0.1) {
-                    Rt.error("ERROR: verify failed " + output.ws[i].cost + " "
-                            + c2);
-                    output.ws[i].cost = c2;
-                }
+                double createCost = 0;
+                for (int j = 0; j < windows[i].totalIndices; j++)
+                    if (cplex.getValue(windows[i].create[j]) == 1)
+                        createCost += param.costModel.indices.get(j).createCost;
+                Rt
+                        .p(
+                                "DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d",
+                                i, output.ws[i].cost, createCost, windows[i]
+                                        .getPresent(cplex));
+                // if (Math.abs(output.ws[i].cost - c2) / c2 > 0.1) {
+                // Rt.error("ERROR: verify failed " + output.ws[i].cost + " "
+                // + c2);
+                // output.ws[i].cost = c2;
+                // }
                 if (i == output.ws.length - 1)
                     totalCost += param.beta * output.ws[i].cost;
                 else

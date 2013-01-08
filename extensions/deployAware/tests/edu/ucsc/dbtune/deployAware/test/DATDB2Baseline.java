@@ -26,6 +26,7 @@ import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.seq.utils.RRange;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Rt;
@@ -135,7 +136,7 @@ public class DATDB2Baseline {
                     total[w]);
         }
         Rt.np("fts %,.0f", total[total.length - 1]);
-         System.exit(0);
+        System.exit(0);
         Rt.write(output2, rx.getXml().getBytes());
     }
 
@@ -174,7 +175,7 @@ public class DATDB2Baseline {
         DATParameter params = new DATParameter(cost, windowConstraints, alpha,
                 beta, l);
         DAT dat = new DAT();
-//         DAT.showFormulas=true;
+        // DAT.showFormulas=true;
         DATOutput datOutput = dat.runDAT(params);
         for (int i = 0; i < windows.length; i++) {
             windows[i].clear();
@@ -211,7 +212,7 @@ public class DATDB2Baseline {
             size += cost.indices.get(i).storageCost;
         }
         Rt.p("index size: %,d", size);
-//        System.exit(0);
+        // System.exit(0);
         String tpch = Rt.readFile(file);
         Workload workload = new Workload("", new StringReader(tpch));
         verify(db, workload, windows, output);
@@ -311,8 +312,9 @@ public class DATDB2Baseline {
         double[] db2 = loadTotalCosts(outputDb2Result);
         double[] dat = loadTotalCosts(outputDatResult);
         double[] datSpace = loadTotalCosts(outputDatResultS);
-        plot = new GnuPlot2(new File("/home/wangrui/dbtune/paper/db2/figs"),
-                dbName + "X" + spaceName, "cost", "window");
+        plot = new GnuPlot2(new File(WorkloadLoaderSettings.dataRoot
+                + "/paper/db2/figs"), dbName + "X" + spaceName, "cost",
+                "window");
         plot.setPlotNames(new String[] { "DB2Advisor", "datOptimalIndexes",
                 "datContraintIndexes" });
         plot.setXtics(new int[] { 1, 2, 3 });
@@ -342,8 +344,8 @@ public class DATDB2Baseline {
                 new TestSet("63 TPCDS queries", "test", "deployAware",
                         "TPCDS63.sql", 10 * gigbytes, "TPCDS63", 0), };
         DATPaperParams params = new DATPaperParams();
-        File texFile = new File("/home/wangrui/dbtune/paper/db2/" + alpha
-                + ".tex");
+        File texFile = new File(WorkloadLoaderSettings.dataRoot + "/paper/db2/"
+                + alpha + ".tex");
         PrintStream ps = new PrintStream(texFile);
         ps.println("\\documentclass{vldb}\n" + "\n"
                 + "\\usepackage{graphicx}   % need for figures\n" + "\n"
@@ -359,7 +361,7 @@ public class DATDB2Baseline {
                 long space = (long) (set.size * spaceFactor);
                 File file = new File("resources/workloads/db2/"
                         + set.workloadName + "/" + set.fileName);
-                String outputPrefix = "/home/wangrui/dbtune/paper/cache/db2/"
+                String outputPrefix = WorkloadLoaderSettings.dataRoot+"/paper/cache/db2/"
                         + set.workloadName + "/" + set.fileName + spaceFactor;
                 DATDB2Baseline db2 = new DATDB2Baseline(alpha, set.dbName,
                         file, space, spaceName, outputPrefix);

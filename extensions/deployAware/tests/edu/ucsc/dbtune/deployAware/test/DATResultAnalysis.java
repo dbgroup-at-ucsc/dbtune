@@ -17,6 +17,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumPlan;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
@@ -222,14 +223,13 @@ public class DATResultAnalysis {
     }
 
     public static void main(String[] args) throws Exception {
-        File inputDir = new File("/home/wangrui/dbtune/debug");
+        File inputDir = new File(WorkloadLoaderSettings.dataRoot + "/debug");
         File outputDir = new File(inputDir, "txt");
 
         // comparePlans(new File(inputDir, "tpch10gXtpch-inumX1mada_1.xml"));
         outputDir.mkdir();
         for (File file : inputDir.listFiles()) {
-            file=new File(inputDir,
-            "testXonline-benchmark-100X1mada_1.xml");
+            file = new File(inputDir, "testXonline-benchmark-100X1mada_1.xml");
             String name = file.getName();
             if (!name.endsWith(".xml"))
                 continue;

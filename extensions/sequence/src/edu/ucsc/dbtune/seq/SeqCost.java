@@ -38,7 +38,7 @@ public class SeqCost {
     public SeqIndex[] destination;
     public double storageConstraint = Double.MAX_VALUE;
     public double maxTransitionCost = Double.MAX_VALUE;
-    public int maxIndexes = Integer.MAX_VALUE;
+    public int maxIndexesWindow = Integer.MAX_VALUE;
     public double[] stepBoost;
 
     private SeqCost() {
@@ -371,6 +371,7 @@ public class SeqCost {
         int indexId = 0;
         for (SeqInumIndex a : cost.indices) {
             SeqIndex index = new SeqIndex();
+            index.id = indexId;
             index.name = "I" + indexId;
             // index.index = a.loadIndex(db);
             index.createCost = a.createCost;
@@ -424,16 +425,17 @@ public class SeqCost {
         for (int i = 0; i < n; i++) {
             vs.clear();
             int storageCost = 0;
-            int numOfIndexes = 0;
+            // int numOfIndexes = 0;
             for (int j = 0; j < count; j++) {
                 if ((i & (1 << j)) != 0) {
                     vs.add(indices[j]);
                     storageCost += indices[j].storageCost;
-                    numOfIndexes++;
+                    // numOfIndexes++;
                 }
             }
             if ((storageConstraint <= 0 || storageCost <= storageConstraint)
-                    && (maxIndexes <= 0 || numOfIndexes <= maxIndexes)) {
+            // && (maxIndexes <= 0 || numOfIndexes <= maxIndexes)
+            ) {
                 if (vs.size() == 0)
                     cs.add(empty);
                 else
@@ -444,17 +446,23 @@ public class SeqCost {
         return cs.toArray(new SeqConfiguration[cs.size()]);
     }
 
-    public double getCost(SeqConfiguration from, SeqConfiguration to) {
+    public Double getCost(SeqConfiguration from, SeqConfiguration to) {
         Double d = from.transitionCostCache.get(to);
         if (d != null)
             return d;
         double cost = 0;
+        int createdIndexes = 0;
         HashSet<SeqIndex> h = new HashSet<SeqIndex>();
         for (SeqIndex i : from.indices)
             h.add(i);
-        for (SeqIndex i : to.indices)
-            if (!h.contains(i))
+        for (SeqIndex i : to.indices) {
+            if (!h.contains(i)) {
                 cost += i.createCost;
+                createdIndexes++;
+            }
+        }
+        if (createdIndexes > maxIndexesWindow)
+            return null;
         h.clear();
         for (SeqIndex i : to.indices)
             h.add(i);

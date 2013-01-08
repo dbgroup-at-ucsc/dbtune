@@ -28,6 +28,7 @@ import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.util.Rx;
@@ -209,9 +210,9 @@ public class InumTestSuite {
         }
         // ExplainTables.optimizationLevel = 1;
         // resultFile = new File(
-        // "/home/wangrui/dbtune/inum/suite/inumTestSuite.xml");
+        // WorkloadLoaderSettings.dataRoot+"/inum/suite/inumTestSuite.xml");
         // resultFile = new File(
-        // "/home/wangrui/dbtune/inum/suite/inumTestSuite39.xml");
+        // WorkloadLoaderSettings.dataRoot+"/inum/suite/inumTestSuite39.xml");
 
         for (Workload workload : workloads) {
             Rx root = Rx.findRoot(Rt.readFile(workload.resultFile));

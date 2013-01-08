@@ -25,7 +25,8 @@ public class SeqUnionPair {
             SeqConfiguration c = a[i + 1].configuration
                     .combine(b[i + 1].configuration);
             if (c.storageCost() <= cost.storageConstraint
-                    && c.indices.length <= cost.maxIndexes)
+//                    && c.indices.length <= cost.maxIndexes
+                    )
                 cs.add(c);
             steps[1 + i] = new SeqStep(queries[i], cs
                     .toArray(new SeqConfiguration[cs.size()]));

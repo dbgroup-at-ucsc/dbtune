@@ -7,7 +7,7 @@
 <listEntry value="1"/>
 </listAttribute>
 <mapAttribute key="org.eclipse.debug.core.environmentVariables">
-<mapEntry key="ILOG_LICENSE_FILE" value="/data/cplex/access.ilm"/>
+<mapEntry key="ILOG_LICENSE_FILE" value="/data/b/cplex/access.ilm"/>
 <mapEntry key="PATH" value="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/home/db2inst1/sqllib/bin:/home/db2inst1/sqllib/adm:/home/db2inst1/sqllib/misc"/>
 </mapAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="edu.ucsc.dbtune.deployAware.test.DATPaper"/>

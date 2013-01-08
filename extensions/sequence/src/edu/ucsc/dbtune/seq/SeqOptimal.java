@@ -41,8 +41,10 @@ public class SeqOptimal {
                     SeqStepConf prevConf = prev.configurations[j];
                     double cb = prevConf.costUtilThisStepBoost;
                     double c = prevConf.costUtilThisStep;
-                    double tc = cost.getCost(prevConf.configuration,
+                    Double tc = cost.getCost(prevConf.configuration,
                             curConf.configuration);
+                    if (tc==null)
+                        continue;
                     if (cost.maxTransitionCost > 0
                             && tc > cost.maxTransitionCost)
                         continue;

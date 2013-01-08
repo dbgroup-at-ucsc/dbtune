@@ -41,6 +41,7 @@ import edu.ucsc.dbtune.seq.bip.SebBIPOutput;
 import edu.ucsc.dbtune.seq.bip.SeqBIP;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumPlan;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
@@ -326,7 +327,7 @@ public class DATTest2 {
                     total += params.costModel.indices.get(i).createCost;
                 }
             }
-            windowSize = 3600*3000;//total / m * windowSizeParameter;
+            windowSize = 3600 * 3000;// total / m * windowSizeParameter;
             Arrays.fill(params.windowConstraints, windowSize);
             Rt.p("total=%,.0f m=%d", total, m);
             Rt
@@ -361,8 +362,8 @@ public class DATTest2 {
             for (SeqInumQuery query : params.costModel.queries)
                 query.save(q.createChild("query"));
         }
-//        runDAT=false;
-//         runGreedy=false;
+        // runDAT=false;
+        // runGreedy=false;
         if (runDAT) {
             try {
                 DAT dat = new DAT();
@@ -393,7 +394,7 @@ public class DATTest2 {
             }
         }
         // PrintStream ps=new PrintStream(new FileOutputStream(new
-        // File("/home/wangrui/dbtune/createDrop.txt"),true));
+        // File(WorkloadLoaderSettings.dataRoot+"/createDrop.txt"),true));
         // for (int i = 0; i < windowConstraints.length; i++) {
         // ps.format("%.0f\tc " + output.ws[i].create + ", d "
         // + output.ws[i].drop + "\t", output.ws[i].cost);
@@ -422,8 +423,8 @@ public class DATTest2 {
         double bipCost = 0;
         if (runMKP) {
             SeqInumCost cost2 = loaderBaseline.loadCost();
-            DATParameter params2 = new DATParameter(cost2, windowConstraints, alpha,
-                    beta, l);
+            DATParameter params2 = new DATParameter(cost2, windowConstraints,
+                    alpha, beta, l);
             params2.intermediateConstraint = intermediateConstraint;
             DATOutput bip = (DATOutput) DATBaselines.baseline2(params2, "db2",
                     debug);
@@ -441,13 +442,17 @@ public class DATTest2 {
         long time2 = timer.get();
         Rt.p("TIME " + time1 + " " + time2 + " " + (double) time2 / time1);
 
-        Rt.p("DAT: %,.0f",datCost);
-        Rt.p("GREEDY: %,.0f",greedyCost);
-        Rt.p("DB2: %,.0f",bipCost);
+        Rt.p("DAT: %,.0f", datCost);
+        if (runGreedy)
+            Rt.p("GREEDY: %,.0f", greedyCost);
+        if (runMKP)
+            Rt.p("DB2: %,.0f", bipCost);
         double result = datCost / bipCost * 100;
-        Rt.p("DAT/DB2="+result + "%");
+        if (runMKP)
+            Rt.p("DAT/DB2=" + result + "%");
         result = datCost / greedyCost * 100;
-        Rt.p("DAT/GREEDY="+result + "%");
+        if (runGreedy)
+            Rt.p("DAT/GREEDY=" + result + "%");
 
         Rt.write(outputFile, root.getXml());
         if (perfReportFile != null)
@@ -464,8 +469,8 @@ public class DATTest2 {
         if (args.length == 2)
             batch(args);
         StringBuilder sb = new StringBuilder();
-        sb.append("/home/wangrui/dbtune/tmpInput.txt");
-        sb.append(" /home/wangrui/dbtune/tmp.txt");
+        sb.append(WorkloadLoaderSettings.dataRoot + "/tmpInput.txt");
+        sb.append(" " + WorkloadLoaderSettings.dataRoot + "/tmp.txt");
         batch(sb.toString().split(" "));
 
         String dbName = "tpch10g";

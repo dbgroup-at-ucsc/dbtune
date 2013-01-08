@@ -6,6 +6,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 
 public class SeqIndex {
+    public int id;
     public String name;
     public Index index;
     public double createCost, dropCost;

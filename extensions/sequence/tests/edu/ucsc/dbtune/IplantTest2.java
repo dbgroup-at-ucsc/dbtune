@@ -18,6 +18,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.Workload;
@@ -70,7 +71,7 @@ public class IplantTest2 {
     }
 
     static void covertLog() throws Exception {
-        File dir = new File("/home/wangrui/dbtune/iplant/logs");
+        File dir = new File(WorkloadLoaderSettings.dataRoot + "/iplant/logs");
         String[] ss = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", };
         int total = 0;
         int update = 0;

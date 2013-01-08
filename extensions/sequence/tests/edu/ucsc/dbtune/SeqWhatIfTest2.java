@@ -78,7 +78,7 @@ public class SeqWhatIfTest2 {
         cost.storageConstraint = Double.MAX_VALUE;
         // cost.storageConstraint = 20;
         cost.maxTransitionCost = 50;
-        cost.maxIndexes = 10;
+        cost.maxIndexesWindow = 10;
         for (SeqIndex index : cost.indicesV)
             index.createCost = 10;
         for (SeqIndex index : cost.indicesV)

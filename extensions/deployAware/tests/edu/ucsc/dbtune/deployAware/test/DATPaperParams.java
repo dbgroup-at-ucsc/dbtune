@@ -3,9 +3,9 @@ package edu.ucsc.dbtune.deployAware.test;
 import java.io.File;
 
 public class DATPaperParams {
-    String latex = "/data/b/soft/texlive/2011/bin/i386-linux/xelatex";
-    String pdflatex = "/data/b/soft/texlive/2011/bin/i386-linux/pdflatex";
-    File outputDir = new File("/home/wangrui/dbtune/paper");
+    String latex = DATSettings.latex;
+    String pdflatex = DATSettings.pdflatex;
+    File outputDir = DATSettings.outputDir;
     File figsDir = new File(outputDir, "figs");
     File skylineLatexFile = new File(outputDir, "skyline.tex");
     public int m_def = 3;
@@ -14,7 +14,8 @@ public class DATPaperParams {
     public double _1mada_def = 2;
     public int[] m_set = { 2, 3, 4, 5 };
     public double[] spaceFactor_set = { 0.25, 0.5, 1, 2, 4, 1000000 };
-    public String[] spaceFactor_names = { "0.25x", "0.5x", "1x", "2x", "4x", "INF" };
+    public String[] spaceFactor_names = { "0.25x", "0.5x", "1x", "2x", "4x",
+            "INF" };
     public int[] l_set = { 4, 6, 8 };
     public int[] _1mada_set = { 1, 2, 4, 16 };
     double[] tau_set = { 0.5, 0.6, 0.8, 0.9, 0.95, 1, 1.05, 1.1, 1.2, 1.4 };
@@ -22,7 +23,7 @@ public class DATPaperParams {
     boolean copyEps = false;
     String generateIndexMethod = "recommend";
     boolean exp5 = true; // rerun experiment
-    int windowSize = 0;
+    long windowSize = 0;
 
     public DATPaperParams() {
         spaceFactor_def = 2;

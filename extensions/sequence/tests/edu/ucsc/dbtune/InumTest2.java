@@ -46,6 +46,7 @@ import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
+import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.InumUtils;
 import edu.ucsc.dbtune.util.ResultTable;
@@ -143,7 +144,7 @@ public class InumTest2 {
             DB2Optimizer db2optimizer) throws Exception {
         // dump = true;
         // find all NLJ operators in TPCH
-        PrintStream ps = new PrintStream("/home/wangrui/dbtune/allTPCH_NLJ.txt");
+        PrintStream ps = new PrintStream(WorkloadLoaderSettings.dataRoot+"/allTPCH_NLJ.txt");
         for (int i = 0; i < workload.size(); i++) {
             Rt.p(i);
             SQLStatement statement = workload.get(i);
@@ -345,7 +346,7 @@ public class InumTest2 {
         // AbstractSpaceComputation.setInumSpacePopulateIndexSet(indexes);
 
         Rt.p("queries: " + workload.size());
-        PrintStream ps = new PrintStream("/home/wangrui/dbtune/inum/cost/"
+        PrintStream ps = new PrintStream(WorkloadLoaderSettings.dataRoot+"/inum/cost/"
                 + testName + ".txt");
         for (int i = 0; i < workload.size(); i++) {
             Workload workload2 = new Workload("", new StringReader(workload
@@ -391,7 +392,7 @@ public class InumTest2 {
         // queries = query.split(";");
 
         PrintStream ps2 = new PrintStream(new FileOutputStream(
-                "/home/wangrui/dbtune/inum/all.txt", true));
+                WorkloadLoaderSettings.dataRoot+"/inum/all.txt", true));
         for (int testId = 1; testId < queries.length; testId++) {
             String id = queries[testId].substring(0, 2);
             query = queries[testId].substring(2).trim();
@@ -412,8 +413,8 @@ public class InumTest2 {
                 InumPreparedSQLStatement inumPlan = (InumPreparedSQLStatement) optimizer
                         .prepareExplain(workload.get(0));
                 String testName = "tpcds_inumspace_interestingorder";
-                new File("/home/wangrui/dbtune/inum/" + testName + "/").mkdir();
-                File file = new File("/home/wangrui/dbtune/inum/" + testName
+                new File(WorkloadLoaderSettings.dataRoot+"/inum/" + testName + "/").mkdir();
+                File file = new File(WorkloadLoaderSettings.dataRoot+"/inum/" + testName
                         + "/" + testId + ".xml");
                 Rx root = new Rx("query");
                 root.setAttribute("id", id);
@@ -446,7 +447,7 @@ public class InumTest2 {
                     .get(0), indexes);
             ExplainedSQLStatement inumPlan = optimizer.prepareExplain(
                     workload.get(0)).explain(indexes);
-            PrintStream ps = new PrintStream("/home/wangrui/dbtune/inum/"
+            PrintStream ps = new PrintStream(WorkloadLoaderSettings.dataRoot+"/inum/"
                     + testId + ".txt");
             ps.println("DB2: " + db2plan.getPlan());
             ps.println("INUM: " + inumPlan.getPlan());
@@ -598,7 +599,7 @@ public class InumTest2 {
         int[] count3 = new int[3];
         for (int i = 0; i < workload.size(); i++) {
 
-            File file = new File("/home/wangrui/dbtune/inum/prune/update/" + i
+            File file = new File(WorkloadLoaderSettings.dataRoot+"/inum/prune/update/" + i
                     + ".xml");
             file.getParentFile().mkdirs();
             if (!file.exists()) {

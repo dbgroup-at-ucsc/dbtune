@@ -1,0 +1,54 @@
+            // SeqInumCost cost = DATTest2.loadCost();
+            // long totalCost = 0;
+            // for (int i = 0; i < cost.indices.size(); i++) {
+            // SeqInumIndex index = cost.indices.get(i);
+            // totalCost += index.createCost;
+            // }
+ 
+        if (false) {
+            for (TestSet set : sets) {
+                WorkloadLoader loader2 = new WorkloadLoader(set.dbName,
+                        set.workloadName, set.fileName,
+                        params.generateIndexMethod);
+                loader2.getIndexes();
+                System.exit(0);
+                WorkloadLoader loader = new WorkloadLoader(set.dbName,
+                        set.workloadName, set.fileName,
+                        params.generateIndexMethod);
+                DATSeparateProcess dsp = new DATSeparateProcess(loader.dbName,
+                        loader.workloadName, loader.fileName,
+                        loader.generateIndexMethod, 1, 1, params.m_def,
+                        params.l_def, set.size * params.spaceFactor_def, 0, 0);
+                // dsp.run();
+            }
+        }
+        if (false) {
+            for (TestSet set : sets) {
+                WorkloadLoader loader = new WorkloadLoader(set.dbName,
+                        set.workloadName, set.fileName,
+                        params.generateIndexMethod);
+                SeqInumCost cost = loader.loadCost();
+                Rt.np("minCost: %,.0f", cost.costWithAllIndex);
+                Rt.np("maxCost: %,.0f", cost.costWithoutIndex);
+
+                GnuPlot plot = null;
+                long spaceBudge = (long) (set.size * params.spaceFactor_def);
+                plot = new GnuPlot(params.figsDir, set.shortName + "Xdebug",
+                        "debug", "debug");
+                plot.setPlotNames(curNames);
+                set.plotNames.add(plot.name);
+                set.figureNames.add("debug");
+                // plot.setXtics(params.spaceFactor_names,
+                // params.spaceFactor_set);
+                if (exp || !plot.pltFile.exists()) {
+                    int m = 3;
+                    File debugFile = new File(debugDir, plot.name + "_" + m
+                            + ".xml");
+                    new DATPaper(loader, plot, m, null, m, spaceBudge,
+                            params.l_def, getAlpha(params._1mada_def),
+                            params.windowSize, debugFile);
+                }
+                // plot.finish();
+            }
+            System.exit(0);
+        }
