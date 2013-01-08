@@ -133,9 +133,9 @@ public class DIVPaper extends DivTestSetting
         // 2. draw graphs
         if (isEquivalent){
             // ratio
-            drawEquivalent(dbName, wlName, true, true);
+            //drawEquivalent(dbName, wlName, true, false);
             // absolute value
-            drawEquivalent(dbName, wlName, false, true);
+            drawEquivalent(dbName, wlName, false, false);
             /*
             boolean isDesign = false;
             // draw ratio with design
@@ -251,7 +251,7 @@ public class DIVPaper extends DivTestSetting
         int numX;
         double ratio; 
         long budget;
-        
+        /*
         // varying space budget
         for (int n : listNumberReplicas) {
             double B;
@@ -295,7 +295,7 @@ public class DIVPaper extends DivTestSetting
                     " Database = " + dbName + " workload = " + wlName +
                     " Varying space budget, n = " + n, 0.5));
         }
-        
+        */
         // varying number of replicas
         int n;
         for (double  B : listBudgets) {
@@ -861,7 +861,7 @@ public class DIVPaper extends DivTestSetting
         String[] competitors = new String[entry.listNumberReplicas.size()
                                           + 1];
         for (int i = 0; i < entry.listNumberReplicas.size(); i++)
-            competitors[i] = "n = " + Integer.toString(
+            competitors[i] = "m = " + Integer.toString(
                      entry.listNumberReplicas.get(i));
         competitors[entry.listNumberReplicas.size()] = "CURRENT";
         

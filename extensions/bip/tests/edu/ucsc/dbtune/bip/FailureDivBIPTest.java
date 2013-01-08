@@ -38,7 +38,7 @@ public class FailureDivBIPTest extends DIVPaper
      * @param failureFactors
      * @throws Exception
      */
-    protected static void testFailure(List<Double> failureFactors) throws Exception
+    public static void testFailure(List<Double> failureFactors) throws Exception
     {
         List<RobustPaperEntry> entries = new ArrayList<RobustPaperEntry>();
         RobustDivBIP robustDiv;

@@ -30,6 +30,7 @@ import edu.ucsc.dbtune.workload.Workload;
  
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
+import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
 import static edu.ucsc.dbtune.bip.CandidateGeneratorFunctionalTest.readCandidateIndexes;
 import edu.ucsc.dbtune.divgdesign.DivgDesign.QueryCostAtPartition;
 
@@ -76,7 +77,7 @@ public class DivTestSetting
     
     // for Debugging purpose only
     protected static double totalIndexSize;
-    protected static boolean isExportToFile = false;
+    protected static boolean isExportToFile = true;
     protected static boolean isTestCost = false;
     protected static boolean isShowRecommendation = false;
     protected static boolean isDB2Cost = false;
@@ -154,7 +155,7 @@ public class DivTestSetting
                 //int fUpdate = (int) (updateRatio * tbl.getCardinality());
                 int fUpdate = 1; 
                 sql.setStatementWeight(fUpdate);
-                Rt.p(" fupdate = " + fUpdate);
+                //Rt.p(" fupdate = " + fUpdate);
             }
        
         
@@ -176,7 +177,7 @@ public class DivTestSetting
     public static void setParameters() throws Exception
     {   
         // debugging purpose
-        isExportToFile = false;
+        isExportToFile = true;
         isTestCost = false;
         isShowRecommendation = false;        
         isGetAverage = false;
@@ -391,13 +392,20 @@ public class DivTestSetting
             db2cost = io.getDelegate().explain(sql, conf).getTotalCost();
             inumPrepared = (InumPreparedSQLStatement) io.prepareExplain(sql);
 
-            if (inumPrepared.getTemplatePlans().size() > 9){
+            if (sql.getSQLCategory().isSame(DELETE)){
+                Rt.p("Not consider DELETE");
+                isGood = false;
+            }
+                    
+            
+            if (inumPrepared.getTemplatePlans().size() > 40){
                 isGood = false;
                 Rt.p("Not good because too many plans ");
                 id++;
                 continue;
             }
-                
+             
+            
             inumcost = inumPrepared.explain(conf).getTotalCost();
             Rt.p(" stmt: " + sql.getSQL());
             if (inumcost < 0.0 || inumcost > Math.pow(10, 9)) { 
@@ -408,8 +416,10 @@ public class DivTestSetting
             ratio = (double) db2cost / inumcost;
             if (ratio > 2 || ratio < 0.4) {
                 isGood = false;
-                Rt.p(" NOT GOOD, id = " + id);
+                Rt.p(" NOT GOOD, id = " + id
+                        + " RATIO = " + ratio);
             }
+            
             if (isGood)
                 goodStmts.add(id);
             

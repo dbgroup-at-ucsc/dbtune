@@ -1,8 +1,13 @@
 package edu.ucsc.dbtune.bip;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+
 import org.junit.Test;
 
 
@@ -13,12 +18,16 @@ import edu.ucsc.dbtune.bip.div.DivBIP;
 import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.util.LogListener;
 
+import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
+import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
+import edu.ucsc.dbtune.util.MetadataUtils;
 import edu.ucsc.dbtune.util.Rt;
 import edu.ucsc.dbtune.workload.SQLStatement;
 import edu.ucsc.dbtune.workload.Workload;
 
+import static edu.ucsc.dbtune.workload.SQLCategory.DELETE;
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
@@ -33,7 +42,8 @@ import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 public class DivBIPFunctionalTest extends DivTestSetting
 {   
     protected static boolean isComparedDB2 = false;
-    protected static boolean isComparedUnif = true;
+    protected static boolean isComparedUnif = false;
+    protected static boolean isRemovedInsertWithSelect = true;
     
     @Test
     public void main() throws Exception
@@ -55,6 +65,59 @@ public class DivBIPFunctionalTest extends DivTestSetting
                     testDiv(n, B1, false);
         }
         
+        if (isRemovedInsertWithSelect)
+            removeInsertWithSelect();
+        
+    }
+    
+    /**
+     * Compute the query execution cost for statements in the given workload
+     * 
+     * @param conf
+     *      A configuration
+     *      
+     * @throws Exception
+     */
+    protected static void removeInsertWithSelect() throws Exception
+    {
+        int id;
+        List<Integer> goodStmts = new ArrayList<Integer>();
+        boolean isGood;
+        
+        id = 0;
+        
+        for (SQLStatement sql : workload) {
+            isGood = true;
+            
+            if (sql.toString().contains("insert into")
+                    && sql.toString().contains("select"))
+                    isGood = false;
+            
+            if (isGood)
+                goodStmts.add(id);
+            else {
+                Rt.p(" NOT good statement"
+                        + sql.toString());
+            }
+            
+            id++;
+        }
+        
+        Rt.p(" Number of good statements = " + goodStmts.size());
+        
+        // write to file
+        id = 0;
+        StringBuilder sb = new StringBuilder();
+        for (int i : goodStmts){
+            sb.append("-- query" + id + "\n");
+            sb.append(workload.get(i).getSQL() + ";" + "\n");
+            id++;
+        }
+        
+        File folderDir = new File (en.getWorkloadsFoldername());
+        PrintWriter out = new PrintWriter(new FileWriter(folderDir + "/workload_good.sql"), false);
+        out.println(sb.toString());
+        out.close();
     }
     
     
@@ -252,7 +315,18 @@ public class DivBIPFunctionalTest extends DivTestSetting
         if (output != null) {
             divConf = (DivConfiguration) output;
             Rt.p(divConf.indexAtReplicaInfo());
-            
+            Rt.p(" configuration = " + divConf);
+            Rt.p("----- RECOMMENDATION -----");
+            long totalSize = 0;
+            for (Index index : divConf.indexesAtReplica(0)) {
+                Rt.np(MetadataUtils.getCreateStatement(index));
+                totalSize += index.getBytes();
+            }
+            Rt.p("Total indexes = " + divConf.indexesAtReplica(0).size());
+            Rt.p("Total space = " + (int) ((long) totalSize / Math.pow(2, 20))
+                    + "MB");
+            Rt.p("Total space = " + totalSize);
+                
             WorkloadCostDetail wc;
             if (isShowOptimizerCost) {
                 queryCost = div.computeOptimizerQueryCost(divConf);
@@ -265,14 +339,20 @@ public class DivBIPFunctionalTest extends DivTestSetting
                 Rt.p("temporary NOT COMPUTE DB2 COST");
                 wc = new WorkloadCostDetail(-1, -1, div.getObjValue());
             }
+            Rt.p(" objective value = " + div.getObjValue()
+                    + " base table cost = "
+                    + div.getTotalBaseTableUpdateCost());
             
+            double costINUM = div.getObjValue() + div.getTotalBaseTableUpdateCost();
             Rt.p(" n = " + _n + " B = " + _B
                     + " cost in INUM = "
-                    + div.getObjValue());
+                    + costINUM);
             Rt.p(" cost in DB2 = " + wc.totalCost);
-            Rt.p(" RATIO = " + (wc.totalCost / div.getObjValue()));
+            Rt.p(" RATIO = " + (wc.totalCost / costINUM));
             Rt.p(" REPLICA IMBALANCE = " + div.getNodeImbalance());
             Rt.p(" ROUTING QUERIES = " + div.computeNumberQueriesSpecializeForReplica());
+            Rt.p(" QUERY C0ST = " + wc.queryCost);
+            Rt.p(" UPDATE C0ST = " + wc.updateCost);
             return wc;
         }
         else {

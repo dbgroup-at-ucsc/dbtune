@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.bip;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -47,7 +48,30 @@ public class UNIFDB2AdvisorTest extends DIVPaper
      * @throws Exception
      */
     public static void testUNIFDB2() throws Exception
-    {         
+    {        
+        // Test the cost without INDEX
+        List<Double> costs = computeCostsDB2(workload, new HashSet<Index>());
+        double queryCost = 0.0;
+        double updateCost = 0.0;
+        
+        int countQuery = 0;
+        int countUpdate = 0;
+        
+        for (int i = 0; i < workload.size(); i++)
+            if (workload.get(i).getSQLCategory().isSame(SELECT)) {
+                queryCost += costs.get(i) * workload.get(i).getStatementWeight();
+                countQuery++;
+            }
+            else {
+                updateCost += costs.get(i) * workload.get(i).getStatementWeight();
+                countUpdate++;
+            }
+        Rt.p("TOTAL COST WITHOUT INDEX CONFIGURATION = "
+                + (queryCost + updateCost));
+        Rt.p(" Number of queries = " + countQuery);
+        Rt.p(" Number of updates = " + countUpdate);
+        // --------------- MIGHT REMOVE
+        
         List<WorkloadCostDetail> wcs;
         long budget;
         detailEntries = new HashMap<DivPaperEntryDetail, Double>();

@@ -94,7 +94,7 @@ public class AdaptiveDivBIPTest extends DIVPaper
         DivBIPFunctionalTest.testDiv(nReplicas, B, descs);
         initialConf = divConf;
     }
-    
+        
     /**
      * Initial DIVBIP object
      * @throws Exception

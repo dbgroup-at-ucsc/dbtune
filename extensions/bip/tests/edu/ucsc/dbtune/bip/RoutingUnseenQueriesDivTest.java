@@ -83,7 +83,7 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
         queryPlanDescs = div.getQueryPlanDescs();
         
         // 2. split into training and testing data set
-        int maxRound = 5;
+        int maxRound = 10;
         int id;
         int countTraining;
         // store result
@@ -135,6 +135,7 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
             Rt.p(" RATIO SPLITTING / UNIF = " + (totalCostSplitting / totalCostUNIF));
         
             // TODO: recording the result
+            // recording cost unseen only
             entry.costUNIF = totalCostUNIF;
             entry.costBestCase = totalCostBestCase;
             entries.add(entry);
@@ -210,9 +211,10 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
         if (output != null) {
             divConf = (DivConfiguration) output;
             Rt.p(divConf.indexAtReplicaInfo());
-            
+            /*
             totalCostSeen = div.computeOptimizerQueryCost(divConf)
                 + div.computeOptimizerUpdateCost(divConf);
+                */
             // TODO: recording the result
             entry.divTraining = divConf;
         }
@@ -230,9 +232,9 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
         entry.divTesting = divTest;
         entry.costSplitting = totalCostSeen + totalCostUnseen;
         
-        Rt.p(" cost seen = " + totalCostSeen);
+        //Rt.p(" cost seen = " + totalCostSeen);
         Rt.p(" cost unseen = " + totalCostUnseen);
-        return (totalCostSeen + totalCostUnseen);
+        return (totalCostUnseen);
     }
     
     /**
@@ -244,7 +246,7 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
      */
     public static double runUNIF() throws Exception
     {
-        double costTraining, costTesting;
+        double costTraining , costTesting;
         db2Advis.process(wlTraining);
         int budget = (int) (B / Math.pow(2, 20));
         Set<Index> recommendation = db2Advis.getRecommendation(budget);
@@ -252,14 +254,14 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
         List<Double> costs = computeCostsDB2(wlTraining, recommendation);
         double queryCost = 0.0;
         double updateCost = 0.0;
-       
+        /*
         for (int i = 0; i < wlTraining.size(); i++)
             if (wlTraining.get(i).getSQLCategory().isSame(SELECT))
                 queryCost += costs.get(i) * wlTraining.get(i).getStatementWeight();
             else
                 updateCost += costs.get(i) * wlTraining.get(i).getStatementWeight();
         costTraining = queryCost + updateCost;
-        
+        */
         queryCost = updateCost = 0.0;
         costs = computeCostsDB2(wlTesting, recommendation);
         for (int i = 0; i < wlTesting.size(); i++)
@@ -269,9 +271,9 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
                 updateCost += costs.get(i) * wlTesting.get(i).getStatementWeight();
         costTesting = queryCost + updateCost;
         
-        Rt.p(" UNIF cost training = " + costTraining);
+        //Rt.p(" UNIF cost training = " + costTraining);
         Rt.p(" UNIF cost testing = " + costTesting);
         
-        return (costTraining + costTesting);
+        return (costTesting);
     }
 }
