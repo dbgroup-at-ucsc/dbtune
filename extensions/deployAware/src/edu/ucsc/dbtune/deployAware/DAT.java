@@ -34,6 +34,7 @@ public class DAT {
     public static boolean showFormulas = false;
     public DATWindow[] windows;
     public Rx debug;
+    DATParameter param;
 
     public DATOutput runDAT(DATParameter param) throws IloException {
         // Rt.p("alpha=" + param.alpha);
@@ -42,6 +43,7 @@ public class DAT {
         // Rt.p("space=" + param.spaceConstraint);
         // Rt.p("window=" + param.windowConstraints[0]);
         // Rt.p("l=" + param.maxIndexCreatedPerWindow);
+        this.param = param;
         CPlexWrapper cplex = new CPlexWrapper();
         windows = new DATWindow[param.windowConstraints.length];
         for (int i = 0; i < param.windowConstraints.length; i++) {
@@ -113,6 +115,8 @@ public class DAT {
                 for (int j = 0; j < windows[i].totalIndices; j++)
                     if (cplex.getValue(windows[i].create[j]) == 1)
                         createCost += param.costModel.indices.get(j).createCost;
+                if (param.costModel.addTransitionCostToObjective)
+                    output.ws[i].cost += createCost;
                 Rt
                         .p(
                                 "DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d",

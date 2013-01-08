@@ -88,6 +88,7 @@ public class DATPaper {
             // dsp.runGreedy = false;
             // dsp.run();
             Rt.p("DAT time: %.2f s", timer.getSecondElapse());
+            Rt.p("Obj value: %,.0f", this.dat);
             // dat = dsp.dat;
             // mkp = dsp.bip;
             // greedyRatio = dsp.greedy;
@@ -124,14 +125,15 @@ public class DATPaper {
                 // DATWindow.costWithIndex(cost, indexUsed);
                 Rt.p("GREEDY-SEQ window " + i
                         + ": cost=%,.0f createCost=%,.0f usedIndexes=%d",
-                        conf.queryCost, tc, indices.length);
-                greedyWindowCosts[i] = conf.queryCost;
+                        conf.queryCost+conf.transitionCost, tc, indices.length);
+                greedyWindowCosts[i] = conf.queryCost+conf.transitionCost;
                 if (i < m - 1)
                     this.greedySeq += alpha * greedyWindowCosts[i];
                 else
                     this.greedySeq += beta * greedyWindowCosts[i];
             }
             Rt.p("GREEDY-SEQ time: %.2f s", timer.getSecondElapse());
+            Rt.p("Obj value: %,.0f", this.greedySeq);
         }
 
         plot.startNewX(plotX, plotLabel);
@@ -186,7 +188,7 @@ public class DATPaper {
         boolean windowOnly = false;
         long tpchWindowSize = 20 * 3600 * 3000;
         long tpcdsWindowSize = 10 * 3600 * 3000;
-        // addTransitionCostToObjective=true;
+         addTransitionCostToObjective=true;
         // eachWindowContainsOneQuery = true;
 
         // only show window cost with default parameters, skip other
