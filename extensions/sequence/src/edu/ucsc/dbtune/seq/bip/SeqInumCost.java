@@ -50,6 +50,8 @@ public class SeqInumCost implements Serializable {
     public boolean complete = true; // whether all queries have been added.
     public double costWithoutIndex;
     public double costWithAllIndex;
+    public boolean addTransitionCostToObjective=false;
+    public boolean eachWindowContainsOneQuery=false;
 
     public SeqInumCost dup(int times) {
         SeqInumCost cost = new SeqInumCost();

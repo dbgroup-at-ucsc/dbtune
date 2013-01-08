@@ -29,15 +29,22 @@ public class DATWindow {
     public DATWindow(SeqInumCost costModel, CPlexWrapper cplex, int id,
             boolean lastWindow, double costConstraint) throws IloException {
         this.costModel = costModel;
-        this.totalQueires = costModel.queries.size();
         this.totalIndices = costModel.indices.size();
         this.id = id;
         this.lastWindow = lastWindow;
         this.costConstraint = costConstraint;
-        this.queries = new DATQuery[totalQueires];
-        for (int i = 0; i < totalQueires; i++) {
-            this.queries[i] = new DATQuery(cplex, this, costModel.queries
-                    .get(i));
+        if (costModel.eachWindowContainsOneQuery) {
+            this.totalQueires = 1;
+            this.queries = new DATQuery[totalQueires];
+            this.queries[0] = new DATQuery(cplex, this, costModel.queries
+                    .get(id));
+        } else {
+            this.totalQueires = costModel.queries.size();
+            this.queries = new DATQuery[totalQueires];
+            for (int i = 0; i < totalQueires; i++) {
+                this.queries[i] = new DATQuery(cplex, this, costModel.queries
+                        .get(i));
+            }
         }
         this.create = cplex.createBinaryVars(totalIndices);
         this.drop = cplex.createBinaryVars(totalIndices);
@@ -61,12 +68,14 @@ public class DATWindow {
             throws IloException {
         for (DATQuery query : queries)
             query.addObjective(expr, coefficient);
-        for (int i = 0; i < totalIndices; i++) {
-            // expr.addTerm(costModel.indices.get(i).createCost, create[i]);
-            // expr.addTerm(costModel.indices.get(i).dropCost, drop[i]);
-            // The purpose of following objective is to
-            // remove a index when it's not necessary
-            // expr.addTerm(0.1, present[i]);
+        if (costModel.addTransitionCostToObjective) {
+            for (int i = 0; i < totalIndices; i++) {
+                expr.addTerm(costModel.indices.get(i).createCost, create[i]);
+                expr.addTerm(costModel.indices.get(i).dropCost, drop[i]);
+                // The purpose of following objective is to
+                // remove a index when it's not necessary
+                // expr.addTerm(0.1, present[i]);
+            }
         }
     }
 
@@ -121,7 +130,7 @@ public class DATWindow {
         // Rt.p(expr.toString() + "<=" + costModel.storageConstraint);
 
         if (totalIndices > 0) {
-            if (this.costConstraint<Double.MAX_VALUE) {
+            if (this.costConstraint < Double.MAX_VALUE) {
                 expr = cplex.linearNumExpr();
                 for (int i = 0; i < totalIndices; i++) {
                     expr.addTerm(costModel.indices.get(i).createCost,
@@ -161,9 +170,9 @@ public class DATWindow {
             cplex.addLe(expr, 1);
             if (DAT.showFormulas)
                 Rt.p(expr.toString() + "<=1");
-//            cplex.addEq(this.present[i], 1);
+            // cplex.addEq(this.present[i], 1);
         }
-        
+
     }
 
     public void getValues(CPlexWrapper cplex) throws UnknownObjectException,

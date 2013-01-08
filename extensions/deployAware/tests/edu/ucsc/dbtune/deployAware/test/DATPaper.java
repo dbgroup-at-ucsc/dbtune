@@ -21,6 +21,8 @@ import edu.ucsc.dbtune.util.Rt;
 
 public class DATPaper {
     public static boolean useRatio = false;
+    public static boolean addTransitionCostToObjective = false;
+    public static boolean eachWindowContainsOneQuery = false;
     public static String[] plotNames = new String[] { "DAT", "GREEDY-SEQ"
     // "DB2", "DA"
     };
@@ -45,12 +47,17 @@ public class DATPaper {
             long windowSize, File debugFile) throws Exception {
         Rt.p(plot.name + " " + plot.xName + "=" + plotX);
         cost = loader.loadCost();
+        if (eachWindowContainsOneQuery)
+            m = cost.queries.size();
+        cost.addTransitionCostToObjective = DATPaper.addTransitionCostToObjective;
+        cost.eachWindowContainsOneQuery = DATPaper.eachWindowContainsOneQuery;
         long totalCost = 0;
         for (int i = 0; i < cost.indices.size(); i++) {
             SeqInumIndex index = cost.indices.get(i);
             totalCost += index.createCost;
         }
         windowConstraints = new double[m];
+
         if (alpha < 0 || alpha > 1)
             throw new Error();
         this.alpha = alpha;
@@ -87,14 +94,15 @@ public class DATPaper {
         }
 
         {
-            SeqCost seqCost = SeqCost.multiWindows(cost, m);
+            SeqCost seqCost = eachWindowContainsOneQuery ? SeqCost
+                    .fromInum(cost) : SeqCost.multiWindows(cost, m);
             seqCost.stepBoost = new double[m + 1];
             Arrays.fill(seqCost.stepBoost, alpha);
-            seqCost.stepBoost[m - 1] = beta; // last window
+            seqCost.stepBoost[m - 1] = beta; // last
+            // window
             seqCost.storageConstraint = spaceBudge;
             seqCost.maxTransitionCost = windowSize;
             seqCost.maxIndexesWindow = l;
-            SeqOptimal.noTransitionCost = true;
             RTimerN timer = new RTimerN();
             SeqGreedySeq greedySeq = new SeqGreedySeq(seqCost);
             while (greedySeq.run())
@@ -178,6 +186,9 @@ public class DATPaper {
         boolean windowOnly = false;
         long tpchWindowSize = 20 * 3600 * 3000;
         long tpcdsWindowSize = 10 * 3600 * 3000;
+        // addTransitionCostToObjective=true;
+        // eachWindowContainsOneQuery = true;
+
         // only show window cost with default parameters, skip other
         // experiments.
         windowOnly = true;

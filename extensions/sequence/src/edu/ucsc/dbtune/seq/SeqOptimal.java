@@ -7,7 +7,6 @@ import edu.ucsc.dbtune.util.Rt;
 
 public class SeqOptimal {
     public SeqStep[] steps;
-    public static boolean noTransitionCost = false;
 
     public static SeqStep[] getOptimalSteps(SeqIndex[] source,
             SeqIndex[] destination, SeqQuerySet[] sequence,
@@ -43,12 +42,13 @@ public class SeqOptimal {
                     double c = prevConf.costUtilThisStep;
                     Double tc = cost.getCost(prevConf.configuration,
                             curConf.configuration);
-                    if (tc==null)
+                    if (tc == null)
                         continue;
                     if (cost.maxTransitionCost > 0
                             && tc > cost.maxTransitionCost)
                         continue;
-                    double stepCost = noTransitionCost ? 0 : tc;
+                    double stepCost = cost.addTransitionCostToObjective ? tc
+                            : 0;
                     double qc = 0;
                     if (query != null)
                         qc = cost.getCost(query, curConf.configuration);

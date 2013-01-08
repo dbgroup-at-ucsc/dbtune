@@ -84,7 +84,7 @@ public class SeqWhatIfTest2 {
         for (SeqIndex index : cost.indicesV)
             index.storageCost = 10;
 
-        SeqOptimal.noTransitionCost = true;
+        cost.addTransitionCostToObjective=false;
         SeqGreedySeq greedySeq = new SeqGreedySeq(cost, cost.sequence,
                 cost.indicesV.toArray(new SeqIndex[cost.indicesV.size()]));
         while (greedySeq.run())

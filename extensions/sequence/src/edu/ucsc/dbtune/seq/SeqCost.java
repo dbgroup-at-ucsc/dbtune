@@ -40,6 +40,7 @@ public class SeqCost {
     public double maxTransitionCost = Double.MAX_VALUE;
     public int maxIndexesWindow = Integer.MAX_VALUE;
     public double[] stepBoost;
+    public boolean addTransitionCostToObjective = true;
 
     private SeqCost() {
     }
@@ -331,6 +332,7 @@ public class SeqCost {
 
     public static SeqCost fromInum(SeqInumCost cost) throws SQLException {
         SeqCost costModel = new SeqCost();
+        costModel.addTransitionCostToObjective = cost.addTransitionCostToObjective;
         int indexId = 0;
         for (SeqInumIndex a : cost.indices) {
             SeqIndex index = new SeqIndex();
@@ -368,6 +370,7 @@ public class SeqCost {
     public static SeqCost multiWindows(SeqInumCost cost, int windows)
             throws SQLException {
         SeqCost costModel = new SeqCost();
+        costModel.addTransitionCostToObjective = cost.addTransitionCostToObjective;
         int indexId = 0;
         for (SeqInumIndex a : cost.indices) {
             SeqIndex index = new SeqIndex();
