@@ -4,6 +4,13 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.deployAware.CPlexWrapper;
+import edu.ucsc.dbtune.deployAware.DATQuery;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.DB2Optimizer;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
+
 public class SeqConfiguration {
 	public SeqIndex[] indices;
 	public Hashtable<SeqConfiguration, Double> transitionCostCache = new Hashtable<SeqConfiguration, Double>();
@@ -34,6 +41,15 @@ public class SeqConfiguration {
 		}
 		return new SeqConfiguration(vs.toArray(new SeqIndex[vs.size()]));
 	}
+	
+    public HashSet<Index> getIndexes(DatabaseSystem db,
+            DB2Optimizer optimizer) throws Exception {
+        double cost = 0;
+        HashSet<Index> allIndexes = new HashSet<Index>();
+        for (SeqIndex index : indices)
+                allIndexes.add(index.inumIndex.loadIndex(db));
+        return allIndexes;
+    }
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

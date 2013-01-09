@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.deployAware.DATQuery;
 import edu.ucsc.dbtune.inum.DerbyInterestingOrdersExtractor;
 import edu.ucsc.dbtune.metadata.Column;
 import edu.ucsc.dbtune.metadata.Index;
@@ -44,7 +45,7 @@ public class SeqCost {
     public boolean useDB2Optimizer = false;
     public DatabaseSystem db;
     public Optimizer optimizer;
-    public int whatIfCount=0;
+    public int whatIfCount = 0;
 
     private SeqCost() {
     }
@@ -475,6 +476,19 @@ public class SeqCost {
             if (!h.contains(i))
                 cost += i.dropCost;
         from.transitionCostCache.put(to, cost);
+        return cost;
+    }
+
+    public double verifyCost(int stepId, DatabaseSystem db,
+            DB2Optimizer optimizer, SeqStepConf conf) throws Exception {
+        double cost = 0;
+        HashSet<Index> indexes = conf.configuration.getIndexes(db, optimizer);
+        for (SeqQuery query : sequence[stepId].queries) {
+            ExplainedSQLStatement explain = optimizer.explain(query.sql,
+                    indexes);
+            double qcost = explain.getTotalCost();
+            cost += qcost;
+        }
         return cost;
     }
 

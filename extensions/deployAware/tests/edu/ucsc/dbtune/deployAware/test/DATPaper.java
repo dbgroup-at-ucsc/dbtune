@@ -29,6 +29,7 @@ public class DATPaper {
     public static boolean addTransitionCostToObjective = false;
     public static boolean eachWindowContainsOneQuery = false;
     public static boolean useDB2Optimizer = false;
+    public static boolean verifyByDB2Optimizer = false;
     public static String[] plotNames = new String[] { "DAT", "GREEDY-SEQ"
     // "DB2", "DA"
     };
@@ -57,8 +58,8 @@ public class DATPaper {
             m = cost.queries.size();
         cost.addTransitionCostToObjective = DATPaper.addTransitionCostToObjective;
         cost.eachWindowContainsOneQuery = DATPaper.eachWindowContainsOneQuery;
-//        Rt.p(cost.queries.get(0)
-//                .cost(cost.indices.toArray(new SeqInumIndex[0])));
+        // Rt.p(cost.queries.get(0)
+        // .cost(cost.indices.toArray(new SeqInumIndex[0])));
         long totalCost = 0;
         for (int i = 0; i < cost.indices.size(); i++) {
             SeqInumIndex index = cost.indices.get(i);
@@ -122,6 +123,21 @@ public class DATPaper {
                 else
                     this.greedySeq += beta * greedyWindowCosts[i];
             }
+            if (!useDB2Optimizer && verifyByDB2Optimizer) {
+                Rt.p("verifying window cost");
+                for (int i = 0; i < m; i++) {
+                    SeqStepConf conf = greedySeq.bestPath[i + 1];
+                    DatabaseSystem db = loader.getDb();
+                    DB2Optimizer optimizer = loader.getDB2Optimizer();
+                    greedyWindowCosts[i] = seqCost.verifyCost(i, db, optimizer,
+                            conf)
+                            + conf.transitionCost;
+                    Rt.p("GREEDY-SEQ window " + i
+                            + ": cost=%,.0f usedIndexes=%d",
+                            greedyWindowCosts[i],
+                            conf.configuration.indices.length);
+                }
+            }
             Rt.p("GREEDY-SEQ time: %.2f s", timer.getSecondElapse());
             Rt.p("Obj value: %,.0f", this.greedySeq);
             Rt.p("whatIfCount: %d", seqCost.whatIfCount);
@@ -135,22 +151,27 @@ public class DATPaper {
             DATOutput output = dat.runDAT(params);
             this.dat = output.totalCost;
             datWindowCosts = new double[m];
-            if (useDB2Optimizer)
-                Rt.p("calculating window cost");
             for (int i = 0; i < m; i++) {
-                if (useDB2Optimizer) {
-                    DatabaseSystem db = loader.getDb();
-                    DB2Optimizer optimizer = loader.getDB2Optimizer();
-                    datWindowCosts[i] = dat.getWindowCost(i, db, optimizer);
-                } else {
-                    datWindowCosts[i] = output.ws[i].cost;
-                }
+                datWindowCosts[i] = output.ws[i].cost;
                 Rt
                         .p(
                                 "DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d",
                                 i, datWindowCosts[i], output.ws[i].createCost,
                                 output.ws[i].present);
-
+            }
+            if (useDB2Optimizer || verifyByDB2Optimizer) {
+                Rt.p("verifying window cost");
+                for (int i = 0; i < m; i++) {
+                    DatabaseSystem db = loader.getDb();
+                    DB2Optimizer optimizer = loader.getDB2Optimizer();
+                    datWindowCosts[i] = dat.getWindowCost(i, db, optimizer);
+                    Rt
+                            .p(
+                                    "DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d",
+                                    i, datWindowCosts[i],
+                                    output.ws[i].createCost,
+                                    output.ws[i].present);
+                }
             }
             // dsp = new DATSeparateProcess(loader.dbName, loader.workloadName,
             // loader.fileName, loader.generateIndexMethod, alpha, beta,
@@ -220,8 +241,9 @@ public class DATPaper {
         long tpchWindowSize = 20 * 3600 * 3000;
         long tpcdsWindowSize = 10 * 3600 * 3000;
         // addTransitionCostToObjective = true;
-         eachWindowContainsOneQuery = true;
+        // eachWindowContainsOneQuery = true;
         // useDB2Optimizer = true;
+         verifyByDB2Optimizer=true;
 
         // only show window cost with default parameters, skip other
         // experiments.
