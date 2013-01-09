@@ -2,11 +2,16 @@ package edu.ucsc.dbtune.deployAware.test;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Vector;
 
+import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.deployAware.DAT;
 import edu.ucsc.dbtune.deployAware.DATOutput;
 import edu.ucsc.dbtune.deployAware.DATParameter;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.DB2Optimizer;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.seq.SeqCost;
 import edu.ucsc.dbtune.seq.SeqGreedySeq;
 import edu.ucsc.dbtune.seq.SeqOptimal;
@@ -23,6 +28,7 @@ public class DATPaper {
     public static boolean useRatio = false;
     public static boolean addTransitionCostToObjective = false;
     public static boolean eachWindowContainsOneQuery = false;
+    public static boolean useDB2Optimizer = false;
     public static String[] plotNames = new String[] { "DAT", "GREEDY-SEQ"
     // "DB2", "DA"
     };
@@ -77,8 +83,23 @@ public class DATPaper {
             DATOutput output = dat.runDAT(params);
             this.dat = output.totalCost;
             datWindowCosts = new double[m];
-            for (int i = 0; i < m; i++)
-                datWindowCosts[i] = output.ws[i].cost;
+            if (useDB2Optimizer)
+                Rt.p("calculating window cost");
+            for (int i = 0; i < m; i++) {
+                if (useDB2Optimizer) {
+                    DatabaseSystem db = loader.getDb();
+                    DB2Optimizer optimizer = loader.getDB2Optimizer();
+                    datWindowCosts[i] = dat.getWindowCost(i, db, optimizer);
+                } else {
+                    datWindowCosts[i] = output.ws[i].cost;
+                }
+                Rt
+                        .p(
+                                "DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d",
+                                i, datWindowCosts[i], output.ws[i].createCost,
+                                output.ws[i].present);
+
+            }
             // dsp = new DATSeparateProcess(loader.dbName, loader.workloadName,
             // loader.fileName, loader.generateIndexMethod, alpha, beta,
             // m, l, spaceBudge, windowSize, 0);
@@ -97,6 +118,11 @@ public class DATPaper {
         {
             SeqCost seqCost = eachWindowContainsOneQuery ? SeqCost
                     .fromInum(cost) : SeqCost.multiWindows(cost, m);
+            if (useDB2Optimizer) {
+                seqCost.useDB2Optimizer = useDB2Optimizer;
+                seqCost.db = loader.getDb();
+                seqCost.optimizer = loader.getDB2Optimizer();
+            }
             seqCost.stepBoost = new double[m + 1];
             Arrays.fill(seqCost.stepBoost, alpha);
             seqCost.stepBoost[m - 1] = beta; // last
@@ -125,8 +151,9 @@ public class DATPaper {
                 // DATWindow.costWithIndex(cost, indexUsed);
                 Rt.p("GREEDY-SEQ window " + i
                         + ": cost=%,.0f createCost=%,.0f usedIndexes=%d",
-                        conf.queryCost+conf.transitionCost, tc, indices.length);
-                greedyWindowCosts[i] = conf.queryCost+conf.transitionCost;
+                        conf.queryCost + conf.transitionCost, tc,
+                        indices.length);
+                greedyWindowCosts[i] = conf.queryCost + conf.transitionCost;
                 if (i < m - 1)
                     this.greedySeq += alpha * greedyWindowCosts[i];
                 else
@@ -134,6 +161,7 @@ public class DATPaper {
             }
             Rt.p("GREEDY-SEQ time: %.2f s", timer.getSecondElapse());
             Rt.p("Obj value: %,.0f", this.greedySeq);
+            Rt.p("whatIfCount: %d", seqCost.whatIfCount);
         }
 
         plot.startNewX(plotX, plotLabel);
@@ -188,8 +216,9 @@ public class DATPaper {
         boolean windowOnly = false;
         long tpchWindowSize = 20 * 3600 * 3000;
         long tpcdsWindowSize = 10 * 3600 * 3000;
-         addTransitionCostToObjective=true;
+        addTransitionCostToObjective = true;
         // eachWindowContainsOneQuery = true;
+//        useDB2Optimizer = true;
 
         // only show window cost with default parameters, skip other
         // experiments.
@@ -197,13 +226,15 @@ public class DATPaper {
         DATPaperParams params = new DATPaperParams();
 
         long gigbytes = 1024L * 1024L * 1024L;
-        TestSet[] sets = {
-                new TestSet("16 TPC-H queries", "tpch10g", "deployAware",
-                        "TPCH16.sql", 10 * gigbytes, "TPCH16",//
-                        tpchWindowSize),
-                new TestSet("63 TPCDS queries", "test", "deployAware",
-                        "TPCDS63.sql", 10 * gigbytes, "TPCDS63",
-                        tpcdsWindowSize),
+        TestSet[] sets = { new TestSet("16 TPC-H queries", "tpch10g",
+                "deployAware", "TPCH16.sql", 10 * gigbytes, "TPCH16",//
+                tpchWindowSize),
+        // new TestSet("63 TPCDS queries", "test", "deployAware",
+        // "TPCDS63.sql", 10 * gigbytes, "TPCDS63",
+        // tpcdsWindowSize),
+        // new TestSet("63 TPCDS queries update", "test", "deployAware",
+        // "tpcds-update.sql", 10 * gigbytes, "tpcdsupdate",
+        // tpcdsWindowSize),
         // new TestSet("15 TPCDS update queries", "test", "tpcds", "update.sql",
         // 10 * gigbytes, "TPCDSU15"),
         // new TestSet("81 OTAB queries", "test", "deployAware",

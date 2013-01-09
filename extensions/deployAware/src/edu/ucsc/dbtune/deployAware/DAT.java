@@ -15,8 +15,10 @@ import java.util.Hashtable;
 import java.util.Vector;
 import java.util.logging.Logger;
 
+import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
+import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumPlan;
@@ -35,6 +37,7 @@ public class DAT {
     public DATWindow[] windows;
     public Rx debug;
     DATParameter param;
+    CPlexWrapper cplex;
 
     public DATOutput runDAT(DATParameter param) throws IloException {
         // Rt.p("alpha=" + param.alpha);
@@ -44,7 +47,7 @@ public class DAT {
         // Rt.p("window=" + param.windowConstraints[0]);
         // Rt.p("l=" + param.maxIndexCreatedPerWindow);
         this.param = param;
-        CPlexWrapper cplex = new CPlexWrapper();
+        cplex = new CPlexWrapper();
         windows = new DATWindow[param.windowConstraints.length];
         for (int i = 0; i < param.windowConstraints.length; i++) {
             windows[i] = new DATWindow(param.costModel, cplex, i,
@@ -117,11 +120,14 @@ public class DAT {
                         createCost += param.costModel.indices.get(j).createCost;
                 if (param.costModel.addTransitionCostToObjective)
                     output.ws[i].cost += createCost;
-                Rt
-                        .p(
-                                "DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d",
-                                i, output.ws[i].cost, createCost, windows[i]
-                                        .getPresent(cplex));
+                output.ws[i].createCost = createCost;
+                output.ws[i].present = windows[i].getPresent(cplex);
+                if (false)
+                    Rt
+                            .p(
+                                    "DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d",
+                                    i, output.ws[i].cost, createCost,
+                                    windows[i].getPresent(cplex));
                 // if (Math.abs(output.ws[i].cost - c2) / c2 > 0.1) {
                 // Rt.error("ERROR: verify failed " + output.ws[i].cost + " "
                 // + c2);
@@ -154,6 +160,11 @@ public class DAT {
             e.printStackTrace();
         }
         return output;
+    }
+
+    public double getWindowCost(int windowId, DatabaseSystem db,
+            DB2Optimizer optimizer) throws Exception {
+        return windows[windowId].getCost(cplex, db, optimizer);
     }
 
     public static void saveDebugInfo(Rx window, DATParameter param,

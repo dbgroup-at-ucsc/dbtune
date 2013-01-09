@@ -41,7 +41,8 @@ public class SeqGreedySeq {
             SeqOptimal optimal = new SeqOptimal(cost, cost.source,
                     cost.destination, queries, steps2);
             SeqStepConf[] best = optimal.getBestSteps();
-            P.add(best);
+            if (best != null)
+                P.add(best);
         }
         for (SeqStepConf[] confs : P) {
             for (int i = 0; i < C.length; i++) {
@@ -53,12 +54,12 @@ public class SeqGreedySeq {
     public boolean run() throws SQLException {
         double minCost = Double.MAX_VALUE;
         r = null;
-        double qc=0;
+        double qc = 0;
         for (SeqStepConf[] confs : P) {
             double cost = confs[confs.length - 1].costUtilThisStepBoost;
             if (cost < minCost) {
                 minCost = cost;
-                qc=confs[confs.length - 2].queryCost;
+                qc = confs[confs.length - 2].queryCost;
                 r = confs;
             }
         }
@@ -75,7 +76,7 @@ public class SeqGreedySeq {
             double cost = t1[t1.length - 1].costUtilThisStepBoost;
             if (cost < minCost) {
                 minCost = cost;
-                qc=t1[t1.length - 2].queryCost;
+                qc = t1[t1.length - 2].queryCost;
                 s = confs;
                 t = t1;
             }

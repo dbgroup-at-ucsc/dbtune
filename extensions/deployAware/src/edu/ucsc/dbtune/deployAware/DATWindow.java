@@ -7,11 +7,17 @@ import ilog.concert.IloObjective;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Hashtable;
 
+import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.metadata.Index;
+import edu.ucsc.dbtune.optimizer.DB2Optimizer;
+import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.util.Rt;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class DATWindow {
     int id;
@@ -84,6 +90,22 @@ public class DATWindow {
         for (DATQuery query : queries) {
             double qcost = query.getCost(cplex);
             // Rt.p(query.q.id + " " + qcost);
+            cost += qcost;
+        }
+        return cost;
+    }
+
+    public double getCost(CPlexWrapper cplex, DatabaseSystem db,
+            DB2Optimizer optimizer) throws Exception {
+        double cost = 0;
+        HashSet<Index> allIndexes = new HashSet<Index>();
+        for (int j = 0; j < totalIndices; j++)
+            if (cplex.getValue(this.present[j]) == 1)
+                allIndexes.add(costModel.indices.get(j).loadIndex(db));
+        for (DATQuery query : queries) {
+            ExplainedSQLStatement explain = optimizer.explain(query.q.sql,
+                    allIndexes);
+            double qcost = explain.getTotalCost();
             cost += qcost;
         }
         return cost;

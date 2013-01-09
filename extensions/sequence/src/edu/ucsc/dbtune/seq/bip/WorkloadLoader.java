@@ -186,6 +186,19 @@ public class WorkloadLoader {
         return getWorkload(en);
     }
 
+    public DatabaseSystem getDb() throws Exception {
+        if (db == null)
+            db = newDatabaseSystem(en);
+        return db;
+    }
+
+    public DB2Optimizer getDB2Optimizer() throws Exception {
+        db = getDb();
+        InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
+        DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
+        return db2optimizer;
+    }
+
     public Set<Index> getIndexes() throws Exception {
         Workload workload = getWorkload();
         if (db == null)

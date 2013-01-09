@@ -41,6 +41,10 @@ public class SeqCost {
     public int maxIndexesWindow = Integer.MAX_VALUE;
     public double[] stepBoost;
     public boolean addTransitionCostToObjective = true;
+    public boolean useDB2Optimizer = false;
+    public DatabaseSystem db;
+    public Optimizer optimizer;
+    public int whatIfCount=0;
 
     private SeqCost() {
     }
@@ -179,8 +183,6 @@ public class SeqCost {
         }
         return cost;
     }
-
-    Optimizer optimizer;
 
     public static double getCreateIndexCost(Optimizer optimizer, Index a,
             SeqInumIndex q) throws SQLException {
@@ -489,8 +491,16 @@ public class SeqCost {
         Double d = q.costCache.get(conf);
         if (d != null)
             return d;
+        whatIfCount++;
         double cost = 0;
-        if (q.inumCached != null) {
+        if (useDB2Optimizer) {
+            HashSet<Index> allIndexes = new HashSet<Index>();
+            for (SeqIndex i : conf.indices)
+                allIndexes.add(i.inumIndex.loadIndex(db));
+            ExplainedSQLStatement explain = optimizer
+                    .explain(q.sql, allIndexes);
+            cost = explain.getTotalCost();
+        } else if (q.inumCached != null) {
             SeqInumIndex[] indexes = new SeqInumIndex[conf.indices.length];
             for (int i = 0; i < conf.indices.length; i++) {
                 indexes[i] = conf.indices[i].inumIndex;

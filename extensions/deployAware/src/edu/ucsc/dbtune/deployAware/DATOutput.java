@@ -9,7 +9,8 @@ public class DATOutput extends IndexTuningOutput {
     public static class W {
         public boolean[] indexUsed;
         public double cost;
-        public int create=0,drop=0;
+        public double createCost;
+        public int create=0,drop=0,present=0;
     }
 
     public W[] ws;

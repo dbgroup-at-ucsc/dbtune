@@ -90,6 +90,8 @@ public class SeqOptimal {
         best[steps.length - 1].isBestPath = true;
         for (int i = steps.length - 2; i >= 0; i--) {
             best[i] = best[i + 1].bestPreviousConfiguration;
+            if (best[i]==null)
+                return null;
             best[i].isBestPath = true;
         }
         return best;
