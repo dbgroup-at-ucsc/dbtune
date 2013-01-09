@@ -38,8 +38,8 @@ public class WorkloadLoader {
     public static File cacheRoot = new File(WorkloadLoaderSettings.cacheRoot);
     public DatabaseSystem db;
     public Environment en;
-    public int querySize = 0;
-    public int indexSize = 0;
+    private int querySize = 0;
+    private int indexSize = 0;
     public int spaceMB = 0;
     public String dbName;
     public String workloadName;
@@ -54,14 +54,14 @@ public class WorkloadLoader {
         this.generateIndexMethod = generateIndexMethod;
     }
 
-    public WorkloadLoader(String dbName, String workloadName,
-            String generateIndexMethod, int maxQuerySize, int maxIndexSize) {
-        this.dbName = dbName;
-        this.workloadName = workloadName;
-        this.generateIndexMethod = generateIndexMethod;
-        this.querySize = maxQuerySize;
-        this.indexSize = maxIndexSize;
-    }
+    // public WorkloadLoader(String dbName, String workloadName,
+    // String generateIndexMethod, int maxQuerySize, int maxIndexSize) {
+    // this.dbName = dbName;
+    // this.workloadName = workloadName;
+    // this.generateIndexMethod = generateIndexMethod;
+    // this.querySize = maxQuerySize;
+    // this.indexSize = maxIndexSize;
+    // }
 
     public void close() throws SQLException {
         if (db != null)
@@ -212,7 +212,7 @@ public class WorkloadLoader {
         File dir = new File(cacheRoot, generateIndexMethod + "/" + dbName + "/"
                 + workloadName);
         dir.mkdirs();
-        File file = new File(dir, fileName + "_" + querySize + "_" + indexSize
+        File file = new File(dir, fileName + "_"
                 + (spaceMB == 0 ? "" : "_" + spaceMB) + ".xml");
         SeqInumCost cost = null;
         Workload workload = getWorkload();

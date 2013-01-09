@@ -24,11 +24,23 @@ public class DATQuery {
             throws IloException {
         for (DATInumPlan plan : plans)
             plan.addObjective(coefficient, expr);
+        for (int i = 0; i < window.totalIndices; i++) {
+            Double updateCost = q.updateCosts.get(window.costModel.indices
+                    .get(i));
+            if (updateCost != null && updateCost > 0)
+                expr.addTerm(updateCost * coefficient, window.present[i]);
+        }
     }
 
     public double getCost(CPlexWrapper cplex) throws IloException {
         double cost = 0;
         cost += q.baseTableUpdateCost;
+        for (int i = 0; i < window.totalIndices; i++) {
+            Double updateCost = q.updateCosts.get(window.costModel.indices
+                    .get(i));
+            if (updateCost != null && updateCost > 0)
+                cost += updateCost * cplex.getValue(window.present[i]);
+        }
         for (DATInumPlan plan : plans) {
             double pcost = plan.getCost(cplex);
             // Rt.p(this.q.id + " " + plan.p.id + " " + pcost);

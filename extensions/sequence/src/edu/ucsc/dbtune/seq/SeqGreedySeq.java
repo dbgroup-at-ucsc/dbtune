@@ -38,6 +38,10 @@ public class SeqGreedySeq {
             SeqConfiguration[] confs = cost.getAllConfigurations(index);
             SeqStep[] steps2 = SeqOptimal.getOptimalSteps(cost.source,
                     cost.destination, queries, confs);
+//            for (SeqStep step : steps2) {
+//                System.out.print(" "+step.configurations.length);
+//            }
+//            System.out.println();
             SeqOptimal optimal = new SeqOptimal(cost, cost.source,
                     cost.destination, queries, steps2);
             SeqStepConf[] best = optimal.getBestSteps();

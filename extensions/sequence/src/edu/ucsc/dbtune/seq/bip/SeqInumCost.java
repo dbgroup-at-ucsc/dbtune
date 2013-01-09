@@ -50,8 +50,8 @@ public class SeqInumCost implements Serializable {
     public boolean complete = true; // whether all queries have been added.
     public double costWithoutIndex;
     public double costWithAllIndex;
-    public boolean addTransitionCostToObjective=false;
-    public boolean eachWindowContainsOneQuery=false;
+    public boolean addTransitionCostToObjective = false;
+    public boolean eachWindowContainsOneQuery = false;
 
     public SeqInumCost dup(int times) {
         SeqInumCost cost = new SeqInumCost();
@@ -157,6 +157,13 @@ public class SeqInumCost implements Serializable {
         // Rt.p("BIP INUM populate time: " + timer.getSecondElapse());
         q.plans = new SeqInumPlan[desc.getNumberOfTemplatePlans()];
         q.baseTableUpdateCost = desc.getBaseTableUpdateCost();
+        for (SeqInumIndex index : indices) {
+            if (index.index == null)
+                throw new Error();
+            double updateCost = desc.getUpdateCost(index.index);
+            if (updateCost > 0)
+                q.updateCosts.put(index, updateCost);
+        }
         for (int planId = 0; planId < desc.getNumberOfTemplatePlans(); planId++) {
             SeqInumPlan plan = new SeqInumPlan(q, planId);
             plan.plan = "";
@@ -179,7 +186,7 @@ public class SeqInumCost implements Serializable {
                             throw new SQLException("Can't map index "
                                     + index.toString());
                         c.cost = desc.getAccessCost(planId, slotId, index);
-                        c.updateCost = desc.getUpdateCost(index);
+                        // c.updateCost = desc.getUpdateCost(index);
                         // Rt.p(index);
                         slot.costs.add(c);
                         // Rt
@@ -200,109 +207,112 @@ public class SeqInumCost implements Serializable {
             }
             q.plans[planId] = plan;
         }
-//        Rt.p(q.totalIndexes());
+        q.timeUsedToLoad=timer.getSecondElapse();
+        // Rt.p(q.totalIndexes());
         PerfTest.addTimer("inumRest");
         return q;
     }
 
-    public SeqInumQuery addQuery2(SQLStatement statement) throws SQLException {
-        int id = queries.size();
-        SeqInumQuery q = new SeqInumQuery(id);
-        q.name = "Q" + id;
-        q.sql = statement;
-        queryHash.put(q.name, q);
-        queries.add(q);
+    // public SeqInumQuery addQuery2(SQLStatement statement) throws SQLException
+    // {
+    // int id = queries.size();
+    // SeqInumQuery q = new SeqInumQuery(id);
+    // q.name = "Q" + id;
+    // q.sql = statement;
+    // queryHash.put(q.name, q);
+    // queries.add(q);
+    //
+    // RTimerN timer = new RTimerN();
+    // PerfTest.startTimer();
+    // InumPreparedSQLStatement space = (InumPreparedSQLStatement) optimizer
+    // .prepareExplain(statement);
+    // InumPlan[] plans = space.getTemplatePlans().toArray(new InumPlan[0]);
+    //
+    // Hashtable<Integer, Double> indexUpdateCosts = new Hashtable<Integer,
+    // Double>();
+    // ExplainedSQLStatement inumExplain = space.explain(inumIndices);
+    // for (Index index : inumIndices) {
+    // double cost = inumExplain.getUpdateCost(index);
+    // indexUpdateCosts.put(index.getId(), cost);
+    // }
+    // // InumQueryPlanDesc desc = (InumQueryPlanDesc) InumQueryPlanDesc
+    // // .getQueryPlanDescInstance(statement);
+    // // Rt.p(id);
+    // // Rt.p(statement.getSQL());
+    // // Populate the INUM space
+    // // desc.generateQueryPlanDesc(optimizer, inumIndices);
+    // PerfTest.addTimer("inum");
+    // PerfTest.startTimer();
+    //
+    // // plugInTime += desc.pluginTime / 1000000000.0;
+    // // populateTime += desc.populateTime / 1000000000.0;
+    // // Rt.p("BIP INUM populate time: " + timer.getSecondElapse());
+    // q.plans = new SeqInumPlan[space.getTemplatePlans().size()];
+    // q.baseTableUpdateCost = plans[0].getBaseTableUpdateCost();
+    // for (int k = 0; k < plans.length; k++) {
+    // SeqInumPlan plan = new SeqInumPlan(q, k);
+    // InumPlan iplan = plans[k];
+    //
+    // Set<Index> indexes = getIndexesReferencingTables(inumIndices, iplan
+    // .getTables());
+    // for (Table table : iplan.getTables())
+    // indexes.add(FullTableScanIndex
+    // .getFullTableScanIndexInstance(table));
+    //
+    // plan.plan = iplan.toString();
+    // plan.internalCost = iplan.getInternalCost();
+    // TableAccessSlot[] slots = iplan.getSlots().toArray(
+    // new TableAccessSlot[0]);
+    //
+    // Map<Table, Set<Index>> indexesPerTable = getIndexesPerTable(indexes);
+    //
+    // plan.slots = new SeqInumSlot[slots.length];
+    // for (int i = 0; i < slots.length; i++) {
+    // SeqInumSlot slot = new SeqInumSlot(plan, i);
+    // TableAccessSlot islot = slots[i];
+    // Set<Index> indexesForTable = indexesPerTable.get(islot
+    // .getTable());
+    //
+    // slot.fullTableScanCost = Double.MAX_VALUE;
+    // for (Index index : indexesForTable) {
+    // double costForIndex = iplan.plug(islot, index);
+    // if (Double.isInfinite(costForIndex))
+    // continue;
+    // costForIndex *= islot.coefficient;
+    // // plugInTime += timer.getSecondElapse();
+    // if (index instanceof FullTableScanIndex) {
+    // slot.fullTableScanCost = costForIndex;
+    // plugInFCount++;
+    // } else {
+    // SeqInumSlotIndexCost c = new SeqInumSlotIndexCost();
+    // c.index = indexToInumIndex.get(index);
+    // if (c.index == null)
+    // throw new SQLException("Can't map index "
+    // + index.toString());
+    // c.cost = costForIndex;
+    // c.updateCost = indexUpdateCosts.get(index.getId());
+    // slot.costs.add(c);
+    // }
+    // plugInCount++;
+    // }
+    // plan.slots[i] = slot;
+    // }
+    // q.plans[k] = plan;
+    // }
+    // q.timeUsedToLoad = timer.getSecondElapse();
+    // PerfTest.addTimer("inumRest");
+    // return q;
+    // }
 
-        RTimerN timer = new RTimerN();
-        PerfTest.startTimer();
-        InumPreparedSQLStatement space = (InumPreparedSQLStatement) optimizer
-                .prepareExplain(statement);
-        InumPlan[] plans = space.getTemplatePlans().toArray(new InumPlan[0]);
-
-        Hashtable<Integer, Double> indexUpdateCosts = new Hashtable<Integer, Double>();
-        ExplainedSQLStatement inumExplain = space.explain(inumIndices);
-        for (Index index : inumIndices) {
-            double cost = inumExplain.getUpdateCost(index);
-            indexUpdateCosts.put(index.getId(), cost);
-        }
-        // InumQueryPlanDesc desc = (InumQueryPlanDesc) InumQueryPlanDesc
-        // .getQueryPlanDescInstance(statement);
-        // Rt.p(id);
-        // Rt.p(statement.getSQL());
-        // Populate the INUM space
-        // desc.generateQueryPlanDesc(optimizer, inumIndices);
-        PerfTest.addTimer("inum");
-        PerfTest.startTimer();
-
-        // plugInTime += desc.pluginTime / 1000000000.0;
-        // populateTime += desc.populateTime / 1000000000.0;
-        // Rt.p("BIP INUM populate time: " + timer.getSecondElapse());
-        q.plans = new SeqInumPlan[space.getTemplatePlans().size()];
-        q.baseTableUpdateCost = plans[0].getBaseTableUpdateCost();
-        for (int k = 0; k < plans.length; k++) {
-            SeqInumPlan plan = new SeqInumPlan(q, k);
-            InumPlan iplan = plans[k];
-
-            Set<Index> indexes = getIndexesReferencingTables(inumIndices, iplan
-                    .getTables());
-            for (Table table : iplan.getTables())
-                indexes.add(FullTableScanIndex
-                        .getFullTableScanIndexInstance(table));
-
-            plan.plan = iplan.toString();
-            plan.internalCost = iplan.getInternalCost();
-            TableAccessSlot[] slots = iplan.getSlots().toArray(
-                    new TableAccessSlot[0]);
-
-            Map<Table, Set<Index>> indexesPerTable = getIndexesPerTable(indexes);
-
-            plan.slots = new SeqInumSlot[slots.length];
-            for (int i = 0; i < slots.length; i++) {
-                SeqInumSlot slot = new SeqInumSlot(plan, i);
-                TableAccessSlot islot = slots[i];
-                Set<Index> indexesForTable = indexesPerTable.get(islot
-                        .getTable());
-
-                slot.fullTableScanCost = Double.MAX_VALUE;
-                for (Index index : indexesForTable) {
-                    double costForIndex = iplan.plug(islot, index);
-                    if (Double.isInfinite(costForIndex))
-                        continue;
-                    costForIndex *= islot.coefficient;
-                    // plugInTime += timer.getSecondElapse();
-                    if (index instanceof FullTableScanIndex) {
-                        slot.fullTableScanCost = costForIndex;
-                        plugInFCount++;
-                    } else {
-                        SeqInumSlotIndexCost c = new SeqInumSlotIndexCost();
-                        c.index = indexToInumIndex.get(index);
-                        if (c.index == null)
-                            throw new SQLException("Can't map index "
-                                    + index.toString());
-                        c.cost = costForIndex;
-                        c.updateCost = indexUpdateCosts.get(index.getId());
-                        slot.costs.add(c);
-                    }
-                    plugInCount++;
-                }
-                plan.slots[i] = slot;
-            }
-            q.plans[k] = plan;
-        }
-        q.timeUsedToLoad = timer.getSecondElapse();
-        PerfTest.addTimer("inumRest");
-        return q;
-    }
-
-//    public SeqInumIndex[] getIndexes(HashSet<Index> indexes) {
-//        SeqInumIndex[] a2=new SeqInumIndex[indexes.size()];
-//        int n=0;
-//        for (Index index : indexes) {
-//            for (SeqInumIndex a : indices) {
-//                if 
-//            }
-//        }
-//    }
+    // public SeqInumIndex[] getIndexes(HashSet<Index> indexes) {
+    // SeqInumIndex[] a2=new SeqInumIndex[indexes.size()];
+    // int n=0;
+    // for (Index index : indexes) {
+    // for (SeqInumIndex a : indices) {
+    // if
+    // }
+    // }
+    // }
     public static SeqInumCost fromInum(DatabaseSystem db,
             InumOptimizer optimizer, Workload workload, Set<Index> indexes)
             throws SQLException {

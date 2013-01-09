@@ -42,17 +42,22 @@ public class SeqOptimal {
                     double c = prevConf.costUtilThisStep;
                     Double tc = cost.getCost(prevConf.configuration,
                             curConf.configuration);
-                    if (tc == null)
+                    if (tc == null) {
+//                        Rt.p("maxIndex invalid");
                         continue;
+                    }
                     if (cost.maxTransitionCost > 0
-                            && tc > cost.maxTransitionCost)
+                            && tc > cost.maxTransitionCost) {
+//                        Rt.p("windowSize invalid");
                         continue;
+                    }
                     double stepCost = cost.addTransitionCostToObjective ? tc
                             : 0;
                     double qc = 0;
                     if (query != null)
                         qc = cost.getCost(query, curConf.configuration);
                     stepCost += qc;
+//                    Rt.p("stepCost "+ tc+" "+qc+" "+c);
                     c += stepCost;
                     if (cost.stepBoost == null)
                         cb += stepCost;
@@ -67,6 +72,7 @@ public class SeqOptimal {
                     }
                 }
                 if (minConf == null) {
+//                    Rt.p("step " + iStep + " conf " + i + " invalid");
                     // throw new Error("minConf is null");
                     curConf.costUtilThisStepBoost = Double.MAX_VALUE;
                     curConf.costUtilThisStep = Double.MAX_VALUE;
@@ -90,7 +96,7 @@ public class SeqOptimal {
         best[steps.length - 1].isBestPath = true;
         for (int i = steps.length - 2; i >= 0; i--) {
             best[i] = best[i + 1].bestPreviousConfiguration;
-            if (best[i]==null)
+            if (best[i] == null)
                 return null;
             best[i].isBestPath = true;
         }

@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.seq.bip.def;
 
+import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
+
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -17,6 +19,7 @@ public class SeqInumQuery implements Serializable {
     public SeqInumPlan[] plans;
     public SeqInumIndex[] relevantIndices;
     public double baseTableUpdateCost;
+    public Hashtable<SeqInumIndex, Double> updateCosts = new Hashtable<SeqInumIndex, Double>();
 
     // the following variables are only for debugging purposes
     // and should be removed when the system works correctly
@@ -31,11 +34,17 @@ public class SeqInumQuery implements Serializable {
     }
 
     public double cost(SeqInumIndex[] indexes) {
-        double min = Double.MAX_VALUE;
+        double min = plans.length == 0 ? 0 : Double.MAX_VALUE;
         for (SeqInumPlan plan : plans) {
             double cost = plan.cost(indexes);
             if (cost < min)
                 min = cost;
+        }
+        min += baseTableUpdateCost;
+        for (SeqInumIndex index : indexes) {
+            Double updateCost = updateCosts.get(index);
+            if (updateCost != null && updateCost > 0)
+                min += updateCost;
         }
         return min;
     }
@@ -60,6 +69,12 @@ public class SeqInumQuery implements Serializable {
         rx.createChild("sql", sql.getSQL());
         rx.createChild("timeUsedToLoad", timeUsedToLoad);
         rx.setAttribute("baseTableUpdateCost", baseTableUpdateCost);
+        Rx update = rx.createChild("updateCosts");
+        for (SeqInumIndex index : updateCosts.keySet()) {
+            Rx rx2 = update.createChild("index");
+            rx2.setAttribute("name", index.name);
+            rx2.setAttribute("updateCost", updateCosts.get(index));
+        }
         for (SeqInumPlan plan : plans) {
             plan.save(rx.createChild("plan"));
         }
@@ -70,6 +85,12 @@ public class SeqInumQuery implements Serializable {
         name = rx.getAttribute("name");
         sql = new SQLStatement(rx.getChildText("sql"));
         timeUsedToLoad = rx.getChildDoubleContent("timeUsedToLoad");
+        baseTableUpdateCost = rx.getDoubleAttribute("baseTableUpdateCost");
+        Rx update = rx.findChild("updateCosts");
+        for (Rx rx2 : update.findChilds("index")) {
+            updateCosts.put(indexHash.get(rx2.getAttribute("name")), rx2
+                    .getDoubleAttribute("updateCost"));
+        }
         Rx[] rs = rx.findChilds("plan");
         Vector<SeqInumPlan> vs = new Vector<SeqInumPlan>();
         for (int i = 0; i < rs.length; i++) {

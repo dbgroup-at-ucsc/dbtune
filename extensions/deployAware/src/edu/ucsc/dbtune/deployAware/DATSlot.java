@@ -40,7 +40,7 @@ public class DATSlot {
             throws IloException {
         for (int i = 0; i < s.costs.size(); i++) {
             SeqInumSlotIndexCost c = s.costs.get(i);
-            expr.addTerm((c.cost + c.updateCost) * coefficient, useIndex[i]);
+            expr.addTerm(c.cost * coefficient, useIndex[i]);
         }
         if (hasFTS)
             expr.addTerm(s.fullTableScanCost * coefficient, useIndex[s.costs
@@ -52,7 +52,7 @@ public class DATSlot {
         for (int i = 0; i < s.costs.size(); i++) {
             SeqInumSlotIndexCost c = s.costs.get(i);
             // Rt.p((c.cost + c.updateCost) + " " + getValue(useIndex[i]));
-            cost += (c.cost + c.updateCost) * cplex.getValue(useIndex[i]);
+            cost += c.cost * cplex.getValue(useIndex[i]);
         }
         cost += s.fullTableScanCost * cplex.getValue(useIndex[s.costs.size()]);
         return cost;

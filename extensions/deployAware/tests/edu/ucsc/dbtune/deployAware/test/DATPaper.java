@@ -57,6 +57,8 @@ public class DATPaper {
             m = cost.queries.size();
         cost.addTransitionCostToObjective = DATPaper.addTransitionCostToObjective;
         cost.eachWindowContainsOneQuery = DATPaper.eachWindowContainsOneQuery;
+//        Rt.p(cost.queries.get(0)
+//                .cost(cost.indices.toArray(new SeqInumIndex[0])));
         long totalCost = 0;
         for (int i = 0; i < cost.indices.size(); i++) {
             SeqInumIndex index = cost.indices.get(i);
@@ -75,45 +77,6 @@ public class DATPaper {
         Rt.showDate = false;
         Rt.p("windowSize=%,d m=%d l=%d alpha=%f beta=%f space=%,d", windowSize,
                 m, l, alpha, beta, spaceBudge);
-        {
-            RTimerN timer = new RTimerN();
-            DATParameter params = new DATParameter(cost, windowConstraints,
-                    alpha, beta, l);
-            DAT dat = new DAT();
-            DATOutput output = dat.runDAT(params);
-            this.dat = output.totalCost;
-            datWindowCosts = new double[m];
-            if (useDB2Optimizer)
-                Rt.p("calculating window cost");
-            for (int i = 0; i < m; i++) {
-                if (useDB2Optimizer) {
-                    DatabaseSystem db = loader.getDb();
-                    DB2Optimizer optimizer = loader.getDB2Optimizer();
-                    datWindowCosts[i] = dat.getWindowCost(i, db, optimizer);
-                } else {
-                    datWindowCosts[i] = output.ws[i].cost;
-                }
-                Rt
-                        .p(
-                                "DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d",
-                                i, datWindowCosts[i], output.ws[i].createCost,
-                                output.ws[i].present);
-
-            }
-            // dsp = new DATSeparateProcess(loader.dbName, loader.workloadName,
-            // loader.fileName, loader.generateIndexMethod, alpha, beta,
-            // m, l, spaceBudge, windowSize, 0);
-            // dsp.debugFile = debugFile;
-            // dsp.runMKP = plotNames.length == 3;
-            // dsp.runMKP = false;
-            // dsp.runGreedy = false;
-            // dsp.run();
-            Rt.p("DAT time: %.2f s", timer.getSecondElapse());
-            Rt.p("Obj value: %,.0f", this.dat);
-            // dat = dsp.dat;
-            // mkp = dsp.bip;
-            // greedyRatio = dsp.greedy;
-        }
 
         {
             SeqCost seqCost = eachWindowContainsOneQuery ? SeqCost
@@ -162,6 +125,46 @@ public class DATPaper {
             Rt.p("GREEDY-SEQ time: %.2f s", timer.getSecondElapse());
             Rt.p("Obj value: %,.0f", this.greedySeq);
             Rt.p("whatIfCount: %d", seqCost.whatIfCount);
+        }
+
+        {
+            RTimerN timer = new RTimerN();
+            DATParameter params = new DATParameter(cost, windowConstraints,
+                    alpha, beta, l);
+            DAT dat = new DAT();
+            DATOutput output = dat.runDAT(params);
+            this.dat = output.totalCost;
+            datWindowCosts = new double[m];
+            if (useDB2Optimizer)
+                Rt.p("calculating window cost");
+            for (int i = 0; i < m; i++) {
+                if (useDB2Optimizer) {
+                    DatabaseSystem db = loader.getDb();
+                    DB2Optimizer optimizer = loader.getDB2Optimizer();
+                    datWindowCosts[i] = dat.getWindowCost(i, db, optimizer);
+                } else {
+                    datWindowCosts[i] = output.ws[i].cost;
+                }
+                Rt
+                        .p(
+                                "DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d",
+                                i, datWindowCosts[i], output.ws[i].createCost,
+                                output.ws[i].present);
+
+            }
+            // dsp = new DATSeparateProcess(loader.dbName, loader.workloadName,
+            // loader.fileName, loader.generateIndexMethod, alpha, beta,
+            // m, l, spaceBudge, windowSize, 0);
+            // dsp.debugFile = debugFile;
+            // dsp.runMKP = plotNames.length == 3;
+            // dsp.runMKP = false;
+            // dsp.runGreedy = false;
+            // dsp.run();
+            Rt.p("DAT time: %.2f s", timer.getSecondElapse());
+            Rt.p("Obj value: %,.0f", this.dat);
+            // dat = dsp.dat;
+            // mkp = dsp.bip;
+            // greedyRatio = dsp.greedy;
         }
 
         plot.startNewX(plotX, plotLabel);
@@ -216,9 +219,9 @@ public class DATPaper {
         boolean windowOnly = false;
         long tpchWindowSize = 20 * 3600 * 3000;
         long tpcdsWindowSize = 10 * 3600 * 3000;
-        addTransitionCostToObjective = true;
-        // eachWindowContainsOneQuery = true;
-//        useDB2Optimizer = true;
+        // addTransitionCostToObjective = true;
+         eachWindowContainsOneQuery = true;
+        // useDB2Optimizer = true;
 
         // only show window cost with default parameters, skip other
         // experiments.
@@ -226,15 +229,16 @@ public class DATPaper {
         DATPaperParams params = new DATPaperParams();
 
         long gigbytes = 1024L * 1024L * 1024L;
-        TestSet[] sets = { new TestSet("16 TPC-H queries", "tpch10g",
-                "deployAware", "TPCH16.sql", 10 * gigbytes, "TPCH16",//
-                tpchWindowSize),
+        TestSet[] sets = {
+        // new TestSet("16 TPC-H queries", "tpch10g",
+        // "deployAware", "TPCH16.sql", 10 * gigbytes, "TPCH16",//
+        // tpchWindowSize),
         // new TestSet("63 TPCDS queries", "test", "deployAware",
         // "TPCDS63.sql", 10 * gigbytes, "TPCDS63",
         // tpcdsWindowSize),
-        // new TestSet("63 TPCDS queries update", "test", "deployAware",
-        // "tpcds-update.sql", 10 * gigbytes, "tpcdsupdate",
-        // tpcdsWindowSize),
+        new TestSet("63 TPCDS queries update", "test", "deployAware",
+                "tpcds-update.sql", 10 * gigbytes, "tpcdsupdate",
+                tpcdsWindowSize),
         // new TestSet("15 TPCDS update queries", "test", "tpcds", "update.sql",
         // 10 * gigbytes, "TPCDSU15"),
         // new TestSet("81 OTAB queries", "test", "deployAware",

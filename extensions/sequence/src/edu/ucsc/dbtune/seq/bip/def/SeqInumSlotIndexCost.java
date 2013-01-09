@@ -9,7 +9,7 @@ import edu.ucsc.dbtune.util.Rx;
 public class SeqInumSlotIndexCost implements Serializable {
     public SeqInumIndex index;
     public double cost;
-    public double updateCost;
+//    public double updateCost;
 
     public SeqInumSlotIndexCost() {
     }
@@ -32,8 +32,8 @@ public class SeqInumSlotIndexCost implements Serializable {
             return false;
         if (Math.abs(cost - s2.cost) > SeqInumPlan.maxAllowedError)
             return false;
-        if (Math.abs(updateCost - s2.updateCost) > SeqInumPlan.maxAllowedError)
-            return false;
+//        if (Math.abs(updateCost - s2.updateCost) > SeqInumPlan.maxAllowedError)
+//            return false;
         return true;
     }
 
@@ -42,8 +42,8 @@ public class SeqInumSlotIndexCost implements Serializable {
             return false;
         if (cost < s2.cost - SeqInumPlan.maxAllowedError)
             return false;
-        if (updateCost < s2.updateCost - SeqInumPlan.maxAllowedError)
-            return false;
+//        if (updateCost < s2.updateCost - SeqInumPlan.maxAllowedError)
+//            return false;
         return true;
     }
 
@@ -51,7 +51,7 @@ public class SeqInumSlotIndexCost implements Serializable {
         rx.setAttribute("indexId", index.id);
         rx.setAttribute("indexName", index.name);
         rx.setAttribute("cost", cost);
-        rx.setAttribute("updateCost", updateCost);
+//        rx.setAttribute("updateCost", updateCost);
     }
 
     public SeqInumSlotIndexCost(Hashtable<String, SeqInumIndex> indexHash, Rx rx) {
@@ -60,6 +60,6 @@ public class SeqInumSlotIndexCost implements Serializable {
         if (index == null)
             throw new Error();
         cost = rx.getDoubleAttribute("cost");
-        updateCost = rx.getDoubleAttribute("updateCost");
+//        updateCost = rx.getDoubleAttribute("updateCost");
     }
 }
