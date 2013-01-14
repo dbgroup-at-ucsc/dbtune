@@ -6,16 +6,18 @@ import java.util.List;
 import javax.swing.JFrame;
 
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
-
 import edu.ucsc.dbtune.workload.Workload;
 
 /**
  * @author Ivo Jimenez
  */
-public abstract class AbstractVisualizer implements Visualizer
+public abstract class SwingVisualizer extends JFrame implements AdvisorVisualizer
 {
+    static final long serialVersionUID = 0;
+
     protected List<RecommendationStatistics> stats;
-    protected JFrame frame;
+
+    protected Workload wl;
 
     /**
      * Sets the stats for this instance.
@@ -41,33 +43,26 @@ public abstract class AbstractVisualizer implements Visualizer
     {
         setStatistics(stats.toArray(new RecommendationStatistics[0]));
     }
+
     /**
      * {@inheritDoc}
      */
     @Override
     public final void hide()
     {
-        frame.dispose();
-        frame.setVisible(false);
+        dispose();
+        setVisible(false);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void setWorkload(Workload w)
+    public final void showit()
     {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public final void show()
-    {
-        frame.setAlwaysOnTop(true);
-        frame.setAlwaysOnTop(false);
-        frame.setVisible(true);
+        setAlwaysOnTop(true);
+        setAlwaysOnTop(false);
+        setVisible(true);
     }
 
     /**
@@ -78,9 +73,15 @@ public abstract class AbstractVisualizer implements Visualizer
     {
         updateContent();
 
-        frame.invalidate();
-        frame.validate();
-        frame.repaint();
+        invalidate();
+        validate();
+        repaint();
+    }
+
+    @Override
+    public void setWorkload(Workload wl)
+    {
+        this.wl = wl;
     }
 
     /**

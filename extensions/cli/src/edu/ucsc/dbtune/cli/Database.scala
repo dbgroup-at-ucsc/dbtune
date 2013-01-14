@@ -24,7 +24,7 @@ import edu.ucsc.dbtune.util.EnvironmentProperties.USERNAME
 import edu.ucsc.dbtune.util.EnvironmentProperties.OPTIMIZER
 import edu.ucsc.dbtune.util.EnvironmentProperties.PASSWORD
 
-/** The CLI interface to a DBMS.
+/** The Scala-fied interface to a DBMS.
   */
 class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
   val DBMS = dbms
@@ -39,7 +39,7 @@ class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
   def recommend(sql:String) : Set[Index] =  {
     dbms.getOptimizer.recommendIndexes(sql)
   }
-  
+
   /** Explains a SQL statement
     *
     * @param sql
@@ -50,7 +50,7 @@ class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
   def explain(sql:String) : ExplainedSQLStatement =  {
     dbms.getOptimizer.explain(sql)
   }
-  
+
   /** Explains a SQL statement
     *
     * @param sql
@@ -63,7 +63,7 @@ class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
   def explain(sql:String, conf:Set[Index]) : ExplainedSQLStatement =  {
     dbms.getOptimizer.explain(sql, conf)
   }
-  
+
   /** Closes the connection to the DBMS
     */
   def close() =  {
@@ -80,7 +80,7 @@ class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
   def optimizer() : Optimizer =  {
     dbms.getOptimizer
   }
-  
+
   /** creates an index.
     *
     * @param orderingSpec
@@ -91,7 +91,7 @@ class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
   def newIndex(orderingSpec: String) : Set[Index] = {
     Sets.newHashSet(DBMS.newIndex(ColumnOrdering.newOrdering(dbms.getCatalog, orderingSpec)))
   }
-  
+
   /** creates a set of indexes by reading their definition from a file.
     *
     * @param file
@@ -100,15 +100,12 @@ class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
     *   a set of indexes that are read from a file
     */
   def loadIndexes(fileName: String) : Set[Index] = {
-    //MetadataUtils.loadIndexes(DBMS, fileName)
-    var stuff = recommend("SELECT col1 FROM one_table.tbl WHERE col1 = 2")
-    stuff.addAll(recommend("SELECT col2 FROM one_table.tbl WHERE col1 = 2"))
-    stuff
+    MetadataUtils.loadIndexes(DBMS, fileName)
   }
 }
 
 object Database
-{  
+{
   /** connects to a database.
     *
     * @param url
@@ -134,5 +131,4 @@ object Database
 
     new Database(newDatabaseSystem(env))
   }
-
 }

@@ -1,10 +1,6 @@
 package edu.ucsc.dbtune.viz;
 
-import javax.swing.JFrame;
-
 import org.jfree.data.xy.XYDataset;
-
-import org.jfree.ui.RefineryUtilities;
 
 /**
  * @author Ivo Jimenez
@@ -42,9 +38,9 @@ public final class VizUtils
             String yLabel)
     {
         XYChart chart = new XYChart(windowTitle, xyDataSet, chartTitle, xLabel, yLabel);
-        RefineryUtilities.centerFrameOnScreen(chart);
-        chart.pack();
-        chart.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        //RefineryUtilities.centerFrameOnScreen(chart);
+        //chart.pack();
+        //chart.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         return chart;
     }
 }

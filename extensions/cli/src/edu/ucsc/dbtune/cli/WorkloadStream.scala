@@ -11,7 +11,7 @@ import java.util.Iterator
 
 import edu.ucsc.dbtune.DatabaseSystem
 import edu.ucsc.dbtune.advisor.Advisor
-import edu.ucsc.dbtune.viz.Visualizer
+import edu.ucsc.dbtune.viz.AdvisorVisualizer
 import edu.ucsc.dbtune.workload.SQLStatement
 import edu.ucsc.dbtune.workload.Workload
 
@@ -30,7 +30,7 @@ class WorkloadStream(fileName: String) {
   val workload = new Workload(fileName)
   val workloadActor = new WorkloadStreamActor(workload.iterator)
   var advisors = Set[Advisor]()
-  var visualizers = Set[Visualizer]()
+  var visualizers = Set[AdvisorVisualizer]()
 
   workloadActor.start
 
@@ -46,7 +46,7 @@ class WorkloadStream(fileName: String) {
    * @param visualizer
    *    new visualizer to be added to the registry
    */
-  def register(visualizer: Visualizer) = {
+  def register(visualizer: AdvisorVisualizer) = {
     visualizers += visualizer; visualizer.setWorkload(workload)
   }
 
@@ -77,7 +77,7 @@ class WorkloadStream(fileName: String) {
    * @param visualizer
    *    visualizer being checked for membership in the registry
    */
-  def isRegistered(viz: Visualizer) = visualizers.contains(viz)
+  def isRegistered(viz: AdvisorVisualizer) = visualizers.contains(viz)
 
   /** Checks if the given visualizer is a member of the internal registry.
    *
@@ -109,7 +109,7 @@ class WorkloadStreamActor(iterator: Iterator[SQLStatement]) extends Actor {
   /** Executes the whole workload, i.e. until there are no more statements in the stream, 
    * communicating each statement to every advisor and visualizer contained in the given sets
    */
-  def play(advisors: Set[Advisor], visualizers: Set[Visualizer]) = {
+  def play(advisors: Set[Advisor], visualizers: Set[AdvisorVisualizer]) = {
     while (iterator.hasNext()) {
       currentStmt = iterator.next
       advisors.foreach(_.process(currentStmt))
@@ -125,7 +125,7 @@ class WorkloadStreamActor(iterator: Iterator[SQLStatement]) extends Actor {
    * contained in the given sets. If the specified number of steps is greater than the remaining 
    * number of statements, the steps are just ignored.
    */
-  def next(advisors: Set[Advisor], visualizers: Set[Visualizer], steps: Integer) = {
+  def next(advisors: Set[Advisor], visualizers: Set[AdvisorVisualizer], steps: Integer) = {
     for (i <- 1 to steps) {
       if (iterator.hasNext()) {
         currentStmt = iterator.next
@@ -138,9 +138,9 @@ class WorkloadStreamActor(iterator: Iterator[SQLStatement]) extends Actor {
     }
   }
 
-  def notify(visualizers: Set[Visualizer]) = visualizers.foreach(_.refresh)
+  def notify(visualizers: Set[AdvisorVisualizer]) = visualizers.foreach(_.refresh)
 }
 
 case class Stop()
-case class Next(advisors: Set[Advisor], visualizers: Set[Visualizer], steps: Integer)
-case class Play(advisors: Set[Advisor], visualizers: Set[Visualizer])
+case class Next(advisors: Set[Advisor], visualizers: Set[AdvisorVisualizer], steps: Integer)
+case class Play(advisors: Set[Advisor], visualizers: Set[AdvisorVisualizer])

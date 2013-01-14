@@ -19,10 +19,11 @@ import edu.ucsc.dbtune.workload.Workload;
  *
  * @author Ivo Jimenez
  */
-public class WorkloadTable extends AbstractVisualizer
+public class WorkloadTable extends SwingVisualizer
 {
     private String[] columnNames;
     private String[][] dataValues;
+    static final long serialVersionUID = 0;
 
     /**
      */
@@ -33,17 +34,15 @@ public class WorkloadTable extends AbstractVisualizer
         columnNames[0] = "SQL";
         //columnNames[1] = "SQL";
 
-        frame = new JFrame();
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
-        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 
-        frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
-
-        frame.setTitle("   Workload");
-        frame.setBackground(Color.gray);
-        frame.setSize(512, 372);
-        frame.setLocation(512, 24);
-        frame.pack();
+        setTitle("   Workload");
+        setBackground(Color.gray);
+        setSize(512, 372);
+        setLocation(512, 24);
+        pack();
     }
 
     /**
@@ -80,10 +79,10 @@ public class WorkloadTable extends AbstractVisualizer
         String sqlText = dataValues[e.getSql().getPosition() - 1][0];
         dataValues[e.getSql().getPosition() - 1][0] = ">> " + sqlText;
 
-        frame.getContentPane().removeAll();
+        getContentPane().removeAll();
         JTable table = new JTable(dataValues, columnNames);
         table.getColumnModel().getColumn(0).setPreferredWidth(30);
-        frame.getContentPane().add(new JScrollPane(table));
+        getContentPane().add(new JScrollPane(table));
     }
 
     /**
@@ -100,7 +99,7 @@ public class WorkloadTable extends AbstractVisualizer
         JTable table = new JTable(dataValues, columnNames);
         table.getColumnModel().getColumn(0).setPreferredWidth(30);
 
-        frame.getContentPane().add(new JScrollPane(table));
+        getContentPane().add(new JScrollPane(table));
     }
 
     /**

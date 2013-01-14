@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 
-import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import org.jfree.chart.ChartFactory;
@@ -21,11 +20,12 @@ import org.jfree.data.xy.XYDataset;
 /**
  * @author Ivo Jimenez
  */
-public class XYChart extends JFrame
+public class XYChart
 {
     /** stuff. */
     public static final long serialVersionUID = 0;
     private JFreeChart chart;
+    private JPanel jpanel;
 
     /**
      * @param windowTitle
@@ -46,12 +46,14 @@ public class XYChart extends JFrame
             String xLabel,
             String yLabel)
     {
-        super(windowTitle);
-        JPanel jpanel = createPanel(xyDataSet, chartTitle, xLabel, yLabel);
+        jpanel = createPanel(xyDataSet, chartTitle, xLabel, yLabel);
         jpanel.setPreferredSize(new Dimension(511, 350));
-        setContentPane(jpanel);
-        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         chart = ((ChartPanel) jpanel).getChart();
+    }
+
+    public JPanel getPanel()
+    {
+        return jpanel;
     }
 
     /**

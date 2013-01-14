@@ -5,8 +5,9 @@ import java.util.Set
 import edu.ucsc.dbtune.advisor.Advisor
 import edu.ucsc.dbtune.advisor.RecommendationStatistics
 import edu.ucsc.dbtune.metadata.Index
-import edu.ucsc.dbtune.viz.AbstractVisualizer
+import edu.ucsc.dbtune.viz.SwingVisualizer
 import edu.ucsc.dbtune.viz.IndexSetPartitionTable
+import edu.ucsc.dbtune.viz.TabbedSwingVisualizer
 import edu.ucsc.dbtune.viz.TotalWorkPlotter
 import edu.ucsc.dbtune.viz.WFITStatisticsTable
 import edu.ucsc.dbtune.viz.WFITIndexSetFeedbackTable
@@ -21,6 +22,13 @@ object Plotter
   var wfitTable = new WFITStatisticsTable
   var feedbackTable = new WFITIndexSetFeedbackTable
   var workloadTable = new WorkloadTable
+  var tabbedWindow = new TabbedSwingVisualizer
+
+  tabbedWindow.add("Workload", workloadTable)
+  tabbedWindow.add("Total Work", twPlotter)
+  tabbedWindow.add("Candidate Set", partitionTable)
+
+  javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
 
   def resetUI = {
     twPlotter.hide
@@ -33,6 +41,10 @@ object Plotter
     wfitTable = new WFITStatisticsTable
     feedbackTable = new WFITIndexSetFeedbackTable
     workloadTable = new WorkloadTable
+
+    tabbedWindow.add("Workload", workloadTable)
+    tabbedWindow.add("Total Work", twPlotter)
+    tabbedWindow.add("Candidate Set", partitionTable)
   }
 
   /** Plots the total work for the given workload and list of statistics. If the plot hadn't been 
@@ -88,7 +100,17 @@ object Plotter
   def showWorkloadTable(wl: WorkloadStream, stats: RecommendationStatistics) =
     show(workloadTable, wl, stats)
 
-  def show(vis: AbstractVisualizer, wl: WorkloadStream, stats: RecommendationStatistics*) = {
+  def showTabbedWindow(wl: WorkloadStream, stats: RecommendationStatistics) = {
+    var it = tabbedWindow.getVisualizers.iterator
+    while (it.hasNext) {
+      var vis = it.next
+      wl.register(vis)
+      vis.setStatistics(stats)
+    }
+    tabbedWindow.showit
+  }
+
+  def show(vis: SwingVisualizer, wl: WorkloadStream, stats: RecommendationStatistics*) = {
     wl.register(vis)
     vis.setStatistics(stats.toList : _*)
     vis.show

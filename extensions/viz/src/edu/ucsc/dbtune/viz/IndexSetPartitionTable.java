@@ -20,7 +20,7 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getColumnListString;
  *
  * @author Ivo Jimenez
  */
-public class IndexSetPartitionTable extends AbstractVisualizer
+public class IndexSetPartitionTable extends SwingVisualizer
 {
     protected String[] columnNames;
 
@@ -39,15 +39,13 @@ public class IndexSetPartitionTable extends AbstractVisualizer
         columnNames[4] = "BENEFIT";
         columnNames[5] = "RECOMMENDED";
 
-        frame = new JFrame();
-
-        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
-        frame.setTitle("   Indexes");
-        frame.setBackground(Color.gray);
-        frame.pack();
-        frame.setSize(511, 375);
-        frame.setLocation(0, 375);
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+        setTitle("   Indexes");
+        setBackground(Color.gray);
+        pack();
+        setSize(511, 375);
+        setLocation(0, 375);
     }
 
     /**
@@ -56,7 +54,7 @@ public class IndexSetPartitionTable extends AbstractVisualizer
     @Override
     public void updateContent()
     {
-        frame.getContentPane().removeAll();
+        getContentPane().removeAll();
 
         if (stats.size() < 1)
             return;
@@ -72,7 +70,7 @@ public class IndexSetPartitionTable extends AbstractVisualizer
         Set<Set<Index>> partitions = e.getCandidatePartitioning();
 
         for (Set<Index> partition : partitions)
-            frame.getContentPane().add(new JScrollPane(newTable(e, partition)));
+            getContentPane().add(new JScrollPane(newTable(e, partition)));
     }
 
     /**

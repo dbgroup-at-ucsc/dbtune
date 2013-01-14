@@ -23,9 +23,10 @@ import static edu.ucsc.dbtune.util.MetadataUtils.transitionCost;
  *
  * @author Ivo Jimenez
  */
-public class WFITStatisticsTable extends AbstractVisualizer
+public class WFITStatisticsTable extends SwingVisualizer
 {
     private String[] columnNames;
+    static final long serialVersionUID = 0;
 
     /**
      */
@@ -40,17 +41,15 @@ public class WFITStatisticsTable extends AbstractVisualizer
         columnNames[4] = "UNDO COST";
         columnNames[5] = "SCORE";
 
-        frame = new JFrame();
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
-        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 
-        frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
-
-        frame.setTitle("   WFIT Internal Statistics");
-        frame.setBackground(Color.gray);
-        frame.setSize(511, 372);
-        frame.setLocation(0, 375);
-        frame.pack();
+        setTitle("   WFIT Internal Statistics");
+        setBackground(Color.gray);
+        setSize(511, 372);
+        setLocation(0, 375);
+        pack();
     }
 
     /**
@@ -59,7 +58,7 @@ public class WFITStatisticsTable extends AbstractVisualizer
     @Override
     public void updateContent()
     {
-        frame.getContentPane().removeAll();
+        getContentPane().removeAll();
 
         if (stats.size() < 1)
             return;
@@ -84,7 +83,7 @@ public class WFITStatisticsTable extends AbstractVisualizer
 
         int partitionNumber = 1;
         for (Set<Index> partition : partitions)
-            frame.getContentPane().add(
+            getContentPane().add(
                 new JScrollPane(
                     newTable(
                         partitionNumber++, partition, wfScores, currentState, previousState)));
@@ -122,7 +121,7 @@ public class WFITStatisticsTable extends AbstractVisualizer
                 newRow(partitionNumber, state, subset, wf.get(subset),
                         Sets.intersection(currentState, partition),
                         Sets.intersection(previousState, partition));
-            
+
         return new JTable(dataValues, columnNames);
     }
 
@@ -153,14 +152,14 @@ public class WFITStatisticsTable extends AbstractVisualizer
         String[] row = new String[6];
 
         double undoCost = transitionCost(subset, previousRecommendationForPartition);
-        
+
         if (currentRecommendationForPartition.equals(subset))
             row[0] = ">> ";
         else
             row[0] = "";
 
         row[0] += partitionNumber + "";
-        
+
         row[1] = stateNumber + "";
         row[2] = subset + "";
         row[3] = wfValue + "";

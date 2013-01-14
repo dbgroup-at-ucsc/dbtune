@@ -20,6 +20,8 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getColumnListString;
  */
 public class WFITIndexSetFeedbackTable extends IndexSetPartitionTable
 {
+    static final long serialVersionUID = 0;
+
     /**
      * constructor.
      */
@@ -36,13 +38,11 @@ public class WFITIndexSetFeedbackTable extends IndexSetPartitionTable
         columnNames[5] = "RECOMMENDED";
         columnNames[6] = "OPTIMAL";
 
-        frame = new JFrame();
-
-        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
-        frame.setTitle("   Feedback");
-        frame.setBackground(Color.gray);
-        frame.setSize(600, 400);
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+        setTitle("   Feedback");
+        setBackground(Color.gray);
+        setSize(600, 400);
     }
 
     /**
