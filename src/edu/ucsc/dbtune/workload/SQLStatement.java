@@ -1,7 +1,7 @@
 package edu.ucsc.dbtune.workload;
 
 /**
- * Represents a SQL statement. Each {@code SQLStatement} object is tied to a {@code String} object 
+ * Represents a SQL statement. Each {@code SQLStatement} object is tied to a {@code String} object
  * that contains the actual literal contents of the SQL statement.
  *
  * @author Ivo Jimenez
@@ -12,14 +12,14 @@ public class SQLStatement
     private SQLCategory category;
 
     /** workload this statement corresponds to. */
-    private Workload workload;
+    private String workload;
 
     /** literal contents of the statement. */
     private String sql;
-    
+
     /** The frequency of the statement in the workload. */
     private double fq;
-    
+
     /** The position of the statement in the workload. */
     private int position;
 
@@ -31,13 +31,13 @@ public class SQLStatement
      * @param position
      *      position of the statement in the workload
      */
-    SQLStatement(Workload workload, String sql, int position)
+    SQLStatement(String workload, String sql, int position)
     {
         this(workload, sql, SQLCategory.from(sql), position);
     }
 
     /**
-     * Constructs a {@code SQLStatement}. The constructor tries to infer the category of the 
+     * Constructs a {@code SQLStatement}. The constructor tries to infer the category of the
      * statement using the {@link SQLCategory#from} method.
      *
      * @param sql
@@ -61,13 +61,13 @@ public class SQLStatement
      * @param position
      *      position of the statement in the workload
      */
-    public SQLStatement(Workload workload, String sql, SQLCategory category, int position)
+    public SQLStatement(String workload, String sql, SQLCategory category, int position)
     {
         this.workload = workload;
         this.category = category;
         this.sql      = sql;
         this.position = position;
-        
+
         // the default weight of the statement is 1.0
         fq = 1.0;
     }
@@ -95,10 +95,10 @@ public class SQLStatement
         return sql;
     }
 
-    
+
     /**
      * Retrieves the weight of the statement.
-     * 
+     *
      * @return
      *      The weight of this statement
      */
@@ -106,10 +106,10 @@ public class SQLStatement
     {
         return fq;
     }
-    
+
     /**
      * Set the weight for the statement.
-     * 
+     *
      * @param fq
      *      The weight
      */
@@ -134,10 +134,10 @@ public class SQLStatement
     {
         if (this == obj)
             return true;
-    
+
         if (!(obj instanceof SQLStatement))
             return false;
-    
+
         SQLStatement o = (SQLStatement) obj;
 
         if (category.isSame(o.category) && sql.equals(o.sql))
@@ -161,7 +161,7 @@ public class SQLStatement
      *
      * @return The workload.
      */
-    public Workload getWorkload()
+    public String getWorkload()
     {
         return this.workload;
     }

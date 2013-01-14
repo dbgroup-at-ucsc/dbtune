@@ -16,6 +16,7 @@ import static edu.ucsc.dbtune.metadata.Index.PRIMARY;
 import static edu.ucsc.dbtune.metadata.Index.UNIQUE;
 import static edu.ucsc.dbtune.metadata.SQLTypes.INTEGER;
 
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.not;
@@ -55,13 +56,13 @@ public class IndexTest
     {
         Index index;
 
-        assertThat(Index.IN_MEMORY_ID.get(), is(0));
+        int memId = Index.IN_MEMORY_ID.get();
 
         index = new Index("other", columns, PRIMARY, CLUSTERED, UNIQUE);
 
         assertThat(index.getContainer(), is((DatabaseObject)schema));
         assertThat(index.size(), is(table.size()));
-        assertThat(index.getId(),is(0));
+        assertThat(index.getId(),is(memId));
     }
 
     @Test
@@ -75,8 +76,7 @@ public class IndexTest
 
         assertThat(index1, is(not(index2)));
         assertThat(index2, is(not(index1)));
-        assertThat(index1.getId(), is(1));
-        assertThat(index2.getId(), is(2));
+        assertThat(index2.getId(), is(greaterThan(index1.getId())));
     }
 
     @Test
