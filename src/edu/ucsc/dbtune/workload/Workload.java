@@ -64,27 +64,35 @@ public class Workload implements Iterable<SQLStatement>
     {
         BufferedReader reader;
         StringBuilder sb;
+        StringBuilder comment;
         String line;
 
         sqls = new ArrayList<SQLStatement>();
         reader = new BufferedReader(workloadStream);
         sb = new StringBuilder();
+        comment = new StringBuilder();
 
         while ((line = reader.readLine()) != null) {
 
             line = line.trim();
 
-            if (line.startsWith("--"))
+            if (line.startsWith("--")) {
+                comment.append(line.substring(2)+"\n");
                 continue;
+            }
 
             if (line.endsWith(";")) {
                 sb.append(line.substring(0, line.length() - 1));
 
                 final String sql = sb.toString();
 
-                if (!sql.isEmpty())
-                    sqls.add(new SQLStatement(sb.toString()));
+                if (!sql.isEmpty()) {
+                    SQLStatement s=new SQLStatement(sb.toString());
+                    s.setComment(comment.toString());
+                    sqls.add(s);
+                }
 
+                comment = new StringBuilder();
                 sb = new StringBuilder();
             } else {
                 sb.append(line + "\n");

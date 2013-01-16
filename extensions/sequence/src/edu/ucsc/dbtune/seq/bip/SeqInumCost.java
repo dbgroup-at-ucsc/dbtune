@@ -112,8 +112,7 @@ public class SeqInumCost implements Serializable {
         }
     }
 
-    public static SeqInumCost loadFromXml(Rx rx, DatabaseSystem db)
-            throws SQLException {
+    public static SeqInumCost loadFromXml(Rx rx, DatabaseSystem db) throws SQLException {
         SeqInumCost cost = new SeqInumCost();
         int queryId = 0;
         cost.complete = !"false".equals(rx.getAttribute("complete"));
@@ -139,13 +138,21 @@ public class SeqInumCost implements Serializable {
         SeqInumQuery q = new SeqInumQuery(id);
         q.name = "Q" + id;
         q.sql = statement;
+        if (!statement.getSQLCategory().name().equals("SELECT")) {
+            //for DAT experiment only
+            String s = statement.getComment();
+            s = s.substring(0, s.indexOf('\n'));
+            try {
+                q.tableSize = Integer.parseInt(s.trim());
+            } catch (NumberFormatException e) {
+            }
+        }
         queryHash.put(q.name, q);
         queries.add(q);
 
         RTimerN timer = new RTimerN();
         PerfTest.startTimer();
-        InumQueryPlanDesc desc = (InumQueryPlanDesc) InumQueryPlanDesc
-                .getQueryPlanDescInstance(statement);
+        InumQueryPlanDesc desc = (InumQueryPlanDesc) InumQueryPlanDesc.getQueryPlanDescInstance(statement);
         // Rt.p(id);
         // Rt.p(statement.getSQL());
         // Populate the INUM space
@@ -175,16 +182,14 @@ public class SeqInumCost implements Serializable {
                 for (Index index : desc.getIndexesAtSlot(planId, slotId)) {
                     // timer = new RTimerN();
                     if (index instanceof FullTableScanIndex) {
-                        slot.fullTableScanCost = desc.getAccessCost(planId,
-                                slotId, index);
+                        slot.fullTableScanCost = desc.getAccessCost(planId, slotId, index);
                         // Rt.p(index);
                         plugInFCount++;
                     } else {
                         SeqInumSlotIndexCost c = new SeqInumSlotIndexCost();
                         c.index = indexToInumIndex.get(index);
                         if (c.index == null)
-                            throw new SQLException("Can't map index "
-                                    + index.toString());
+                            throw new SQLException("Can't map index " + index.toString());
                         c.cost = desc.getAccessCost(planId, slotId, index);
                         // c.updateCost = desc.getUpdateCost(index);
                         // Rt.p(index);
@@ -207,7 +212,7 @@ public class SeqInumCost implements Serializable {
             }
             q.plans[planId] = plan;
         }
-        q.timeUsedToLoad=timer.getSecondElapse();
+        q.timeUsedToLoad = timer.getSecondElapse();
         // Rt.p(q.totalIndexes());
         PerfTest.addTimer("inumRest");
         return q;
@@ -313,8 +318,7 @@ public class SeqInumCost implements Serializable {
     // }
     // }
     // }
-    public static SeqInumCost fromInum(DatabaseSystem db,
-            InumOptimizer optimizer, Workload workload, Set<Index> indexes)
+    public static SeqInumCost fromInum(DatabaseSystem db, InumOptimizer optimizer, Workload workload, Set<Index> indexes)
             throws SQLException {
         SeqInumCost cost = new SeqInumCost();
         cost.optimizer = optimizer;
@@ -333,8 +337,7 @@ public class SeqInumCost implements Serializable {
                 q.createCost = q.index.getCreationCost();
             else {
                 PerfTest.startTimer();
-                q.createCost = SeqCost
-                        .getCreateIndexCost(optimizer, q.index, q);
+                q.createCost = SeqCost.getCreateIndexCost(optimizer, q.index, q);
                 PerfTest.addTimer("calculate create index cost");
             }
             q.dropCost = 0;

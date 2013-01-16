@@ -49,9 +49,8 @@ public class DATPaper {
 
     // DATSeparateProcess dsp;
 
-    public DATPaper(WorkloadLoader loader, GnuPlot plot, double plotX,
-            String plotLabel, int m, long spaceBudge, int l, double alpha,
-            long windowSize, File debugFile) throws Exception {
+    public DATPaper(WorkloadLoader loader, GnuPlot plot, double plotX, String plotLabel, int m, long spaceBudge, int l,
+            double alpha, long windowSize, File debugFile) throws Exception {
         Rt.p(plot.name + " " + plot.xName + "=" + plotX);
         cost = loader.loadCost();
         if (eachWindowContainsOneQuery)
@@ -76,17 +75,16 @@ public class DATPaper {
         cost.storageConstraint = spaceBudge;
         maxIndexCreatedPerWindow = l;
         Rt.showDate = false;
-        Rt.p("windowSize=%,d m=%d l=%d alpha=%f beta=%f space=%,d", windowSize,
-                m, l, alpha, beta, spaceBudge);
+        Rt.p("windowSize=%,d m=%d l=%d alpha=%f beta=%f space=%,d", windowSize, m, l, alpha, beta, spaceBudge);
 
         {
-            SeqCost seqCost = eachWindowContainsOneQuery ? SeqCost
-                    .fromInum(cost) : SeqCost.multiWindows(cost, m);
+            SeqCost seqCost = eachWindowContainsOneQuery ? SeqCost.fromInum(cost) : SeqCost.multiWindows(cost, m);
             if (useDB2Optimizer) {
                 seqCost.useDB2Optimizer = useDB2Optimizer;
                 seqCost.db = loader.getDb();
                 seqCost.optimizer = loader.getDB2Optimizer();
             }
+            seqCost.addTransitionCostToObjective = cost.addTransitionCostToObjective;
             seqCost.stepBoost = new double[m + 1];
             Arrays.fill(seqCost.stepBoost, alpha);
             seqCost.stepBoost[m - 1] = beta; // last
@@ -96,8 +94,7 @@ public class DATPaper {
             seqCost.maxIndexesWindow = l;
             RTimerN timer = new RTimerN();
             SeqGreedySeq greedySeq = new SeqGreedySeq(seqCost);
-            while (greedySeq.run())
-                ;
+            while (greedySeq.run());
             greedySeq.finish();
             double totalCost1 = greedySeq.bestPath[greedySeq.bestPath.length - 1].costUtilThisStep;
             double objValue = greedySeq.bestPath[greedySeq.bestPath.length - 1].costUtilThisStepBoost;
@@ -106,18 +103,15 @@ public class DATPaper {
             for (int i = 0; i < m; i++) {
                 SeqStepConf conf = greedySeq.bestPath[i + 1];
                 SeqIndex[] indices = conf.configuration.indices;
-                double tc = seqCost
-                        .getCost(greedySeq.bestPath[i].configuration,
-                                conf.configuration);
+                double tc = seqCost.getCost(greedySeq.bestPath[i].configuration, conf.configuration);
                 // boolean[] indexUsed = new boolean[seqCost.indicesV.size()];
                 // for (SeqIndex index : indices)
                 // indexUsed[index.id] = true;
                 // DATWindow.costWithIndex(cost, indexUsed);
-                Rt.p("GREEDY-SEQ window " + i
-                        + ": cost=%,.0f createCost=%,.0f usedIndexes=%d",
-                        conf.queryCost + conf.transitionCost, tc,
-                        indices.length);
-                greedyWindowCosts[i] = conf.queryCost + conf.transitionCost;
+                greedyWindowCosts[i] = conf.queryCost
+                        + (seqCost.addTransitionCostToObjective ? conf.transitionCost : 0);
+                Rt.p("GREEDY-SEQ window " + i + ": cost=%,.0f createCost=%,.0f usedIndexes=%d", greedyWindowCosts[i],
+                        tc, indices.length);
                 if (i < m - 1)
                     this.greedySeq += alpha * greedyWindowCosts[i];
                 else
@@ -129,12 +123,9 @@ public class DATPaper {
                     SeqStepConf conf = greedySeq.bestPath[i + 1];
                     DatabaseSystem db = loader.getDb();
                     DB2Optimizer optimizer = loader.getDB2Optimizer();
-                    greedyWindowCosts[i] = seqCost.verifyCost(i, db, optimizer,
-                            conf)
-                            + conf.transitionCost;
-                    Rt.p("GREEDY-SEQ window " + i
-                            + ": cost=%,.0f usedIndexes=%d",
-                            greedyWindowCosts[i],
+                    greedyWindowCosts[i] = seqCost.verifyCost(i, db, optimizer, conf)
+                            + (seqCost.addTransitionCostToObjective ? conf.transitionCost : 0);
+                    Rt.p("GREEDY-SEQ window " + i + ": cost=%,.0f usedIndexes=%d", greedyWindowCosts[i],
                             conf.configuration.indices.length);
                 }
             }
@@ -145,19 +136,15 @@ public class DATPaper {
 
         {
             RTimerN timer = new RTimerN();
-            DATParameter params = new DATParameter(cost, windowConstraints,
-                    alpha, beta, l);
+            DATParameter params = new DATParameter(cost, windowConstraints, alpha, beta, l);
             DAT dat = new DAT();
             DATOutput output = dat.runDAT(params);
             this.dat = output.totalCost;
             datWindowCosts = new double[m];
             for (int i = 0; i < m; i++) {
                 datWindowCosts[i] = output.ws[i].cost;
-                Rt
-                        .p(
-                                "DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d",
-                                i, datWindowCosts[i], output.ws[i].createCost,
-                                output.ws[i].present);
+                Rt.p("DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d", i, datWindowCosts[i],
+                        output.ws[i].createCost, output.ws[i].present);
             }
             if (useDB2Optimizer || verifyByDB2Optimizer) {
                 Rt.p("verifying window cost");
@@ -165,12 +152,8 @@ public class DATPaper {
                     DatabaseSystem db = loader.getDb();
                     DB2Optimizer optimizer = loader.getDB2Optimizer();
                     datWindowCosts[i] = dat.getWindowCost(i, db, optimizer);
-                    Rt
-                            .p(
-                                    "DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d",
-                                    i, datWindowCosts[i],
-                                    output.ws[i].createCost,
-                                    output.ws[i].present);
+                    Rt.p("DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d", i, datWindowCosts[i],
+                            output.ws[i].createCost, output.ws[i].present);
                 }
             }
             // dsp = new DATSeparateProcess(loader.dbName, loader.workloadName,
@@ -210,13 +193,12 @@ public class DATPaper {
         public Vector<String> plotNames = new Vector<String>();
         public Vector<String> figureNames = new Vector<String>();
 
-        public TestSet(String name, String dbName, String workloadName,
-                long size, String shortName) {
+        public TestSet(String name, String dbName, String workloadName, long size, String shortName) {
             this(name, dbName, workloadName, "workload.sql", size, shortName, 0);
         }
 
-        public TestSet(String name, String dbName, String workloadName,
-                String fileName, long size, String shortName, long windowSize) {
+        public TestSet(String name, String dbName, String workloadName, String fileName, long size, String shortName,
+                long windowSize) {
             this.name = name;
             this.dbName = dbName;
             this.workloadName = workloadName;
@@ -235,32 +217,33 @@ public class DATPaper {
     }
 
     public static void main(String[] args) throws Exception {
+        DATPaperParams params = new DATPaperParams();
         boolean exp = true; // rerun experiment
         // exp = false;
         boolean windowOnly = false;
         long tpchWindowSize = 20 * 3600 * 3000;
         long tpcdsWindowSize = 10 * 3600 * 3000;
         // addTransitionCostToObjective = true;
-        // eachWindowContainsOneQuery = true;
+        //        eachWindowContainsOneQuery = true;
+//        params.l_def = 10000;
         // useDB2Optimizer = true;
-         verifyByDB2Optimizer=true;
+        //         verifyByDB2Optimizer=true;
 
         // only show window cost with default parameters, skip other
         // experiments.
         windowOnly = true;
-        DATPaperParams params = new DATPaperParams();
 
         long gigbytes = 1024L * 1024L * 1024L;
-        TestSet[] sets = {
-        // new TestSet("16 TPC-H queries", "tpch10g",
-        // "deployAware", "TPCH16.sql", 10 * gigbytes, "TPCH16",//
-        // tpchWindowSize),
+        TestSet[] sets = { //
+        //        new TestSet("TPCH", "tpch10g", "deployAware", "tpchPaper.sql", 10 * gigbytes, "tpch",//
+        //                tpchWindowSize),
+//        new TestSet("TPCDS", "test", "deployAware", "tpcdsPaper.sql", 10 * gigbytes, "tpcds", tpcdsWindowSize),
         // new TestSet("63 TPCDS queries", "test", "deployAware",
         // "TPCDS63.sql", 10 * gigbytes, "TPCDS63",
         // tpcdsWindowSize),
-        new TestSet("63 TPCDS queries update", "test", "deployAware",
-                "tpcds-update.sql", 10 * gigbytes, "tpcdsupdate",
-                tpcdsWindowSize),
+                new TestSet("63 TPCDS queries update", "test", "deployAware",
+                        "tpcds-update.sql", 10 * gigbytes, "tpcdsupdate",
+                        tpcdsWindowSize),
         // new TestSet("15 TPCDS update queries", "test", "tpcds", "update.sql",
         // 10 * gigbytes, "TPCDSU15"),
         // new TestSet("81 OTAB queries", "test", "deployAware",
@@ -272,6 +255,7 @@ public class DATPaper {
         // "online-benchmark-update-100", 10 * gigbytes,
         // "OTAB update"),
         };
+        sets[0].windowSize = Long.MAX_VALUE;
 
         File debugDir = new File(WorkloadLoaderSettings.dataRoot + "/debug");
         GnuPlot.defaultStyle = GnuPlot.Style.histograms;
@@ -281,8 +265,8 @@ public class DATPaper {
             if (set.windowSize != 0)
                 params.windowSize = set.windowSize;
             Rt.p(set.dbName + " " + set.workloadName + " " + set.fileName);
-            WorkloadLoader loader = new WorkloadLoader(set.dbName,
-                    set.workloadName, set.fileName, params.generateIndexMethod);
+            WorkloadLoader loader = new WorkloadLoader(set.dbName, set.workloadName, set.fileName,
+                    params.generateIndexMethod);
             set.plotNames.clear();
             set.figureNames.clear();
             SeqInumCost cost = loader.loadCost();
@@ -296,8 +280,7 @@ public class DATPaper {
             GnuPlot plot = null;
 
             int win = params.m_def;
-            plot = new GnuPlot(params.figsDir, set.shortName + "Xwindow",
-                    "window", "cost");
+            plot = new GnuPlot(params.figsDir, set.shortName + "Xwindow", "window", "cost");
             // int[] set2 = new int[win];
             // for (int i = 0; i < set2.length; i++)
             // set2[i] = i;
@@ -305,13 +288,10 @@ public class DATPaper {
             plot.setPlotNames(plotNames);
             set.plotNames.add(plot.name);
             set.figureNames.add("cost of each window");
-            if (exp || !plot.pltFile.exists()
-                    || plot.pltFile.lastModified() < rerunTime) {
-                File debugFile = new File(debugDir, plot.name + "_"
-                        + "window.xml");
-                DATPaper run = new DATPaper(loader, plot, win, null, win,
-                        spaceBudge, params.l_def, getAlpha(params._1mada_def),
-                        params.windowSize, debugFile);
+            if (exp || !plot.pltFile.exists() || plot.pltFile.lastModified() < rerunTime) {
+                File debugFile = new File(debugDir, plot.name + "_" + "window.xml");
+                DATPaper run = new DATPaper(loader, plot, win, null, win, spaceBudge, params.l_def,
+                        getAlpha(params._1mada_def), params.windowSize, debugFile);
                 plot.vs.clear();
                 plot.current.clear();
                 plot.xtics.clear();
@@ -327,78 +307,60 @@ public class DATPaper {
             plot.finish();
 
             if (!windowOnly) {
-                plot = new GnuPlot(params.figsDir, set.shortName + "Xm", "m",
-                        "cost");
+                plot = new GnuPlot(params.figsDir, set.shortName + "Xm", "m", "cost");
                 // plot.setXtics(params.m_set);
                 plot.setPlotNames(curNames);
                 set.plotNames.add(plot.name);
                 set.figureNames.add("differnt window size");
-                if (exp || !plot.pltFile.exists()
-                        || plot.pltFile.lastModified() < rerunTime) {
+                if (exp || !plot.pltFile.exists() || plot.pltFile.lastModified() < rerunTime) {
                     for (int m : params.m_set) {
-                        File debugFile = new File(debugDir, plot.name + "_" + m
-                                + ".xml");
-                        new DATPaper(loader, plot, m, null, m, spaceBudge,
-                                params.l_def, getAlpha(params._1mada_def),
+                        File debugFile = new File(debugDir, plot.name + "_" + m + ".xml");
+                        new DATPaper(loader, plot, m, null, m, spaceBudge, params.l_def, getAlpha(params._1mada_def),
                                 params.windowSize, debugFile);
                     }
                 }
                 plot.finish();
-                plot = new GnuPlot(params.figsDir, set.shortName + "Xspace",
-                        "space", "cost");
+                plot = new GnuPlot(params.figsDir, set.shortName + "Xspace", "space", "cost");
                 plot.setPlotNames(curNames);
                 set.plotNames.add(plot.name);
                 set.figureNames.add("different space budget");
                 // plot.setXtics(params.spaceFactor_names,
                 // params.spaceFactor_set);
-                if (exp || !plot.pltFile.exists()
-                        || plot.pltFile.lastModified() < rerunTime) {
+                if (exp || !plot.pltFile.exists() || plot.pltFile.lastModified() < rerunTime) {
                     int i = 0;
                     for (int k = 0; k < params.spaceFactor_set.length; k++) {
                         double spaceFactor = params.spaceFactor_set[k];
                         long space = (long) (set.size * spaceFactor);
-                        File debugFile = new File(debugDir, plot.name + "_"
-                                + params.spaceFactor_names[i] + ".xml");
-                        new DATPaper(loader, plot, spaceFactor,
-                                params.spaceFactor_names[k], params.m_def,
-                                space, params.l_def,
-                                getAlpha(params._1mada_def), params.windowSize,
-                                debugFile);
+                        File debugFile = new File(debugDir, plot.name + "_" + params.spaceFactor_names[i] + ".xml");
+                        new DATPaper(loader, plot, spaceFactor, params.spaceFactor_names[k], params.m_def, space,
+                                params.l_def, getAlpha(params._1mada_def), params.windowSize, debugFile);
                         i++;
                     }
                 }
                 plot.finish();
-                plot = new GnuPlot(params.figsDir, set.shortName + "Xl", "l",
-                        "cost");
+                plot = new GnuPlot(params.figsDir, set.shortName + "Xl", "l", "cost");
                 // plot.setXtics(params.l_set);
                 plot.setPlotNames(curNames);
                 set.plotNames.add(plot.name);
                 set.figureNames.add("maximum indexes per window");
-                if (exp || !plot.pltFile.exists()
-                        || plot.pltFile.lastModified() < rerunTime) {
+                if (exp || !plot.pltFile.exists() || plot.pltFile.lastModified() < rerunTime) {
                     for (int l : params.l_set) {
-                        File debugFile = new File(debugDir, plot.name + "_" + l
-                                + ".xml");
-                        new DATPaper(loader, plot, l, null, params.m_def,
-                                spaceBudge, l, getAlpha(params._1mada_def),
+                        File debugFile = new File(debugDir, plot.name + "_" + l + ".xml");
+                        new DATPaper(loader, plot, l, null, params.m_def, spaceBudge, l, getAlpha(params._1mada_def),
                                 params.windowSize, debugFile);
                     }
                 }
                 plot.finish();
-                plot = new GnuPlot(params.figsDir, set.shortName + "X1mada",
-                        "(1-a)/a", "cost");
+                plot = new GnuPlot(params.figsDir, set.shortName + "X1mada", "(1-a)/a", "cost");
                 // plot.setXtics(params._1mada_set);
                 plot.setPlotNames(curNames);
                 set.plotNames.add(plot.name);
                 set.figureNames.add("alpha");
-                if (exp || !plot.pltFile.exists()
-                        || plot.pltFile.lastModified() < rerunTime) {
+                if (exp || !plot.pltFile.exists() || plot.pltFile.lastModified() < rerunTime) {
                     for (int _1mada : params._1mada_set) {
                         double alpha = getAlpha(_1mada);
-                        File debugFile = new File(debugDir, plot.name + "_"
-                                + _1mada + ".xml");
-                        new DATPaper(loader, plot, _1mada, null, params.m_def,
-                                spaceBudge, params.l_def, alpha,
+                        File debugFile = new File(debugDir, plot.name + "_" + _1mada + ".xml");
+                        new DATPaper(loader, plot, _1mada, null, params.m_def, spaceBudge, params.l_def, alpha,
                                 params.windowSize, debugFile);
                     }
                 }
@@ -407,14 +369,13 @@ public class DATPaper {
 
         }
 
-        String windowSize = "cophyRecommendIndexes/m*"
-                + DATTest2.windowSizeParameter;
+        String windowSize = "cophyRecommendIndexes/m*" + DATTest2.windowSizeParameter;
         if (params.windowSize > 0) {
             windowSize = String.format("%,d", params.windowSize);
         }
         if (!windowOnly)
-            DATPaperOthers.generatePdf(new File(params.outputDir,
-                    params.generateIndexMethod.replace(' ', '_') + ".tex"),
-                    params, sets, windowSize);
+            DATPaperOthers.generatePdf(
+                    new File(params.outputDir, params.generateIndexMethod.replace(' ', '_') + ".tex"), params, sets,
+                    windowSize);
     }
 }

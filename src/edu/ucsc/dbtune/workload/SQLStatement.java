@@ -24,6 +24,9 @@ public class SQLStatement implements Serializable
     /** The frequency of the statement in the workload */
     private int fq;
     
+    /** The comment before the statement */
+    private String comment;
+    
     
     /**
      * Constructs a {@code SQLStatement}. The constructor tries to infer the category of the 
@@ -100,6 +103,23 @@ public class SQLStatement implements Serializable
     {
         this.fq = fq;
     }
+    
+    /**
+     * Set comment
+     * @return
+     */
+    public String getComment() {
+        return comment;
+    }
+
+    /**
+     * Get comment
+     * @return
+     */
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+    
     /**
      * {@inheritDoc}
      */

@@ -28,6 +28,9 @@ public class SeqInumQuery implements Serializable {
 
     // performance variables
     public double timeUsedToLoad;
+    
+    //table size of updated table
+    public int tableSize;
 
     public SeqInumQuery(int id) {
         this.id = id;
@@ -67,6 +70,8 @@ public class SeqInumQuery implements Serializable {
         rx.setAttribute("id", id);
         rx.setAttribute("name", name);
         rx.createChild("sql", sql.getSQL());
+        rx.createChild("sqlType", sql.getSQLCategory().name());
+        rx.createChild("tableSize", tableSize);
         rx.createChild("timeUsedToLoad", timeUsedToLoad);
         rx.setAttribute("baseTableUpdateCost", baseTableUpdateCost);
         Rx update = rx.createChild("updateCosts");
@@ -84,6 +89,7 @@ public class SeqInumQuery implements Serializable {
         id = rx.getIntAttribute("id");
         name = rx.getAttribute("name");
         sql = new SQLStatement(rx.getChildText("sql"));
+        tableSize = rx.getIntAttribute("tableSize");
         timeUsedToLoad = rx.getChildDoubleContent("timeUsedToLoad");
         baseTableUpdateCost = rx.getDoubleAttribute("baseTableUpdateCost");
         Rx update = rx.findChild("updateCosts");

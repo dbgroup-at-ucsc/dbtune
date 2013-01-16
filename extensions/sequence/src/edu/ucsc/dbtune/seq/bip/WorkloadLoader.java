@@ -46,8 +46,7 @@ public class WorkloadLoader {
     public String fileName;
     public String generateIndexMethod = "recommend";
 
-    public WorkloadLoader(String dbName, String workloadName, String fileName,
-            String generateIndexMethod) {
+    public WorkloadLoader(String dbName, String workloadName, String fileName, String generateIndexMethod) {
         this.dbName = dbName;
         this.workloadName = workloadName;
         this.fileName = fileName;
@@ -68,38 +67,33 @@ public class WorkloadLoader {
             db.getConnection().close();
     }
 
-    public Workload getWorkload(Environment en) throws IOException,
-            SQLException {
+    public Workload getWorkload(Environment en) throws IOException, SQLException {
         String file = "/" + workloadName + "/" + fileName;
-        Workload workload = new Workload("", new FileReader(en
-                .getWorkloadsFoldername()
-                + file));
-        Rt.np("workload size: " + workload.size());
-        StringBuilder sb = new StringBuilder();
-        int count = 0;
-        all: while (true) {
-            for (int i = 0; i < workload.size(); i++) {
-                sb.append(workload.get(i).getSQL() + ";\r\n");
-                count++;
-                if (querySize != 0 && count >= querySize)
-                    break all;
-            }
-            if (querySize == 0)
-                break;
-        }
-        return new Workload("", new StringReader(sb.toString()));
+        return new Workload("", new FileReader(en.getWorkloadsFoldername() + file));
+//        Rt.np("workload size: " + workload.size());
+//        StringBuilder sb = new StringBuilder();
+//        int count = 0;
+//        all: while (true) {
+//            for (int i = 0; i < workload.size(); i++) {
+//                sb.append(workload.get(i).getSQL() + ";\r\n");
+//                count++;
+//                if (querySize != 0 && count >= querySize)
+//                    break all;
+//            }
+//            if (querySize == 0)
+//                break;
+//        }
+//        return new Workload("", new StringReader(sb.toString()));
     }
 
-    public Set<Index> getIndexes(Workload workload, DatabaseSystem db)
-            throws Exception {
+    public Set<Index> getIndexes(Workload workload, DatabaseSystem db) throws Exception {
         // Rt.runAndShowCommand("db2 connect to test");
         // HashSet<Index> set=new HashSet<Index>();
         // for (int i = 0; i <= 9; i++) {
         // Rt.runAndShowCommand("db2 set current query optimization = "+i);
         File dir = new File(cacheRoot, "index/" + dbName + "/" + workloadName);
         dir.mkdirs();
-        File cacheFile = new File(dir, this.fileName + "_"
-                + generateIndexMethod + "_" + spaceMB + ".xml");
+        File cacheFile = new File(dir, this.fileName + "_" + generateIndexMethod + "_" + spaceMB + ".xml");
         Set<Index> indexes = new HashSet<Index>();
         if (cacheFile.exists()) {
             Rx root = Rx.findRoot(Rt.readFile(cacheFile));
@@ -110,8 +104,7 @@ public class WorkloadLoader {
                 for (int i = 0; i < columns.length; i++) {
                     String s = columns[i].getText();
                     String cname = s.substring(0, s.indexOf('('));
-                    Column c = (Column) db.getCatalog().findByQualifiedName(
-                            cname);
+                    Column c = (Column) db.getCatalog().findByQualifiedName(cname);
                     if (c == null)
                         throw new Error(cname);
                     v.add(c);
@@ -128,19 +121,16 @@ public class WorkloadLoader {
                 // getBaseOptimizer(db.getOptimizer()));
                 // indexes = candGen.generate(workload);
                 if (spaceMB == 0) {
-                    DB2AdvisorCandidateGenerator candGen = new DB2AdvisorCandidateGenerator(
-                            db2Advis);
+                    DB2AdvisorCandidateGenerator candGen = new DB2AdvisorCandidateGenerator(db2Advis);
                     indexes = candGen.generate(workload);
                 } else {
                     db2Advis.process(workload);
                     indexes = db2Advis.getRecommendation(spaceMB);
                 }
             } else if (generateIndexMethod.startsWith("powerset")) {
-                int size = Integer.parseInt(generateIndexMethod.substring(
-                        "powerset".length()).trim());
-                CandidateGenerator candGen = new PowerSetOptimalCandidateGenerator(
-                        db.getOptimizer(), new OptimizerCandidateGenerator(
-                                getBaseOptimizer(db.getOptimizer())), size);
+                int size = Integer.parseInt(generateIndexMethod.substring("powerset".length()).trim());
+                CandidateGenerator candGen = new PowerSetOptimalCandidateGenerator(db.getOptimizer(),
+                        new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())), size);
                 indexes = candGen.generate(workload);
             } else {
                 throw new Error(generateIndexMethod);
@@ -150,8 +140,7 @@ public class WorkloadLoader {
             for (Index index : indexes) {
                 Rx rx2 = rx.createChild("index");
                 for (Column col : index) {
-                    rx2.createChild("column", col
-                            + (index.isAscending(col) ? "(A)" : "(D)"));
+                    rx2.createChild("column", col + (index.isAscending(col) ? "(A)" : "(D)"));
                 }
             }
             Rt.write(cacheFile, rx.getXml().getBytes());
@@ -209,11 +198,9 @@ public class WorkloadLoader {
     public Set<Index> overrideIndexes;
 
     public SeqInumCost loadCost() throws Exception {
-        File dir = new File(cacheRoot, generateIndexMethod + "/" + dbName + "/"
-                + workloadName);
+        File dir = new File(cacheRoot, generateIndexMethod + "/" + dbName + "/" + workloadName);
         dir.mkdirs();
-        File file = new File(dir, fileName + "_"
-                + (spaceMB == 0 ? "" : "_" + spaceMB) + ".xml");
+        File file = new File(dir, fileName + "_" + (spaceMB == 0 ? "" : "_" + spaceMB) + ".xml");
         SeqInumCost cost = null;
         Workload workload = getWorkload();
         if (file.exists()) {
@@ -225,8 +212,7 @@ public class WorkloadLoader {
                 db = newDatabaseSystem(en);
 
             RTimer timer = new RTimer();
-            Set<Index> indexes = overrideIndexes != null ? overrideIndexes
-                    : getIndexes(workload, db);
+            Set<Index> indexes = overrideIndexes != null ? overrideIndexes : getIndexes(workload, db);
             timer.finish("recommend indexes");
 
             InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
@@ -240,8 +226,7 @@ public class WorkloadLoader {
             if (db == null) {
                 db = newDatabaseSystem(en);
                 InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
-                DB2Optimizer db2optimizer = (DB2Optimizer) optimizer
-                        .getDelegate();
+                DB2Optimizer db2optimizer = (DB2Optimizer) optimizer.getDelegate();
                 Rx rx = Rx.findRoot(Rt.readFile(file));
                 cost = SeqInumCost.loadFromXml(rx, db);
                 cost.optimizer = optimizer;
@@ -271,16 +256,14 @@ public class WorkloadLoader {
             // dat.setOptimizer(optimizer);
             PerfTest.startTimer();
             // Rt.p("get index benefit 1");
-            double costWithoutIndex = DATWindow.costWithIndex(cost,
-                    new boolean[cost.indexCount()]);
+            double costWithoutIndex = DATWindow.costWithIndex(cost, new boolean[cost.indexCount()]);
             cost.costWithoutIndex = costWithoutIndex;
             Rt.error("skip index benefit ERROR");
             if (false) {
                 for (SeqInumIndex index : cost.indices) {
                     if (index.indexBenefit < 0.01) {
                         Rt.p("index benefit " + index.id);
-                        index.indexBenefit = costWithoutIndex
-                                - DATWindow.costWithIndex(cost, index.id);
+                        index.indexBenefit = costWithoutIndex - DATWindow.costWithIndex(cost, index.id);
                         cost.save(file);
                     }
                 }
@@ -290,8 +273,7 @@ public class WorkloadLoader {
             cost.save(file);
         }
         if (cost.costWithoutIndex < 0.1) {
-            double costWithoutIndex = DATWindow.costWithIndex(cost,
-                    new boolean[cost.indexCount()]);
+            double costWithoutIndex = DATWindow.costWithIndex(cost, new boolean[cost.indexCount()]);
             cost.costWithoutIndex = costWithoutIndex;
             cost.save(file);
         }
