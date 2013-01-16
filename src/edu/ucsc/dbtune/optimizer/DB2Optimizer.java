@@ -1424,8 +1424,19 @@ public class DB2Optimizer extends AbstractOptimizer {
             Set<Index> indexes, Index index) throws SQLException {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("SELECT *");
+        // The query to estimate creation cost
+        // SELECT columns_in_index
+        // FROM relation
+        // ORDER BY columns_in_index
+        
+        sb.append("SELECT ");        
+        for (Column c : index.columns())
+            sb.append(c.getName() + ", ");        
+        sb.delete(sb.length() - 2, sb.length() - 1);
+        
+        // from clause
         sb.append("  FROM ").append(index.getTable().getFullyQualifiedName());
+        // order by
         sb.append("  ORDER BY ");
 
         for (Column c : index.columns())
