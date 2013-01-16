@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
 import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
 import edu.ucsc.dbtune.seq.def.SeqIndex;
 import edu.ucsc.dbtune.seq.def.SeqStepConf;
 import edu.ucsc.dbtune.seq.utils.RTimerN;
@@ -30,6 +31,9 @@ public class DATPaper {
     public static boolean eachWindowContainsOneQuery = false;
     public static boolean useDB2Optimizer = false;
     public static boolean verifyByDB2Optimizer = false;
+    public static double updateRatio = 0.01;
+    public static boolean noAlphaBeta = false;
+
     public static String[] plotNames = new String[] { "DAT", "GREEDY-SEQ"
     // "DB2", "DA"
     };
@@ -64,12 +68,22 @@ public class DATPaper {
             SeqInumIndex index = cost.indices.get(i);
             totalCost += index.createCost;
         }
+        for (int i = 0; i < cost.queries.size(); i++) {
+            SeqInumQuery query = cost.queries.get(i);
+            if (!"select".equalsIgnoreCase(query.sql.getSQLCategory().name())) {
+                query.weight = query.tableSize * updateRatio;
+            }
+        }
         windowConstraints = new double[m];
 
         if (alpha < 0 || alpha > 1)
             throw new Error();
         this.alpha = alpha;
         this.beta = 1 - alpha;
+        if (noAlphaBeta) {
+            this.alpha = 1;
+            this.beta = 1;
+        }
         for (int i = 0; i < windowConstraints.length; i++)
             windowConstraints[i] = windowSize;
         cost.storageConstraint = spaceBudge;
@@ -223,9 +237,15 @@ public class DATPaper {
         boolean windowOnly = false;
         long tpchWindowSize = 20 * 3600 * 3000;
         long tpcdsWindowSize = 10 * 3600 * 3000;
-        // addTransitionCostToObjective = true;
-        //        eachWindowContainsOneQuery = true;
-//        params.l_def = 10000;
+        boolean workloadAsSequence = false;
+        workloadAsSequence = true;
+        if (workloadAsSequence) {
+            addTransitionCostToObjective = true;
+            eachWindowContainsOneQuery = true;
+            params.l_def = 10000;
+            params.windowSizeForce = Long.MAX_VALUE;
+            noAlphaBeta = true;
+        }
         // useDB2Optimizer = true;
         //         verifyByDB2Optimizer=true;
 
@@ -235,15 +255,14 @@ public class DATPaper {
 
         long gigbytes = 1024L * 1024L * 1024L;
         TestSet[] sets = { //
-        //        new TestSet("TPCH", "tpch10g", "deployAware", "tpchPaper.sql", 10 * gigbytes, "tpch",//
-        //                tpchWindowSize),
-//        new TestSet("TPCDS", "test", "deployAware", "tpcdsPaper.sql", 10 * gigbytes, "tpcds", tpcdsWindowSize),
+        new TestSet("TPCH", "tpch10g", "deployAware", "tpchPaper.sql", 10 * gigbytes, "tpch",//
+                tpchWindowSize),
+                new TestSet("TPCDS", "test", "deployAware", "tpcdsPaper.sql", 10 * gigbytes, "tpcds", tpcdsWindowSize),
         // new TestSet("63 TPCDS queries", "test", "deployAware",
         // "TPCDS63.sql", 10 * gigbytes, "TPCDS63",
         // tpcdsWindowSize),
-                new TestSet("63 TPCDS queries update", "test", "deployAware",
-                        "tpcds-update.sql", 10 * gigbytes, "tpcdsupdate",
-                        tpcdsWindowSize),
+        //        new TestSet("63 TPCDS queries update", "test", "deployAware", "tpcds-update.sql", 10 * gigbytes, "tpcdsupdate",
+        //                tpcdsWindowSize),
         // new TestSet("15 TPCDS update queries", "test", "tpcds", "update.sql",
         // 10 * gigbytes, "TPCDSU15"),
         // new TestSet("81 OTAB queries", "test", "deployAware",
@@ -255,7 +274,6 @@ public class DATPaper {
         // "online-benchmark-update-100", 10 * gigbytes,
         // "OTAB update"),
         };
-        sets[0].windowSize = Long.MAX_VALUE;
 
         File debugDir = new File(WorkloadLoaderSettings.dataRoot + "/debug");
         GnuPlot.defaultStyle = GnuPlot.Style.histograms;
@@ -264,6 +282,8 @@ public class DATPaper {
         for (TestSet set : sets) {
             if (set.windowSize != 0)
                 params.windowSize = set.windowSize;
+            if (params.windowSizeForce != 0)
+                params.windowSize = params.windowSizeForce;
             Rt.p(set.dbName + " " + set.workloadName + " " + set.fileName);
             WorkloadLoader loader = new WorkloadLoader(set.dbName, set.workloadName, set.fileName,
                     params.generateIndexMethod);

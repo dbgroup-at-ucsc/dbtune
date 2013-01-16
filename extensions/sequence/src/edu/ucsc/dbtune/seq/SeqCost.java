@@ -185,8 +185,7 @@ public class SeqCost {
         return cost;
     }
 
-    public static double getCreateIndexCost(Optimizer optimizer, Index a,
-            SeqInumIndex q) throws SQLException {
+    public static double getCreateIndexCost(Optimizer optimizer, Index a, SeqInumIndex q) throws SQLException {
         StringBuilder sql = new StringBuilder();
         sql.append("select ");
         boolean first = true;
@@ -197,16 +196,14 @@ public class SeqCost {
                 sql.append(",");
             sql.append(col.getName());
         }
-        sql.append(" from " + a.getSchema().getName() + "."
-                + a.getTable().getName() + " order by");
+        sql.append(" from " + a.getSchema().getName() + "." + a.getTable().getName() + " order by");
         first = true;
         for (Column col : a) {
             if (first)
                 first = false;
             else
                 sql.append(",");
-            sql.append(" " + col.getName()
-                    + (a.isAscending(col) ? " asc" : " desc"));
+            sql.append(" " + col.getName() + (a.isAscending(col) ? " asc" : " desc"));
         }
         RTimerN timer = new RTimerN();
         if (q != null)
@@ -233,8 +230,7 @@ public class SeqCost {
                 sql.append("+");
             sql.append("length(" + col.getName() + ")");
         }
-        sql.append(") from " + a.getSchema().getName() + "."
-                + a.getTable().getName());
+        sql.append(") from " + a.getSchema().getName() + "." + a.getTable().getName());
         RTimerN timer = new RTimerN();
         Rt.p(sql);
         st.execute(sql.toString());
@@ -251,8 +247,8 @@ public class SeqCost {
     public static long plugInTime = 0;
     public static int plugInCount = 0;
 
-    public static SeqCost fromOptimizer(DatabaseSystem db, Optimizer optimizer,
-            Workload workload, Index[] indices) throws SQLException {
+    public static SeqCost fromOptimizer(DatabaseSystem db, Optimizer optimizer, Workload workload, Index[] indices)
+            throws SQLException {
         SeqCost costModel = new SeqCost();
         costModel.optimizer = optimizer;
 
@@ -280,18 +276,15 @@ public class SeqCost {
             // Rt.np(sql);
             RTimerN timer = new RTimerN();
             if (optimizer instanceof edu.ucsc.dbtune.optimizer.InumOptimizer) {
-                q.inum = (InumPreparedSQLStatement) optimizer
-                        .prepareExplain(q.sql);
+                q.inum = (InumPreparedSQLStatement) optimizer.prepareExplain(q.sql);
                 populateTime += timer.getSecondElapse();
                 Rt.p("GREEDY INUM populate time: " + timer.getSecondElapse());
                 totalWhatIfNanoTime += timer.get();
                 timer.reset();
-                q.costWithoutIndex = q.inum.explain(new HashSet<Index>())
-                        .getTotalCost();
+                q.costWithoutIndex = q.inum.explain(new HashSet<Index>()).getTotalCost();
             } else {
                 SQLStatementPlan sqlPlan = optimizer.explain(q.sql).getPlan();
-                q.costWithoutIndex = sqlPlan.getRootOperator()
-                        .getAccumulatedCost();
+                q.costWithoutIndex = sqlPlan.getRootOperator().getAccumulatedCost();
                 if (true)
                     throw new Error();
             }
@@ -357,6 +350,7 @@ public class SeqCost {
             q.name = "Q" + queryId;
             q.inumCached = cost.queries.get(queryId);
             q.sql = q.inumCached.sql;
+            q.weight = q.inumCached.weight;
             q.costWithoutIndex = q.inumCached.cost(new SeqInumIndex[0]);
             SeqQuerySet set = new SeqQuerySet();
             set.name = q.name;
@@ -370,8 +364,7 @@ public class SeqCost {
         return costModel;
     }
 
-    public static SeqCost multiWindows(SeqInumCost cost, int windows)
-            throws SQLException {
+    public static SeqCost multiWindows(SeqInumCost cost, int windows) throws SQLException {
         SeqCost costModel = new SeqCost();
         costModel.addTransitionCostToObjective = cost.addTransitionCostToObjective;
         int indexId = 0;
@@ -400,6 +393,7 @@ public class SeqCost {
                 q.name = "Q" + queryId;
                 q.inumCached = cost.queries.get(queryId);
                 q.sql = q.inumCached.sql;
+                q.weight = q.inumCached.weight;
                 q.costWithoutIndex = q.inumCached.cost(new SeqInumIndex[0]);
                 set.queries[queryId] = q;
             }
@@ -413,8 +407,7 @@ public class SeqCost {
     }
 
     public SeqConfiguration[] getAllConfigurations(Vector<SeqIndex> indices) {
-        return getAllConfigurations(indices
-                .toArray(new SeqIndex[indices.size()]));
+        return getAllConfigurations(indices.toArray(new SeqIndex[indices.size()]));
     }
 
     private SeqConfiguration empty = new SeqConfiguration(new SeqIndex[0]);
@@ -445,8 +438,7 @@ public class SeqCost {
                 if (vs.size() == 0)
                     cs.add(empty);
                 else
-                    cs.add(new SeqConfiguration(vs.toArray(new SeqIndex[vs
-                            .size()])));
+                    cs.add(new SeqConfiguration(vs.toArray(new SeqIndex[vs.size()])));
             }
         }
         return cs.toArray(new SeqConfiguration[cs.size()]);
@@ -479,46 +471,40 @@ public class SeqCost {
         return cost;
     }
 
-    public double verifyCost(int stepId, DatabaseSystem db,
-            DB2Optimizer optimizer, SeqStepConf conf) throws Exception {
+    public double verifyCost(int stepId, DatabaseSystem db, DB2Optimizer optimizer, SeqStepConf conf) throws Exception {
         double cost = 0;
         HashSet<Index> indexes = conf.configuration.getIndexes(db, optimizer);
         for (SeqQuery query : sequence[stepId].queries) {
-            ExplainedSQLStatement explain = optimizer.explain(query.sql,
-                    indexes);
+            ExplainedSQLStatement explain = optimizer.explain(query.sql, indexes);
             double qcost = explain.getTotalCost();
             cost += qcost;
         }
         return cost;
     }
 
-    public double getCost(SeqQuerySet queries, SeqConfiguration conf)
-            throws SQLException {
+    public double getCost(SeqQuerySet queries, SeqConfiguration conf) throws SQLException {
         double cost = 0;
         for (SeqQuery q : queries.queries)
             cost += getCost(q, conf);
         return cost;
     }
 
-    public double getCost(SeqQuery q, SeqConfiguration conf)
-            throws SQLException {
+    public double getCost(SeqQuery q, SeqConfiguration conf) throws SQLException {
         Double d = q.costCache.get(conf);
         if (d != null)
-            return d;
+            return d * q.weight;
         whatIfCount++;
         double cost = 0;
         if (useDB2Optimizer) {
             HashSet<Index> allIndexes = new HashSet<Index>();
             for (SeqIndex i : conf.indices)
                 allIndexes.add(i.inumIndex.loadIndex(db));
-            ExplainedSQLStatement explain = optimizer
-                    .explain(q.sql, allIndexes);
+            ExplainedSQLStatement explain = optimizer.explain(q.sql, allIndexes);
             cost = explain.getTotalCost();
         } else if (q.inumCached != null) {
             SeqInumIndex[] indexes = new SeqInumIndex[conf.indices.length];
-            for (int i = 0; i < conf.indices.length; i++) {
+            for (int i = 0; i < conf.indices.length; i++)
                 indexes[i] = conf.indices[i].inumIndex;
-            }
             cost = q.inumCached.cost(indexes);
         } else if (optimizer != null) {
             HashSet<Index> allIndexes = new HashSet<Index>();
@@ -531,8 +517,7 @@ public class SeqCost {
                     // Rt.p("GREEDY INUM plugin time: " +
                     // timer.getSecondElapse());
                 } else {
-                    ExplainedSQLStatement explain = optimizer.explain(q.sql,
-                            allIndexes);
+                    ExplainedSQLStatement explain = optimizer.explain(q.sql, allIndexes);
                     cost = explain.getTotalCost();
                 }
                 totalWhatIfNanoTime += timer.get();
@@ -545,8 +530,7 @@ public class SeqCost {
                 }
                 e.printStackTrace();
                 RTimerN timer = new RTimerN();
-                ExplainedSQLStatement explain = optimizer.explain(q.sql,
-                        allIndexes);
+                ExplainedSQLStatement explain = optimizer.explain(q.sql, allIndexes);
                 totalWhatIfNanoTime += timer.get();
                 cost = explain.getTotalCost();
             }
@@ -565,6 +549,6 @@ public class SeqCost {
             }
         }
         q.costCache.put(conf, cost);
-        return cost;
+        return cost * q.weight;
     }
 }

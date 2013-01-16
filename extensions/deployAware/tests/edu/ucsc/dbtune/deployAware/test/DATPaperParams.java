@@ -24,6 +24,7 @@ public class DATPaperParams {
     String generateIndexMethod = "recommend";
     boolean exp5 = true; // rerun experiment
     long windowSize = 0;
+    long windowSizeForce = 0;
 
     public DATPaperParams() {
         spaceFactor_def = 2;

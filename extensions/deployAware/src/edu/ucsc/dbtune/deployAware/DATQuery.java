@@ -22,6 +22,7 @@ public class DATQuery {
 
     public void addObjective(IloLinearNumExpr expr, double coefficient)
             throws IloException {
+        coefficient*=q.weight;
         for (DATInumPlan plan : plans)
             plan.addObjective(coefficient, expr);
         for (int i = 0; i < window.totalIndices; i++) {
@@ -46,7 +47,7 @@ public class DATQuery {
             // Rt.p(this.q.id + " " + plan.p.id + " " + pcost);
             cost += pcost;
         }
-        return cost;
+        return cost*q.weight;
     }
 
     public void addConstriant(CPlexWrapper cplex) throws IloException {

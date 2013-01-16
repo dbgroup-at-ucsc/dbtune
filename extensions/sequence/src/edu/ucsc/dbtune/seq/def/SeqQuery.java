@@ -11,6 +11,7 @@ public class SeqQuery {
     public int id; // for sorting after split and merge
     public String name;
     public SQLStatement sql;
+    public double weight=1;
     public double costWithoutIndex;
     public SeqIndex[] relevantIndices;
     public InumPreparedSQLStatement inum;
