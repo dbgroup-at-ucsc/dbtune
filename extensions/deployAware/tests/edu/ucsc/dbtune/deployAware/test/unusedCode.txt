@@ -52,3 +52,20 @@
             }
             System.exit(0);
         }
+
+                // new TestSet("63 TPCDS queries", "test", "deployAware",
+        // "TPCDS63.sql", 10 * gigbytes, "TPCDS63",
+        // tpcdsWindowSize),
+        //        new TestSet("63 TPCDS queries update", "test", "deployAware", "tpcds-update.sql", 10 * gigbytes, "tpcdsupdate",
+        //                tpcdsWindowSize),
+        // new TestSet("15 TPCDS update queries", "test", "tpcds", "update.sql",
+        // 10 * gigbytes, "TPCDSU15"),
+        // new TestSet("81 OTAB queries", "test", "deployAware",
+        // "OTAB86.sql", 10 * gigbytes, "OTAB86"),
+        // new TestSet("170 OST queries", "test", "OST", 10 * gigbytes),
+        // new TestSet("100 OTAB  queries", "test",
+        // "online-benchmark-100", 10 * gigbytes, "OTAB"),
+        // new TestSet("100 OTAB queries and 10 updates", "test",
+        // "online-benchmark-update-100", 10 * gigbytes,
+        // "OTAB update"),
+        

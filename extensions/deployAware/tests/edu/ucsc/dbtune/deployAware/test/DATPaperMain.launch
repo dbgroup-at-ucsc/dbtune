@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/deployAware/extensions/deployAware/tests/edu/ucsc/dbtune/deployAware/test/DATPaper.java"/>
+<listEntry value="/deployAware/extensions/deployAware/tests/edu/ucsc/dbtune/deployAware/test/DATPaperMain.java"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="1"/>
@@ -10,7 +10,7 @@
 <mapEntry key="ILOG_LICENSE_FILE" value="/data/b/cplex/access.ilm"/>
 <mapEntry key="PATH" value="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/home/db2inst1/sqllib/bin:/home/db2inst1/sqllib/adm:/home/db2inst1/sqllib/misc"/>
 </mapAttribute>
-<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="edu.ucsc.dbtune.deployAware.test.DATPaper"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="edu.ucsc.dbtune.deployAware.test.DATPaperMain"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="deployAware"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djava.library.path=lib -Xmx1200m"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djava.library.path=lib -Xmx2g"/>
 </launchConfiguration>

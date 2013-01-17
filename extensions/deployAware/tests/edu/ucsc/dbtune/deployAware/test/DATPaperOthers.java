@@ -29,21 +29,18 @@ public class DATPaperOthers {
     public static void generateIndexes(TestSet[] sets) throws Exception {
         for (String method : new String[] { "recommend", "powerset 2" }) {
             for (TestSet set : sets) {
-                WorkloadLoader loader = new WorkloadLoader(set.dbName,
-                        set.workloadName, set.fileName, method);
+                WorkloadLoader loader = new WorkloadLoader(set.dbName, set.workloadName, set.fileName, method);
                 loader.getIndexes();
             }
         }
         System.exit(0);
     }
 
-    public static void testBipAccuracy(TestSet[] sets,
-            String generateIndexMethod) throws Exception {
+    public static void testBipAccuracy(TestSet[] sets, String generateIndexMethod) throws Exception {
         for (TestSet set : sets) {
             Rt.p(set.dbName + " " + set.workloadName + " " + set.fileName);
             PrintStream ps = System.out;
-            WorkloadLoader loader = new WorkloadLoader(set.dbName,
-                    set.workloadName, set.fileName, generateIndexMethod);
+            WorkloadLoader loader = new WorkloadLoader(set.dbName, set.workloadName, set.fileName, generateIndexMethod);
             SeqInumCost cost = loader.loadCost();
             DATParameter param = new DATParameter();
             param.spaceConstraint = Double.MAX_VALUE;
@@ -52,8 +49,7 @@ public class DATPaperOthers {
             boolean[] bs = new boolean[cost.indexCount()];
             Arrays.fill(bs, true);
             double[] ds = DATBaselines.getQueryCost(cost, bs);
-            double[] fts = DATBaselines.getQueryCost(cost, new boolean[cost
-                    .indexCount()]);
+            double[] fts = DATBaselines.getQueryCost(cost, new boolean[cost.indexCount()]);
 
             Environment en = Environment.getInstance();
             String dbName = set.dbName;
@@ -76,8 +72,7 @@ public class DATPaperOthers {
             double inumIndexAll = 0;
             double inumFtsAll = 0;
             for (int i = 0; i < ds.length; i++) {
-                ExplainedSQLStatement db2plan = db2optimizer.explain(
-                        cost.queries.get(i).sql, indexes);
+                ExplainedSQLStatement db2plan = db2optimizer.explain(cost.queries.get(i).sql, indexes);
                 double db2index = db2plan.getTotalCost();
 
                 db2plan = db2optimizer.explain(cost.queries.get(i).sql);
@@ -87,9 +82,10 @@ public class DATPaperOthers {
                 inumIndexAll += ds[i];
                 inumFtsAll += fts[i];
 
-                Rt.np("query=%d\tDB2(FTS)=%,.0f\tBIP(FTS)=%,.0f"
-                        + "\tDB2(Index)=%,.0f\tBIP(Index)=%,.0f\tBIP/DB2=%.2f",
-                        i, db2fts, fts[i], db2index, ds[i], ds[i] / db2index);
+                Rt.np(
+                        "query=%d\tDB2(FTS)=%,.0f\tBIP(FTS)=%,.0f"
+                                + "\tDB2(Index)=%,.0f\tBIP(Index)=%,.0f\tBIP/DB2=%.2f", i, db2fts, fts[i], db2index,
+                        ds[i], ds[i] / db2index);
             }
             Rt.np("DB2(FTS)=%,.0f", db2ftsAll);
             Rt.np("INUM(FTS)=%,.0f", inumFtsAll);
@@ -110,34 +106,27 @@ public class DATPaperOthers {
         System.exit(0);
     }
 
-    public static void generatePdf(File latexFile, DATPaperParams params,
-            TestSet[] sets,String windowSize) throws IOException {
+    public static void generatePdf(File latexFile, DATPaperParams params, TestSet[] sets, String windowSize)
+            throws IOException {
         {
             PrintStream ps = new PrintStream(latexFile);
-            ps.println("\\documentclass{vldb}}\n" + "\n"
-                    + "\\usepackage{graphicx}   % need for figures\n" + "\n"
-                    + "\\usepackage{subfigure}\n" + "\n"
-                    + "\\begin{document}\n" + "" + "");
+            ps.println("\\documentclass{vldb}}\n" + "\n" + "\\usepackage{graphicx}   % need for figures\n" + "\n"
+                    + "\\usepackage{subfigure}\n" + "\n" + "\\begin{document}\n" + "" + "");
             ps.println("\\textbf{default values:}\\\\");
-            ps.println("windowSize="+windowSize + "\\\\");
-            ps.println("spaceFactor=" + params.spaceFactor_def + "\\\\");
-            ps.println("l=" + params.l_def + "\\\\");
-            ps.println("m=" + params.m_def + "\\\\");
-            ps.println("(1-a)/a=" + params._1mada_def + "\\\\");
+            ps.println("windowFactor=" + params.winFactor.def + "\\\\");
+            ps.println("spaceFactor=" + params.spaceFactor.def + "\\\\");
+            ps.println("l=" + params.l.def + "\\\\");
+            ps.println("m=" + params.m.def + "\\\\");
+            ps.println("(1-a)/a=" + params._1mada.def + "\\\\");
             ps.println();
             for (int i = 0; i < sets[0].plotNames.size(); i++) {
-                File outputDir2 = new File(
-                        WorkloadLoaderSettings.dataRoot+"/dbtune.papers/deployment_aware_tuning/figs");
-                ps.println("\\begin{figure}\n" + "\\centering\n");
+                File outputDir2 = new File(WorkloadLoaderSettings.dataRoot
+                        + "/dbtune.papers/deployment_aware_tuning/figs");
+                ps.println("\\begin{figure}[htb]\n" + "\\centering\n");
                 for (TestSet set : sets) {
-                    ps
-                            .println("        \\begin{subfigure}["
-                                    + set.shortName
-                                    + "]\n"
-                                    + "                \\centering\n"
-                                    + "                \\includegraphics[scale=0.3]{figs/"
-                                    + set.plotNames.get(i) + ".eps}\n"
-                                    + "        \\end{subfigure}");
+                    ps.println("        \\begin{subfigure}[" + set.shortName + "]\n" + "                \\centering\n"
+                            + "                \\includegraphics[scale=0.3]{figs/" + set.plotNames.get(i) + ".eps}\n"
+                            + "        \\end{subfigure}");
                     // ps.println("\\begin{figure}\n" + "\\centering\n"
                     // + "\\includegraphics[scale=" + scale + "]{figs/"
                     // + set.plotNames.get(i) + ".eps}\n" + "\\caption{"
@@ -145,19 +134,14 @@ public class DATPaperOthers {
                     // // + "\\label{" + plot.name + "}\n"
                     // + "\\end{figure}\n" + "");
                     if (params.copyEps)
-                        Rt.copyFile(new File(params.figsDir, set.plotNames
-                                .get(i)
-                                + ".eps"), new File(outputDir2, set.plotNames
-                                .get(i)
-                                + ".eps"));
+                        Rt.copyFile(new File(params.figsDir, set.plotNames.get(i) + ".eps"), new File(outputDir2,
+                                set.plotNames.get(i) + ".eps"));
                 }
-                ps.println("\\caption{" + sets[0].figureNames.get(i) + "}\n"
-                        + "\\end{figure}");
+                ps.println("\\caption{" + sets[0].figureNames.get(i) + "}\n" + "\\end{figure}");
             }
             ps.println("\\end{document}\n");
             ps.close();
-            Rt.runAndShowCommand(params.latex + " -interaction=nonstopmode "
-                    + latexFile.getName(), params.outputDir);
+            Rt.runAndShowCommand(params.latex + " -interaction=nonstopmode " + latexFile.getName(), params.outputDir);
         }
         for (int i = 0; i < sets[0].plotNames.size(); i++) {
             latexFile = new File(params.outputDir, "_exp_" + (i + 1) + ".tex");
@@ -169,98 +153,98 @@ public class DATPaperOthers {
         }
     }
 
-    public static void generateSkylinePdf(File latexFile,
-            DATPaperParams params, TestSet[] sets) throws Exception {
-        PrintStream ps = new PrintStream(params.skylineLatexFile);
-        ps.println("\\documentclass{vldb}}\n" + "\n"
-                + "\\usepackage{graphicx}   % need for figures\n" + "\n"
-                + "\\usepackage{subfigure}\n" + "\n" + "\\begin{document}\n"
-                + "" + "");
-        for (TestSet set : sets) {
-            Rt.p(set.dbName + " " + set.workloadName);
-            long spaceBudge = (long) (set.size * params.spaceFactor_def);
-            GnuPlot2.uniform = true;
-            GnuPlot2 plot = new GnuPlot2(params.outputDir, set.shortName
-                    + "Xskyline", "r", "cost");
-            plot.setXtics(null, params.tau_set);
-            plot.setPlotNames(new String[] { "DAT" });
-            ps.println("\\begin{figure}\n" + "\\centering\n"
-                    + "\\includegraphics[scale=" + params.scale + "]{"
-                    + plot.name + ".eps}\n" + "\\caption{" + set.name
-                    + " skyline}\n"
-                    // + "\\label{" + plot.name + "}\n"
-                    + "\\end{figure}\n" + "");
-            if (params.exp5) {
-                double alpha = 0.000001;
-                double beta = 1 - alpha;
-                DATSeparateProcess dsp = new DATSeparateProcess(set.dbName,
-                        set.workloadName, set.fileName,
-                        params.generateIndexMethod, alpha, beta, params.m_def,
-                        params.l_def, spaceBudge, params.windowSize, 0);
-                dsp.run();
-                double p0int = dsp.datIntermediate;
-                for (double tau : params.tau_set) {
-                    dsp = new DATSeparateProcess(set.dbName, set.workloadName,
-                            set.fileName, params.generateIndexMethod, alpha,
-                            beta, params.m_def, params.l_def, spaceBudge,
-                            params.windowSize, p0int * tau);
-                    dsp.run();
-                    plot.add(tau, dsp.dat);
-                    plot.addLine();
-                }
-            }
-            plot.finish();
-        }
-        // ps.println("\\end{multicols}");
-        ps.println("\\end{document}\n");
-        ps.close();
-        Rt.runAndShowCommand(params.latex + " -interaction=nonstopmode "
-                + params.skylineLatexFile.getName(), params.outputDir);
-    }
+    //    public static void generateSkylinePdf(File latexFile,
+    //            DATPaperParams params, TestSet[] sets) throws Exception {
+    //        PrintStream ps = new PrintStream(params.skylineLatexFile);
+    //        ps.println("\\documentclass{vldb}}\n" + "\n"
+    //                + "\\usepackage{graphicx}   % need for figures\n" + "\n"
+//                + "\\usepackage{subfigure}\n" + "\n" + "\\begin{document}\n"
+//                + "" + "");
+    //        for (TestSet set : sets) {
+    //            Rt.p(set.dbName + " " + set.workloadName);
+    //            long spaceBudge = (long) (set.size * params.spaceFactor.def);
+    //            GnuPlot2.uniform = true;
+    //            GnuPlot2 plot = new GnuPlot2(params.outputDir, set.shortName
+    //                    + "Xskyline", "r", "cost");
+    //            plot.setXtics(null, params.tau_set);
+    //            plot.setPlotNames(new String[] { "DAT" });
+    //            ps.println("\\begin{figure}\n" + "\\centering\n"
+    //                    + "\\includegraphics[scale=" + params.scale + "]{"
+    //                    + plot.name + ".eps}\n" + "\\caption{" + set.name
+    //                    + " skyline}\n"
+    //                    // + "\\label{" + plot.name + "}\n"
+    //                    + "\\end{figure}\n" + "");
+    //            if (params.exp5) {
+    //                double alpha = 0.000001;
+    //                double beta = 1 - alpha;
+    //                DATSeparateProcess dsp = new DATSeparateProcess(set.dbName,
+    //                        set.workloadName, set.fileName,
+    //                        params.generateIndexMethod, alpha, beta, params.m.def,
+    //                        params.l.def, spaceBudge, params.windowSize, 0);
+    //                dsp.run();
+    //                double p0int = dsp.datIntermediate;
+    //                for (double tau : params.tau_set) {
+    //                    dsp = new DATSeparateProcess(set.dbName, set.workloadName,
+    //                            set.fileName, params.generateIndexMethod, alpha,
+    //                            beta, params.m.def, params.l.def, spaceBudge,
+    //                            params.windowSize, p0int * tau);
+    //                    dsp.run();
+    //                    plot.add(tau, dsp.dat);
+    //                    plot.addLine();
+    //                }
+    //            }
+    //            plot.finish();
+    //        }
+    //        // ps.println("\\end{multicols}");
+    //        ps.println("\\end{document}\n");
+    //        ps.close();
+    //        Rt.runAndShowCommand(params.latex + " -interaction=nonstopmode "
+    //                + params.skylineLatexFile.getName(), params.outputDir);
+    //    }
+    //
+    //    public static void runPerfTest(DATPaperParams params, TestSet[] sets)
+    //            throws Exception {
+    //        TestSet perfTest = sets[3];
+    //        DATSeparateProcess dsp = new DATSeparateProcess(perfTest.dbName,
+    //                perfTest.workloadName, perfTest.fileName,
+    //                params.generateIndexMethod, 0.5, 0.5, params.m_def,
+    //                params.l_def, Double.MAX_VALUE, params.windowSize, 0);
+    //        dsp.generatePerfReport = true;
+    //        dsp.run();
+    //    }
 
-    public static void runPerfTest(DATPaperParams params, TestSet[] sets)
-            throws Exception {
-        TestSet perfTest = sets[3];
-        DATSeparateProcess dsp = new DATSeparateProcess(perfTest.dbName,
-                perfTest.workloadName, perfTest.fileName,
-                params.generateIndexMethod, 0.5, 0.5, params.m_def,
-                params.l_def, Double.MAX_VALUE, params.windowSize, 0);
-        dsp.generatePerfReport = true;
-        dsp.run();
-    }
-
-    public static void runScalabilityTest(DATPaperParams params, TestSet[] sets)
-            throws Exception {
-        // 0 3
-        TestSet perfTest = sets[3];
-        WorkloadLoader loader = new WorkloadLoader(perfTest.dbName,
-                perfTest.workloadName, perfTest.fileName,
-                params.generateIndexMethod);
-        SeqInumCost cost = loader.loadCost();
-
-        PrintStream ps2 = new PrintStream(
-                WorkloadLoaderSettings.dataRoot+"/scalability.txt");
-        int start = 1;
-        int step = 1;
-        int end = start + 100 * step;
-        for (int i = start; i <= end; i += step) {
-            DATSeparateProcess dsp = new DATSeparateProcess(perfTest.dbName,
-                    perfTest.workloadName, perfTest.fileName,
-                    params.generateIndexMethod, 0.5, 0.5, params.m_def,
-                    params.l_def, Double.MAX_VALUE, params.windowSize, 0);
-            dsp.runGreedy = false;
-            dsp.runMKP = false;
-            dsp.dupWorkloadNTimes = i;
-            // dsp.generatePerfReport = true;
-            RTimerN timer = new RTimerN();
-            dsp.run();
-            ps2.format(cost.queries.size() * i + "\t%.3f\t%d\t%s\t%s\n", timer
-                    .getSecondElapse(), dsp.memoryUsed, perfTest.shortName,
-                    new Date().toString());
-            ps2.flush();
-        }
-        ps2.close();
-    }
+    //    public static void runScalabilityTest(DATPaperParams params, TestSet[] sets)
+    //            throws Exception {
+    //        // 0 3
+    //        TestSet perfTest = sets[3];
+    //        WorkloadLoader loader = new WorkloadLoader(perfTest.dbName,
+    //                perfTest.workloadName, perfTest.fileName,
+    //                params.generateIndexMethod);
+    //        SeqInumCost cost = loader.loadCost();
+    //
+    //        PrintStream ps2 = new PrintStream(
+    //                WorkloadLoaderSettings.dataRoot+"/scalability.txt");
+    //        int start = 1;
+    //        int step = 1;
+    //        int end = start + 100 * step;
+    //        for (int i = start; i <= end; i += step) {
+    //            DATSeparateProcess dsp = new DATSeparateProcess(perfTest.dbName,
+    //                    perfTest.workloadName, perfTest.fileName,
+    //                    params.generateIndexMethod, 0.5, 0.5, params.m_def,
+    //                    params.l_def, Double.MAX_VALUE, params.windowSize, 0);
+    //            dsp.runGreedy = false;
+    //            dsp.runMKP = false;
+    //            dsp.dupWorkloadNTimes = i;
+    //            // dsp.generatePerfReport = true;
+    //            RTimerN timer = new RTimerN();
+    //            dsp.run();
+    //            ps2.format(cost.queries.size() * i + "\t%.3f\t%d\t%s\t%s\n", timer
+    //                    .getSecondElapse(), dsp.memoryUsed, perfTest.shortName,
+    //                    new Date().toString());
+    //            ps2.flush();
+    //        }
+    //        ps2.close();
+    //    }
 
     public static void main(String[] args) {
 

@@ -352,27 +352,27 @@ public class DATDB2Baseline {
                 + "\\usepackage{subfigure}\n" + "\n" + "\\begin{document}\n"
                 + "" + "");
         params.scale = "0.6";
-        for (TestSet set : sets) {
-            for (int i = 3; i < params.spaceFactor_set.length; i++) {
-                double spaceFactor = params.spaceFactor_set[i];
-                String spaceName = params.spaceFactor_names[i];
-                // spaceFactor =
-                // params.spaceFactor_set[params.spaceFactor_set.length - 1];
-                long space = (long) (set.size * spaceFactor);
-                File file = new File("resources/workloads/db2/"
-                        + set.workloadName + "/" + set.fileName);
-                String outputPrefix = WorkloadLoaderSettings.dataRoot+"/paper/cache/db2/"
-                        + set.workloadName + "/" + set.fileName + spaceFactor;
-                DATDB2Baseline db2 = new DATDB2Baseline(alpha, set.dbName,
-                        file, space, spaceName, outputPrefix);
-                ps.println("\\begin{figure}\n" + "\\centering\n"
-                        + "\\includegraphics[scale=" + params.scale + "]{figs/"
-                        + db2.plot.name + ".eps}\n" + "\\caption{" + set.name
-                        + " space " + spaceName + "}\n"
-                        // + "\\label{" + plot.name + "}\n"
-                        + "\\end{figure}\n" + "");
-            }
-        }
+//        for (TestSet set : sets) {
+//            for (int i = 3; i < params.spaceFactor_set.length; i++) {
+//                double spaceFactor = params.spaceFactor_set[i];
+//                String spaceName = params.spaceFactor_names[i];
+//                // spaceFactor =
+//                // params.spaceFactor_set[params.spaceFactor_set.length - 1];
+//                long space = (long) (set.size * spaceFactor);
+//                File file = new File("resources/workloads/db2/"
+//                        + set.workloadName + "/" + set.fileName);
+//                String outputPrefix = WorkloadLoaderSettings.dataRoot+"/paper/cache/db2/"
+//                        + set.workloadName + "/" + set.fileName + spaceFactor;
+//                DATDB2Baseline db2 = new DATDB2Baseline(alpha, set.dbName,
+//                        file, space, spaceName, outputPrefix);
+//                ps.println("\\begin{figure}\n" + "\\centering\n"
+//                        + "\\includegraphics[scale=" + params.scale + "]{figs/"
+//                        + db2.plot.name + ".eps}\n" + "\\caption{" + set.name
+//                        + " space " + spaceName + "}\n"
+//                        // + "\\label{" + plot.name + "}\n"
+//                        + "\\end{figure}\n" + "");
+//            }
+//        }
         ps.println("\\end{document}\n");
         ps.close();
         Rt.runAndShowCommand(params.pdflatex + " -interaction=nonstopmode "
