@@ -29,6 +29,7 @@ public class DATPaperMain {
 
     public DATPaperMain() throws Exception {
         Rt.p("Current time: " + df.format(new Date()));
+        windowOnly = true;
         deployAwareTuning();
         workloadSequence();
     }
@@ -37,8 +38,8 @@ public class DATPaperMain {
         GnuPlot.defaultStyle = GnuPlot.Style.histograms;
         GnuPlot.uniform = true;
         DATExp p = params.def();
-        p.alpha=1;
-        p.beta=1;
+        p.alpha = 1;
+        p.beta = 1;
         WorkloadLoader loader = new WorkloadLoader(set.dbName, set.workloadName, set.fileName,
                 params.generateIndexMethod);
         SeqInumCost cost = loader.loadCost();
@@ -88,13 +89,13 @@ public class DATPaperMain {
     public void windowOnly() throws Exception {
         for (TestSet set : sets) {
             DATExp p = def(set, "window", "cost of each window");
-            if (p.rerunExperiment) {
+            if (true||p.rerunExperiment) {
                 p.debugFile.delete();
                 DATPaper run = new DATPaper(p);
                 p.plot.vs.clear();
                 p.plot.current.clear();
                 p.plot.xtics.clear();
-                for (int i = 0; i < params.m.def; i++) {
+                for (int i = 0; i < run.datWindowCosts.length; i++) {
                     p.plot.startNewX(i);
                     p.plot.addY(run.datWindowCosts[i]);
                     // if (plotNames.length == 3)
@@ -119,32 +120,37 @@ public class DATPaperMain {
             set.plotNames.clear();
             set.figureNames.clear();
         }
-        // useDB2Optimizer = true;
-        // verifyByDB2Optimizer=true;
-        run(params.spaceFactor, "space", "Varying space budget", new Callback() {
-            @Override
-            public void callback(TestSet set, DATExp p, double value) {
-                p.spaceBudge = set.size * value;
-            }
-        });
-        run(params.winFactor, "window", "Varying window size", new Callback() {
-            @Override
-            public void callback(TestSet set, DATExp p, double value) {
-                p.windowSize = p.avgCreateCost * value;
-            }
-        });
-        run(params.l, "l", "Varying numberof indexes in a window", new Callback() {
-            @Override
-            public void callback(TestSet set, DATExp p, double value) {
-                p.l = value;
-            }
-        });
-        run(params.percentageUpdate, "update", "Varying ratio of udpates", new Callback() {
-            @Override
-            public void callback(TestSet set, DATExp p, double value) {
-                p.percentageUpdate = value;
-            }
-        });
+        if (windowOnly) {
+            windowOnly();
+        } else {
+            // useDB2Optimizer = true;
+            // verifyByDB2Optimizer=true;
+            run(params.spaceFactor, "space", "Varying space budget", new Callback() {
+                @Override
+                public void callback(TestSet set, DATExp p, double value) {
+                    p.spaceBudge = set.size * value;
+                }
+            });
+            run(params.winFactor, "window", "Varying window size", new Callback() {
+                @Override
+                public void callback(TestSet set, DATExp p, double value) {
+                    p.windowSize = p.avgCreateCost * value;
+                }
+            });
+            run(params.l, "l", "Varying numberof indexes in a window", new Callback() {
+                @Override
+                public void callback(TestSet set, DATExp p, double value) {
+                    p.l = value;
+                }
+            });
+            run(params.percentageUpdate, "update", "Varying ratio of udpates", new Callback() {
+                @Override
+                public void callback(TestSet set, DATExp p, double value) {
+                    p.percentageUpdate = value;
+                }
+            });
+        }
+        DATPaperOthers.generatePdf(new File(params.outputDir, "seq.tex"), params, sets);
     }
 
     public void deployAwareTuning() throws Exception {
@@ -156,36 +162,43 @@ public class DATPaperMain {
         figsDir = new File(params.figsDir, "dat");
         figsDir.mkdirs();
 
-        run(params.m, "m", "Varying number of windows", new Callback() {
-            @Override
-            public void callback(TestSet set, DATExp p, double value) {
-                p.m = value;
-            }
-        });
+        for (TestSet set : sets) {
+            set.plotNames.clear();
+            set.figureNames.clear();
+        }
 
-        run(params.spaceFactor, "space", "Varying space budget", new Callback() {
-            @Override
-            public void callback(TestSet set, DATExp p, double value) {
-                p.spaceBudge = set.size * value;
-            }
-        });
+        if (windowOnly) {
+            windowOnly();
+        } else {
+            run(params.m, "m", "Varying number of windows", new Callback() {
+                @Override
+                public void callback(TestSet set, DATExp p, double value) {
+                    p.m = value;
+                }
+            });
 
-        run(params.winFactor, "window", "Varying window size", new Callback() {
-            @Override
-            public void callback(TestSet set, DATExp p, double value) {
-                p.windowSize = p.avgCreateCost * value;
-            }
-        });
+            run(params.spaceFactor, "space", "Varying space budget", new Callback() {
+                @Override
+                public void callback(TestSet set, DATExp p, double value) {
+                    p.spaceBudge = set.size * value;
+                }
+            });
 
-        run(params.l, "l", "Varying numberof indexes in a window", new Callback() {
-            @Override
-            public void callback(TestSet set, DATExp p, double value) {
-                p.l = value;
-            }
-        });
+            run(params.winFactor, "window", "Varying window size", new Callback() {
+                @Override
+                public void callback(TestSet set, DATExp p, double value) {
+                    p.windowSize = p.avgCreateCost * value;
+                }
+            });
 
-        DATPaperOthers.generatePdf(new File(params.outputDir, params.generateIndexMethod.replace(' ', '_') + ".tex"),
-                params, sets, "");
+            run(params.l, "l", "Varying numberof indexes in a window", new Callback() {
+                @Override
+                public void callback(TestSet set, DATExp p, double value) {
+                    p.l = value;
+                }
+            });
+        }
+        DATPaperOthers.generatePdf(new File(params.outputDir, "dat.tex"), params, sets);
     }
 
     public static void main(String[] args) throws Exception {

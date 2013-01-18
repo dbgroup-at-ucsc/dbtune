@@ -106,8 +106,7 @@ public class DATPaperOthers {
         System.exit(0);
     }
 
-    public static void generatePdf(File latexFile, DATPaperParams params, TestSet[] sets, String windowSize)
-            throws IOException {
+    public static void generatePdf(File latexFile, DATPaperParams params, TestSet[] sets) throws IOException {
         {
             PrintStream ps = new PrintStream(latexFile);
             ps.println("\\documentclass{vldb}}\n" + "\n" + "\\usepackage{graphicx}   % need for figures\n" + "\n"
