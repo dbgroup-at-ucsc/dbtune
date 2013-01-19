@@ -214,4 +214,8 @@ public class DAT {
             }
         }
     }
+    
+    public void close() throws IloException {
+        cplex.close();
+    }
 }

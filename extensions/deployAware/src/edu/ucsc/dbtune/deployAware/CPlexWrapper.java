@@ -12,6 +12,10 @@ public class CPlexWrapper {
         cplex.setOut(null);
         cplex.setWarning(null);
     }
+    
+    public void close() throws IloException {
+        cplex.clearModel();
+    }
 
     public static void invokeCplex() throws IloException {
         // force to show the warning, so it won't mess up with later outputs

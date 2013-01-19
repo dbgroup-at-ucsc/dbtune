@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.deployAware.test;
 
+import ilog.concert.IloException;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -240,6 +242,7 @@ public class DATPaper {
                             output.ws[i].drop);
                 }
             }
+            
             // dsp = new DATSeparateProcess(loader.dbName, loader.workloadName,
             // loader.fileName, loader.generateIndexMethod, alpha, beta,
             // m, l, spaceBudge, windowSize, 0);
@@ -253,6 +256,7 @@ public class DATPaper {
             // dat = dsp.dat;
             // mkp = dsp.bip;
             // greedyRatio = dsp.greedy;
+            dat.close();
         }
 
         p.plot.startNewX(p.plotX, p.plotLabel);
