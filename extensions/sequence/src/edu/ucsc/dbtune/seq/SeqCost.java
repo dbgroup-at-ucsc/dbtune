@@ -459,7 +459,7 @@ public class SeqCost {
                 createdIndexes++;
             }
         }
-        if (createdIndexes > maxIndexesWindow)
+        if (maxIndexesWindow > 0 && createdIndexes > maxIndexesWindow)
             return null;
         h.clear();
         for (SeqIndex i : to.indices)

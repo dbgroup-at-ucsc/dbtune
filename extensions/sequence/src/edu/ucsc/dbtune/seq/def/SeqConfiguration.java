@@ -19,8 +19,8 @@ public class SeqConfiguration {
 		this.indices = indices;
 	}
 
-	public int storageCost() {
-		int storageCost = 0;
+	public double storageCost() {
+		double storageCost = 0;
 		for (SeqIndex index : indices)
 			storageCost += index.storageCost;
 		return storageCost;

@@ -185,8 +185,11 @@ public class DATPaper {
                 // DATWindow.costWithIndex(cost, indexUsed);
                 greedyWindowCosts[i] = conf.queryCost
                         + (seqCost.addTransitionCostToObjective ? conf.transitionCost : 0);
-                p("GREEDY-SEQ window " + i + ": cost=%,.0f createCost=%,.0f usedIndexes=%d", greedyWindowCosts[i], tc,
-                        indices.length);
+                long space = 0;
+                for (SeqIndex index : indices)
+                    space += index.inumIndex.storageCost;
+                p("GREEDY-SEQ window " + i + ": cost=%,.0f createCost=%,.0f usedIndexes=%d space=%,d",
+                        greedyWindowCosts[i], tc, indices.length, space);
                 if (i < m - 1)
                     this.greedySeq += alpha * greedyWindowCosts[i];
                 else
@@ -218,8 +221,13 @@ public class DATPaper {
             datWindowCosts = new double[m];
             for (int i = 0; i < m; i++) {
                 datWindowCosts[i] = output.ws[i].cost;
-                p("DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d", i, datWindowCosts[i],
-                        output.ws[i].createCost, output.ws[i].present);
+                long space = 0;
+                for (int j = 0; j < output.ws[i].indexUsed.length; j++)
+                    if (output.ws[i].indexUsed[j])
+                        space += cost.indices.get(j).storageCost;
+                p("DAT Window %d: cost=%,.0f createCost=%,.0f usedIndexes=%d create=%d drop=%d space=%,d", i,
+                        datWindowCosts[i], output.ws[i].createCost, output.ws[i].present, output.ws[i].create,
+                        output.ws[i].drop, space);
             }
             if (useDB2Optimizer || verifyByDB2Optimizer) {
                 p("verifying window cost");
@@ -227,8 +235,9 @@ public class DATPaper {
                     DatabaseSystem db = p.loader.getDb();
                     DB2Optimizer optimizer = p.loader.getDB2Optimizer();
                     datWindowCosts[i] = dat.getWindowCost(i, db, optimizer);
-                    p("DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d", i, datWindowCosts[i],
-                            output.ws[i].createCost, output.ws[i].present);
+                    p("DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d\tcreate=%d\tdrop=%d", i,
+                            datWindowCosts[i], output.ws[i].createCost, output.ws[i].present, output.ws[i].create,
+                            output.ws[i].drop);
                 }
             }
             // dsp = new DATSeparateProcess(loader.dbName, loader.workloadName,

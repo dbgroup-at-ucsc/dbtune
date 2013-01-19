@@ -32,8 +32,8 @@ public class DATWindow {
     int totalQueires;
     int totalIndices;
 
-    public DATWindow(SeqInumCost costModel, CPlexWrapper cplex, int id,
-            boolean lastWindow, double costConstraint) throws IloException {
+    public DATWindow(SeqInumCost costModel, CPlexWrapper cplex, int id, boolean lastWindow, double costConstraint)
+            throws IloException {
         this.costModel = costModel;
         this.totalIndices = costModel.indices.size();
         this.id = id;
@@ -42,26 +42,21 @@ public class DATWindow {
         if (costModel.eachWindowContainsOneQuery) {
             this.totalQueires = 1;
             this.queries = new DATQuery[totalQueires];
-            this.queries[0] = new DATQuery(cplex, this, costModel.queries
-                    .get(id));
+            this.queries[0] = new DATQuery(cplex, this, costModel.queries.get(id));
         } else {
             this.totalQueires = costModel.queries.size();
             this.queries = new DATQuery[totalQueires];
             for (int i = 0; i < totalQueires; i++) {
-                this.queries[i] = new DATQuery(cplex, this, costModel.queries
-                        .get(i));
+                this.queries[i] = new DATQuery(cplex, this, costModel.queries.get(i));
             }
         }
         this.create = cplex.createBinaryVars(totalIndices);
         this.drop = cplex.createBinaryVars(totalIndices);
         this.present = cplex.createBinaryVars(totalIndices);
         for (int i = 0; i < totalIndices; i++) {
-            this.create[i].setName("CREATE_" + id + "_"
-                    + costModel.indices.get(i).id);
-            this.drop[i].setName("DROP_" + id + "_"
-                    + costModel.indices.get(i).id);
-            this.present[i].setName("PRESENT_" + id + "_"
-                    + costModel.indices.get(i).id);
+            this.create[i].setName("CREATE_" + id + "_" + costModel.indices.get(i).id);
+            this.drop[i].setName("DROP_" + id + "_" + costModel.indices.get(i).id);
+            this.present[i].setName("PRESENT_" + id + "_" + costModel.indices.get(i).id);
             index2id.put(costModel.indices.get(i), i);
             index2present.put(costModel.indices.get(i), present[i]);
         }
@@ -70,8 +65,7 @@ public class DATWindow {
         cplex.addVars(present);
     }
 
-    public void addObjective(IloLinearNumExpr expr, double coefficient)
-            throws IloException {
+    public void addObjective(IloLinearNumExpr expr, double coefficient) throws IloException {
         for (DATQuery query : queries)
             query.addObjective(expr, coefficient);
         if (costModel.addTransitionCostToObjective) {
@@ -95,16 +89,14 @@ public class DATWindow {
         return cost;
     }
 
-    public double getCost(CPlexWrapper cplex, DatabaseSystem db,
-            DB2Optimizer optimizer) throws Exception {
+    public double getCost(CPlexWrapper cplex, DatabaseSystem db, DB2Optimizer optimizer) throws Exception {
         double cost = 0;
         HashSet<Index> allIndexes = new HashSet<Index>();
         for (int j = 0; j < totalIndices; j++)
             if (cplex.getValue(this.present[j]) == 1)
                 allIndexes.add(costModel.indices.get(j).loadIndex(db));
         for (DATQuery query : queries) {
-            ExplainedSQLStatement explain = optimizer.explain(query.q.sql,
-                    allIndexes);
+            ExplainedSQLStatement explain = optimizer.explain(query.q.sql, allIndexes);
             double qcost = explain.getTotalCost();
             cost += qcost;
         }
@@ -135,8 +127,8 @@ public class DATWindow {
         return n;
     }
 
-    public void addConstriant(CPlexWrapper cplex, double spaceConstraint,
-            int maxIndexCreatedPerWindow) throws IloException {
+    public void addConstriant(CPlexWrapper cplex, double spaceConstraint, int maxIndexCreatedPerWindow)
+            throws IloException {
         for (DATQuery query : queries)
             query.addConstriant(cplex);
         // add storage constraint
@@ -152,11 +144,10 @@ public class DATWindow {
         // Rt.p(expr.toString() + "<=" + costModel.storageConstraint);
 
         if (totalIndices > 0) {
-            if (this.costConstraint < Double.MAX_VALUE) {
+            if (0 <= this.costConstraint && this.costConstraint < Double.MAX_VALUE) {
                 expr = cplex.linearNumExpr();
                 for (int i = 0; i < totalIndices; i++) {
-                    expr.addTerm(costModel.indices.get(i).createCost,
-                            this.create[i]);
+                    expr.addTerm(costModel.indices.get(i).createCost, this.create[i]);
                 }
                 cplex.addLe(expr, this.costConstraint);
                 if (DAT.showFormulas)
@@ -164,8 +155,7 @@ public class DATWindow {
             }
             expr = cplex.linearNumExpr();
             for (int i = 0; i < totalIndices; i++) {
-                expr.addTerm(costModel.indices.get(i).storageCost,
-                        this.present[i]);
+                expr.addTerm(costModel.indices.get(i).storageCost, this.present[i]);
             }
             if (spaceConstraint > 1E-5) {
                 cplex.addLe(expr, spaceConstraint);
@@ -197,27 +187,23 @@ public class DATWindow {
 
     }
 
-    public void getValues(CPlexWrapper cplex) throws UnknownObjectException,
-            IloException {
+    public void getValues(CPlexWrapper cplex) throws UnknownObjectException, IloException {
         indexPresent = new boolean[totalIndices];
         for (int j = 0; j < totalIndices; j++) {
             indexPresent[j] = cplex.getValue(present[j]) == 1;
         }
     }
 
-    public static double costWithIndex(SeqInumCost costModel, int i)
-            throws IloException {
+    public static double costWithIndex(SeqInumCost costModel, int i) throws IloException {
         boolean[] present = new boolean[costModel.indexCount()];
         Arrays.fill(present, false);
         present[i] = true;
         return costWithIndex(costModel, present);
     }
 
-    public static double costWithIndex(SeqInumCost costModel, boolean[] present)
-            throws IloException {
+    public static double costWithIndex(SeqInumCost costModel, boolean[] present) throws IloException {
         CPlexWrapper cplex = new CPlexWrapper();
-        DATWindow window = new DATWindow(costModel, cplex, 0, true,
-                Double.MAX_VALUE);
+        DATWindow window = new DATWindow(costModel, cplex, 0, true, Double.MAX_VALUE);
         IloLinearNumExpr expr = cplex.linearNumExpr();
         window.addObjective(expr, 1);
         IloObjective obj = cplex.minimize(expr);

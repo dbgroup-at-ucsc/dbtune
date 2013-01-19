@@ -30,11 +30,11 @@ public class DATPaperParams {
     File skylineLatexFile = new File(outputDir, "skyline.tex");
 
     public Set m = new Set(4, new double[] { 2, 4, 6 }, null);
-    public Set winFactor = new Set(1E100, new double[] { 8, 16, 32, 64, 1E100 }, new String[] { "8x", "16x", "32x",
+    public Set winFactor = new Set(-1, new double[] { 8, 16, 32, 64, 1E100 }, new String[] { "8x", "16x", "32x",
             "64x", "INF" });
     public Set spaceFactor = new Set(0.5, new double[] { 0.25, 0.5, 1, 1000000 }, new String[] { "0.25x", "0.5x", "1x",
             "INF" });
-    public Set l = new Set(100000, new double[] { 4, 6, 8, 10, 100000 }, new String[] { "4", "6", "8", "10", "INF" });
+    public Set l = new Set(-1, new double[] { 4, 6, 8, 10, 100000 }, new String[] { "4", "6", "8", "10", "INF" });
     public Set percentageUpdate = new Set(1E-3, new double[] { 1E-5, 1E-4, 1E-3, 1E-2 }, new String[] { "10^{-5}",
             "10^{-4}", "10^{-3}", "10^{-2}" });
 
