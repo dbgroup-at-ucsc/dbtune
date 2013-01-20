@@ -201,7 +201,7 @@ public class GnuPlot {
                     // Rt.error("Can't handle negative value");
                 }
             }
-            power = (int) Math.floor(Math.log10(minY));
+            power = (int) Math.floor(Math.log10(maxY));
             factor = Math.pow(10, power);
             if (factor < 0.000001)
                 factor = 1;
@@ -262,7 +262,7 @@ public class GnuPlot {
         // ps.println("set xtics ()");
         ps.println("set xlabel offset 0,0.5 \"" + xName + "\"");
         ps.print("set ylabel offset 2,0 \"" + yName);
-        if (power > 0)
+        if (power != 0)
             ps.print("(10^{" + power + "})");
         if (usePercentage)
             ps.print(" %");
@@ -342,7 +342,7 @@ public class GnuPlot {
         for (int i = 0; i < xname3d.length; i++)
             xh.put(xname3d[i], i);
         for (int i = 0; i < yname3d.length; i++) {
-//            Rt.p(yname3d[i]);
+            //            Rt.p(yname3d[i]);
             yh.put(yname3d[i], i);
         }
         String[] lines = Rt.readFileAsLines(orgDataFile);
@@ -359,11 +359,11 @@ public class GnuPlot {
                 d[j - 2] = d2;
             }
             d[0] = d[0] / d[1];
-            Integer t1=xh.get(x[1]);
-            if (t1==null)
+            Integer t1 = xh.get(x[1]);
+            if (t1 == null)
                 throw new Error(x[1]);
-            Integer t2=yh.get(y[1]);
-            if (t2==null)
+            Integer t2 = yh.get(y[1]);
+            if (t2 == null)
                 throw new Error(y[1]);
             ds[t1][t2] = d;
         }
@@ -405,7 +405,7 @@ public class GnuPlot {
         ps.println("set palette gray");
         ps.println("set grid x y z");
         ps.println("set xlabel \"" + xName + "\"");
-        ps.println("set ylabel \"" + yName+ "\"");
+        ps.println("set ylabel \"" + yName + "\"");
         ps.print("set xtics (");
         for (int i = 0; i < xname3d.length; i++) {
             if (i > 0)

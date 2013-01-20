@@ -26,7 +26,7 @@ import edu.ucsc.dbtune.workload.Workload;
 public class DATBaselines {
     public static boolean[] cophy(DATParameter param, double totalCreateCost,
             double maxIndexCost, int maxIndices) throws IloException {
-        CPlexWrapper cplex = new CPlexWrapper();
+        CPlexWrapper cplex = new CPlexWrapper(0.05);
         DATWindow window = new DATWindow(param.costModel, cplex, 0, true,
                 totalCreateCost);
         IloLinearNumExpr expr = cplex.linearNumExpr();
@@ -91,7 +91,7 @@ public class DATBaselines {
 
     public static double[] getQueryCost(SeqInumCost costModel, boolean[] present)
             throws IloException {
-        CPlexWrapper cplex = new CPlexWrapper();
+        CPlexWrapper cplex = new CPlexWrapper(0.05);
         DATWindow window = new DATWindow(costModel, cplex, 0, true,
                 Double.MAX_VALUE);
         IloLinearNumExpr expr = cplex.linearNumExpr();
@@ -300,7 +300,7 @@ public class DATBaselines {
             if (debug != null)
                 root = debug.createChild(method);
             for (int i = 0; i < param.windowConstraints.length; i++) {
-                CPlexWrapper cplex = new CPlexWrapper();
+                CPlexWrapper cplex = new CPlexWrapper(0.05);
                 windows[i] = new DATWindow(param.costModel, cplex, i,
                         i == param.windowConstraints.length - 1,
                         param.windowConstraints[i]);

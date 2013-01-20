@@ -76,7 +76,27 @@ public class DATPaperParams {
             p.percentageUpdate = value;
         }
     });
-
+    public Set workloadRatio = new Set(1, "input size", new double[] { 1.0 / 8, 1.0 / 4, 1.0 / 2, 1 }, new String[] {
+            "1/8", "1/4", "1/2", "1" }, new Callback() {
+        @Override
+        public void callback(TestSet set, DATExp p, double value) {
+            p.workloadRatio = value;
+        }
+    });
+    public Set indexRatio = new Set(1, "configuration size", new double[] { 1.0 / 8, 1.0 / 4, 1.0 / 2, 1 },
+            new String[] { "1/8", "1/4", "1/2", "1" }, new Callback() {
+                @Override
+                public void callback(TestSet set, DATExp p, double value) {
+                    p.indexRatio = value;
+                }
+            });
+    public Set bipEpGap = new Set(1, "bip EpGap", new double[] { 0.05, 0.1, 0.15 }, new String[] { "5%", "10%",
+            "15%" }, new Callback() {
+        @Override
+        public void callback(TestSet set, DATExp p, double value) {
+            p.bipEpGap = value;
+        }
+    });
     public Set _1mada = new Set(1, "a", new double[] { 1, 2, 4, 16 }, null, new Callback() {
         @Override
         public void callback(TestSet set, DATExp p, double value) {

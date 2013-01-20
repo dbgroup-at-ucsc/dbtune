@@ -8,6 +8,7 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Vector;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.deployAware.DATBaselines;
@@ -118,13 +119,29 @@ public class DATPaperOthers {
             ps.println("m=" + params.m.def + "\\\\");
             ps.println("(1-a)/a=" + params._1mada.def + "\\\\");
             ps.println();
-            for (int i = 0; i < sets[0].plotNames.size(); i++) {
+            Vector<String> allFigureNames = new Vector<String>();
+            for (TestSet set : sets) {
+                for (String s : set.figureNames) {
+                    if (!allFigureNames.contains(s))
+                        allFigureNames.add(s);
+                }
+            }
+            for (String figureName : allFigureNames) {
                 File outputDir2 = new File(WorkloadLoaderSettings.dataRoot
                         + "/dbtune.papers/deployment_aware_tuning/figs");
                 ps.println("\\begin{figure}[htb]\n" + "\\centering\n");
                 for (TestSet set : sets) {
+                    int pos = -1;
+                    for (int i = 0; i < set.figureNames.size(); i++) {
+                        if (set.figureNames.get(i).equals(figureName)) {
+                            pos = i;
+                            break;
+                        }
+                    }
+                    if (pos < 0)
+                        continue;
                     ps.println("        \\begin{subfigure}[" + set.shortName + "]\n" + "                \\centering\n"
-                            + "                \\includegraphics[scale=0.3]{figs/" + set.plotNames.get(i) + ".eps}\n"
+                            + "                \\includegraphics[scale=0.3]{figs/" + set.plotNames.get(pos) + ".eps}\n"
                             + "        \\end{subfigure}");
                     // ps.println("\\begin{figure}\n" + "\\centering\n"
                     // + "\\includegraphics[scale=" + scale + "]{figs/"
@@ -133,10 +150,10 @@ public class DATPaperOthers {
                     // // + "\\label{" + plot.name + "}\n"
                     // + "\\end{figure}\n" + "");
                     if (params.copyEps)
-                        Rt.copyFile(new File(params.figsDir, set.plotNames.get(i) + ".eps"), new File(outputDir2,
-                                set.plotNames.get(i) + ".eps"));
+                        Rt.copyFile(new File(params.figsDir, set.plotNames.get(pos) + ".eps"), new File(outputDir2,
+                                set.plotNames.get(pos) + ".eps"));
                 }
-                ps.println("\\caption{" + sets[0].figureNames.get(i) + "}\n" + "\\end{figure}");
+                ps.println("\\caption{" + figureName + "}\n" + "\\end{figure}");
             }
             ps.println("\\end{document}\n");
             ps.close();

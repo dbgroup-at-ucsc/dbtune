@@ -22,6 +22,7 @@ import edu.ucsc.dbtune.workload.SQLStatement;
 public class DATWindow {
     int id;
     double costConstraint;
+    public double weight = 1;
     boolean lastWindow;
     DATQuery[] queries;
     IloNumVar[] create, drop, present;
@@ -66,6 +67,7 @@ public class DATWindow {
     }
 
     public void addObjective(IloLinearNumExpr expr, double coefficient) throws IloException {
+        coefficient *= weight;
         for (DATQuery query : queries)
             query.addObjective(expr, coefficient);
         if (costModel.addTransitionCostToObjective) {

@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.seq.bip.def;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -24,6 +25,15 @@ public class SeqInumSlot implements Serializable {
     public SeqInumSlot(SeqInumPlan plan, int id) {
         this.plan = plan;
         this.id = id;
+    }
+
+    public void removeIndex(HashSet<SeqInumIndex> remove) {
+        Vector<SeqInumSlotIndexCost> costs2 = new Vector<SeqInumSlotIndexCost>();
+        for (SeqInumSlotIndexCost cost : costs) {
+            if (!remove.contains(cost.index))
+                costs2.add(cost);
+        }
+        this.costs = costs2;
     }
 
     public double cost(SeqInumIndex[] indexes) {
@@ -57,10 +67,8 @@ public class SeqInumSlot implements Serializable {
     public boolean equals(SeqInumSlot s2) {
         if (Math.abs(fullTableScanCost - s2.fullTableScanCost) > SeqInumPlan.maxAllowedError)
             return false;
-        SeqInumSlotIndexCost[] c1 = costs
-                .toArray(new SeqInumSlotIndexCost[costs.size()]);
-        SeqInumSlotIndexCost[] c2 = s2.costs
-                .toArray(new SeqInumSlotIndexCost[s2.costs.size()]);
+        SeqInumSlotIndexCost[] c1 = costs.toArray(new SeqInumSlotIndexCost[costs.size()]);
+        SeqInumSlotIndexCost[] c2 = s2.costs.toArray(new SeqInumSlotIndexCost[s2.costs.size()]);
         if (c1.length != c2.length)
             return false;
         Comparator<SeqInumSlotIndexCost> c = new Comparator<SeqInumSlotIndexCost>() {
@@ -79,13 +87,10 @@ public class SeqInumSlot implements Serializable {
     }
 
     public boolean isCoveredBy(SeqInumSlot s2) {
-        if (fullTableScanCost < s2.fullTableScanCost
-                - SeqInumPlan.maxAllowedError)
+        if (fullTableScanCost < s2.fullTableScanCost - SeqInumPlan.maxAllowedError)
             return false;
-        SeqInumSlotIndexCost[] c1 = costs
-                .toArray(new SeqInumSlotIndexCost[costs.size()]);
-        SeqInumSlotIndexCost[] c2 = s2.costs
-                .toArray(new SeqInumSlotIndexCost[s2.costs.size()]);
+        SeqInumSlotIndexCost[] c1 = costs.toArray(new SeqInumSlotIndexCost[costs.size()]);
+        SeqInumSlotIndexCost[] c2 = s2.costs.toArray(new SeqInumSlotIndexCost[s2.costs.size()]);
         if (c1.length > c2.length)
             return false;
         Comparator<SeqInumSlotIndexCost> c = new Comparator<SeqInumSlotIndexCost>() {
@@ -128,8 +133,7 @@ public class SeqInumSlot implements Serializable {
         }
     }
 
-    public SeqInumSlot(Hashtable<String, SeqInumIndex> indexHash,
-            SeqInumPlan plan, Rx rx, int id) {
+    public SeqInumSlot(Hashtable<String, SeqInumIndex> indexHash, SeqInumPlan plan, Rx rx, int id) {
         this.plan = plan;
         this.id = id;
         fullTableScanCost = rx.getDoubleAttribute("fullTableScanCost");

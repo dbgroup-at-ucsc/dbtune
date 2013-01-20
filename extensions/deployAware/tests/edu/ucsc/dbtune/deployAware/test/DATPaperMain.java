@@ -2,10 +2,12 @@ package edu.ucsc.dbtune.deployAware.test;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 import edu.ucsc.dbtune.deployAware.test.DATPaper.DATExp;
 import edu.ucsc.dbtune.deployAware.test.DATPaper.TestSet;
+import edu.ucsc.dbtune.deployAware.test.DATPaperParams.Callback;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
 import edu.ucsc.dbtune.util.Rt;
@@ -22,18 +24,17 @@ public class DATPaperMain {
     long tpchWindowSize = 20 * 3600 * 3000;
     long tpcdsWindowSize = 10 * 3600 * 3000;
     File figsDir;
-    TestSet[] sets = { //
-    new TestSet("TPCH", "tpch10g", "deployAware", "tpchPaper.sql", 10 * gigbytes, "tpch",//
-            tpchWindowSize),
-    //            new TestSet("TPCDS", "test", "deployAware", "tpcdsPaper.sql", 10 * gigbytes, "tpcds", tpcdsWindowSize), 
-    };
+    TestSet tpch = new TestSet("TPCH", "tpch10g", "deployAware", "tpchPaper.sql", 10 * gigbytes, "tpch", tpchWindowSize);
+    TestSet tpcds = new TestSet("TPCDS", "test", "deployAware", "tpcdsPaper.sql", 10 * gigbytes, "tpcds",
+            tpcdsWindowSize);
+    TestSet[] sets = { tpch, tpcds, };
 
     public DATPaperMain() throws Exception {
         Rt.p("Current time: " + df.format(new Date()));
         //        windowOnly = true;
         //         rerunAllExp=true;
         //        params.spaceFactor.def = 0.1;
-        //        deployAwareTuning();
+        deployAwareTuning();
         workloadSequence();
         //         figsDir = new File(params.figsDir, "dat");
         //         figsDir.mkdirs();
@@ -78,23 +79,34 @@ public class DATPaperMain {
         return p;
     }
 
-    public void run(DATPaperParams.Set inputs, String name, String desc) throws Exception {
-        for (TestSet set : sets) {
-            DATExp p = def(set, name, desc);
-            if (p.rerunExperiment) {
-                p.debugFile.delete();
-                for (int k = 0; k < inputs.values.length; k++) {
-                    double value = inputs.values[k];
-                    p.plotX = value;
-                    p.plotLabel = inputs.names[k];
-                    inputs.callback.callback(set, p, value);
-                    new DATPaper(p);
-                }
-            }
-            p.plot.finish();
-            if (outputWinCost)
-                p.plotWin.finish();
+    public void run(TestSet set, DATPaperParams.Set inputs, String name, String desc, boolean useRunningTime,
+            Callback callback) throws Exception {
+        DATExp p = def(set, name, desc);
+        p.plot.xName = inputs.name;
+        if (useRunningTime) {
+            p.plot.yName = "time";
+            p.useRunningTime = useRunningTime;
         }
+        if (p.rerunExperiment) {
+            p.debugFile.delete();
+            for (int k = 0; k < inputs.values.length; k++) {
+                double value = inputs.values[k];
+                p.plotX = value;
+                p.plotLabel = inputs.names[k];
+                if (callback != null)
+                    callback.callback(set, p, value);
+                inputs.callback.callback(set, p, value);
+                new DATPaper(p);
+            }
+        }
+        p.plot.finish();
+        if (outputWinCost)
+            p.plotWin.finish();
+    }
+
+    public void run(DATPaperParams.Set inputs, String name, String desc) throws Exception {
+        for (TestSet set : sets)
+            run(set, inputs, name, desc, false, null);
     }
 
     public void run2(DATPaperParams.Set inputs1, DATPaperParams.Set inputs2, String name, String desc) throws Exception {
@@ -127,10 +139,13 @@ public class DATPaperMain {
         }
     }
 
-    public void windowOnly() throws Exception {
+    public void windowOnly(String name, String desc, Callback callback) throws Exception {
         for (TestSet set : sets) {
-            DATExp p = def(set, "window", "cost of each window");
-            if (true || p.rerunExperiment) {
+            DATExp p = def(set, name, desc);
+            p.plot.xName = "window";
+            if (callback != null)
+                callback.callback(set, p, 0);
+            if (callback == null || p.rerunExperiment) {
                 p.debugFile.delete();
                 DATPaper run = new DATPaper(p);
                 p.plot.vs.clear();
@@ -162,7 +177,7 @@ public class DATPaperMain {
             set.figureNames.clear();
         }
         if (windowOnly) {
-            windowOnly();
+            windowOnly("window", "cost of each window", null);
         } else {
             // useDB2Optimizer = true;
             // verifyByDB2Optimizer=true;
@@ -172,6 +187,10 @@ public class DATPaperMain {
             run(params.percentageUpdate, "update", "Varying ratio of udpates");
             run2(params.spaceFactor, params.m, "spaceNm", "Varying space budget and number of windows");
             run2(params.spaceFactor, params.winFactor, "spaceNwin", "Varying space budget and window size");
+            run(tpcds, params.workloadRatio, "inputSize", "Running time w.r.t. input size", true, null);
+            run(tpcds, params.indexRatio, "indexSize", "Running time w.r.t. index size", true, null);
+            run(tpcds, params.bipEpGap, "bipTime", "Running time w.r.t. bip EpGap", true, null);
+            run(tpcds, params.bipEpGap, "bipQuality", "Result w.r.t. bip EpGap", false, null);
         }
         DATPaperOthers.generatePdf(new File(params.outputDir, "seq.tex"), params, sets);
     }
@@ -191,17 +210,29 @@ public class DATPaperMain {
         }
 
         if (windowOnly) {
-            windowOnly();
+            windowOnly("window", "cost of each window", null);
             return;
         }
 
         run(params.m, "m", "Varying number of windows");
-
         run(params.spaceFactor, "space", "Varying space budget");
-
         run(params.winFactor, "window", "Varying window size");
-
         run(params.l, "l", "Varying numberof indexes in a window");
+        windowOnly("firstWindow", "Boost first window", new Callback() {
+            @Override
+            public void callback(TestSet set, DATExp p, double value) {
+                double[] weights = new double[(int) params.m.def];
+                Arrays.fill(weights, 1);
+                weights[0] = 10;
+                p.windowWeights = weights;
+            }
+        });
+        windowOnly("mustDesc", "Cost must decrease", new Callback() {
+            @Override
+            public void callback(TestSet set, DATExp p, double value) {
+                p.costMustDecrease = true;
+            }
+        });
 
         DATPaperOthers.generatePdf(new File(params.outputDir, "dat.tex"), params, sets);
     }

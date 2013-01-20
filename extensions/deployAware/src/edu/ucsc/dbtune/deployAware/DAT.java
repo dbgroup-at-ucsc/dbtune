@@ -40,6 +40,10 @@ public class DAT {
     CPlexWrapper cplex;
 
     public DATOutput runDAT(DATParameter param) throws IloException {
+        return runDAT(param, 0.05);
+    }
+
+    public DATOutput runDAT(DATParameter param, double epGap) throws IloException {
         // Rt.p("alpha=" + param.alpha);
         // Rt.p("beta=" + param.beta);
         // Rt.p("m=" + param.windowConstraints.length);
@@ -47,23 +51,34 @@ public class DAT {
         // Rt.p("window=" + param.windowConstraints[0]);
         // Rt.p("l=" + param.maxIndexCreatedPerWindow);
         this.param = param;
-        cplex = new CPlexWrapper();
+        cplex = new CPlexWrapper(epGap);
         windows = new DATWindow[param.windowConstraints.length];
         for (int i = 0; i < param.windowConstraints.length; i++) {
-            windows[i] = new DATWindow(param.costModel, cplex, i,
-                    i == param.windowConstraints.length - 1,
+            windows[i] = new DATWindow(param.costModel, cplex, i, i == param.windowConstraints.length - 1,
                     param.windowConstraints[i]);
+            if (param.windowWeight != null)
+                windows[i].weight = param.windowWeight[i];
         }
         IloLinearNumExpr expr = cplex.linearNumExpr();
         for (int i = 0; i < windows.length; i++) {
-            this.windows[i].addObjective(expr,
-                    i == windows.length - 1 ? param.beta : param.alpha);
+            this.windows[i].addObjective(expr, i == windows.length - 1 ? param.beta : param.alpha);
         }
         IloObjective obj = cplex.minimize(expr);
         cplex.add(obj);
         if (showFormulas)
             Rt.p("Obj: " + expr.toString());
 
+        if (param.costMustDecrease) {
+            for (int i = 0; i < windows.length - 1; i++) {
+                expr = cplex.linearNumExpr();
+                this.windows[i].addObjective(expr, 1);
+                IloLinearNumExpr expr2 = cplex.linearNumExpr();
+                this.windows[i + 1].addObjective(expr2, 1);
+                cplex.addLe(expr2, expr);
+                if (showFormulas)
+                    Rt.p(expr2 + "<=" + expr);
+            }
+        }
         if (param.intermediateConstraint > 0.1) {
             expr = cplex.linearNumExpr();
             for (int i = 0; i < windows.length - 1; i++) {
@@ -74,8 +89,7 @@ public class DAT {
                 Rt.p(expr.toString() + "<=" + param.intermediateConstraint);
         }
         for (int i = 0; i < windows.length; i++) {
-            this.windows[i].addConstriant(cplex, param.spaceConstraint,
-                    param.maxIndexCreatedPerWindow);
+            this.windows[i].addConstriant(cplex, param.spaceConstraint, param.maxIndexCreatedPerWindow);
             for (int k = 0; k < param.totalIndices; k++) {
                 expr = cplex.linearNumExpr();
                 if (i > 0)
@@ -104,8 +118,7 @@ public class DAT {
                 w.getValues(cplex);
             double totalCost = 0;
             for (int i = 0; i < output.ws.length; i++) {
-                output.ws[i].indexUsed = Arrays.copyOf(windows[i].indexPresent,
-                        param.totalIndices);
+                output.ws[i].indexUsed = Arrays.copyOf(windows[i].indexPresent, param.totalIndices);
                 output.ws[i].cost = windows[i].getCost(cplex);
                 output.ws[i].create = windows[i].getCreated(cplex);
                 output.ws[i].drop = windows[i].getDropped(cplex);
@@ -123,11 +136,8 @@ public class DAT {
                 output.ws[i].createCost = createCost;
                 output.ws[i].present = windows[i].getPresent(cplex);
                 if (false)
-                    Rt
-                            .p(
-                                    "DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d",
-                                    i, output.ws[i].cost, createCost,
-                                    windows[i].getPresent(cplex));
+                    Rt.p("DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d", i, output.ws[i].cost,
+                            createCost, windows[i].getPresent(cplex));
                 // if (Math.abs(output.ws[i].cost - c2) / c2 > 0.1) {
                 // Rt.error("ERROR: verify failed " + output.ws[i].cost + " "
                 // + c2);
@@ -162,13 +172,12 @@ public class DAT {
         return output;
     }
 
-    public double getWindowCost(int windowId, DatabaseSystem db,
-            DB2Optimizer optimizer) throws Exception {
+    public double getWindowCost(int windowId, DatabaseSystem db, DB2Optimizer optimizer) throws Exception {
         return windows[windowId].getCost(cplex, db, optimizer);
     }
 
-    public static void saveDebugInfo(Rx window, DATParameter param,
-            CPlexWrapper cplex, DATWindow w) throws IloException {
+    public static void saveDebugInfo(Rx window, DATParameter param, CPlexWrapper cplex, DATWindow w)
+            throws IloException {
         window.setAttribute("cost", w.getCost(cplex));
         window.setAttribute("created", w.getCreated(cplex));
         window.setAttribute("dropped", w.getDropped(cplex));
@@ -208,13 +217,12 @@ public class DAT {
                         }
                     }
                     if (sb.length() > 0)
-                        px.createChild("slot", sb.toString()).setAttribute(
-                                "id", slot.s.id);
+                        px.createChild("slot", sb.toString()).setAttribute("id", slot.s.id);
                 }
             }
         }
     }
-    
+
     public void close() throws IloException {
         cplex.close();
     }

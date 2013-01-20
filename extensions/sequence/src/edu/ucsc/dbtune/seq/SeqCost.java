@@ -40,6 +40,7 @@ public class SeqCost {
     public double storageConstraint = Double.MAX_VALUE;
     public double maxTransitionCost = Double.MAX_VALUE;
     public int maxIndexesWindow = Integer.MAX_VALUE;
+    public boolean costMustDecrease = false;
     public double[] stepBoost;
     public boolean addTransitionCostToObjective = true;
     public boolean useDB2Optimizer = false;

@@ -8,8 +8,7 @@ import edu.ucsc.dbtune.util.Rt;
 public class SeqOptimal {
     public SeqStep[] steps;
 
-    public static SeqStep[] getOptimalSteps(SeqIndex[] source,
-            SeqIndex[] destination, SeqQuerySet[] sequence,
+    public static SeqStep[] getOptimalSteps(SeqIndex[] source, SeqIndex[] destination, SeqQuerySet[] sequence,
             SeqConfiguration[] allConfigurations) {
         int n = sequence.length;
         SeqStep[] steps = new SeqStep[n + 2];
@@ -21,8 +20,8 @@ public class SeqOptimal {
         return steps;
     }
 
-    public SeqOptimal(SeqCost cost, SeqIndex[] source, SeqIndex[] destination,
-            SeqQuerySet[] sequence, SeqStep[] steps) throws SQLException {
+    public SeqOptimal(SeqCost cost, SeqIndex[] source, SeqIndex[] destination, SeqQuerySet[] sequence, SeqStep[] steps)
+            throws SQLException {
         int n = sequence.length;
         this.steps = steps;
         for (int iStep = 0; iStep < n + 1; iStep++) {
@@ -40,25 +39,27 @@ public class SeqOptimal {
                     SeqStepConf prevConf = prev.configurations[j];
                     double cb = prevConf.costUtilThisStepBoost;
                     double c = prevConf.costUtilThisStep;
-                    Double tc = cost.getCost(prevConf.configuration,
-                            curConf.configuration);
+                    Double tc = cost.getCost(prevConf.configuration, curConf.configuration);
                     if (tc == null) {
-//                        Rt.p("maxIndex invalid");
+                        //                        Rt.p("maxIndex invalid");
                         continue;
                     }
-                    if (cost.maxTransitionCost > 0
-                            && tc > cost.maxTransitionCost) {
-//                        Rt.p("windowSize invalid");
+                    if (cost.maxTransitionCost > 0 && tc > cost.maxTransitionCost) {
+                        //                        Rt.p("windowSize invalid");
                         continue;
                     }
-                    double stepCost = cost.addTransitionCostToObjective ? tc
-                            : 0;
+                    double stepCost = cost.addTransitionCostToObjective ? tc : 0;
                     double qc = 0;
                     if (query != null)
                         qc = cost.getCost(query, curConf.configuration);
                     stepCost += qc;
-//                    Rt.p("stepCost "+ tc+" "+qc+" "+c);
+                    //                    Rt.p("stepCost "+ tc+" "+qc+" "+c);
                     c += stepCost;
+                    if (cost.costMustDecrease) {
+//                        if (qc > prevConf.queryCost)
+//                            continue;
+                    }
+
                     if (cost.stepBoost == null)
                         cb += stepCost;
                     else
@@ -72,7 +73,7 @@ public class SeqOptimal {
                     }
                 }
                 if (minConf == null) {
-//                    Rt.p("step " + iStep + " conf " + i + " invalid");
+                    //                    Rt.p("step " + iStep + " conf " + i + " invalid");
                     // throw new Error("minConf is null");
                     curConf.costUtilThisStepBoost = Double.MAX_VALUE;
                     curConf.costUtilThisStep = Double.MAX_VALUE;
@@ -117,34 +118,24 @@ public class SeqOptimal {
                 if (conf.isBestPath)
                     sb.append("BEST");
                 if (conf.bestPreviousConfiguration != null) {
-                    sb.append("<font size=\"-1\">{"
-                            + conf.bestPreviousConfiguration.configuration
-                            + "} ");
-                    sb
-                            .append(String
-                                    .format(
-                                            "%.0f",
-                                            conf.bestPreviousConfiguration.costUtilThisStepBoost));
+                    sb.append("<font size=\"-1\">{" + conf.bestPreviousConfiguration.configuration + "} ");
+                    sb.append(String.format("%.0f", conf.bestPreviousConfiguration.costUtilThisStepBoost));
                     sb.append("<br />");
-                    sb.append("-> "
-                            + String.format("%.0f", conf.transitionCost)
-                            + "<br /></font>");
+                    sb.append("-> " + String.format("%.0f", conf.transitionCost) + "<br /></font>");
                 }
                 sb.append("<b>{" + conf.configuration + "}</b> ");
                 if (step.queries != null) {
                     sb.append(String.format("%.0f", conf.queryCost));
                 }
                 sb.append("<br />");
-                sb.append(String.format("<b>%.0f</b>",
-                        conf.costUtilThisStepBoost));
+                sb.append(String.format("<b>%.0f</b>", conf.costUtilThisStepBoost));
                 ss[x++] = sb.toString();
             }
             if (x > height)
                 height = x;
         }
         StringBuilder sb = new StringBuilder();
-        sb
-                .append("<table class=\"rtable\" cellpadding=\"2\" cellspacing=\"0\">");
+        sb.append("<table class=\"rtable\" cellpadding=\"2\" cellspacing=\"0\">");
         for (int i = 0; i < height; i++) {
             sb.append("<tr>");
             for (int j = 0; j < tb.length; j++) {
@@ -179,8 +170,7 @@ public class SeqOptimal {
             sb.append("<b>{" + c.configuration + "}</b> ");
             if (c.step.queries != null)
                 sb.append("<b>" + c.step.queries + "</b>");
-            sb.append("(" + String.format("%.0f", c.costUtilThisStepBoost)
-                    + ")");
+            sb.append("(" + String.format("%.0f", c.costUtilThisStepBoost) + ")");
         }
         return sb.toString();
     }
@@ -193,10 +183,10 @@ public class SeqOptimal {
             sb.append("{" + c.configuration + "} ");
             if (c.step.queries != null)
                 sb.append("" + c.step.queries.name + "");
-            sb.append("("
-                    + String.format("q=%,.0f t=%,.0f sum=%,.0f", c.queryCost,
-                            c.transitionCost, c.costUtilThisStepBoost)
-                    + ")\r\n");
+            sb
+                    .append("("
+                            + String.format("q=%,.0f t=%,.0f sum=%,.0f", c.queryCost, c.transitionCost,
+                                    c.costUtilThisStepBoost) + ")\r\n");
         }
         return sb.toString();
     }

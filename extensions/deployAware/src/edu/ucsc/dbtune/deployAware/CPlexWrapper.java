@@ -7,12 +7,20 @@ public class CPlexWrapper {
     IloCplex cplex;
 
     public CPlexWrapper() throws IloException {
+        this(0.05);
+    }
+
+    public CPlexWrapper(double gap) throws IloException {
         cplex = new IloCplex();
-        cplex.setParam(IloCplex.DoubleParam.EpGap, 0.05);
+        cplex.setParam(IloCplex.DoubleParam.EpGap, gap);
         cplex.setOut(null);
         cplex.setWarning(null);
     }
-    
+
+    public void setEpGap(double gap) throws IloException {
+        cplex.setParam(IloCplex.DoubleParam.EpGap, gap);
+    }
+
     public void close() throws IloException {
         cplex.clearModel();
     }
@@ -80,26 +88,22 @@ public class CPlexWrapper {
         return cplex.linearNumExpr();
     }
 
-    public IloConstraint addLe(IloNumExpr arg0, double arg1)
-            throws IloException {
+    public IloConstraint addLe(IloNumExpr arg0, double arg1) throws IloException {
         constraintCount++;
         return cplex.addLe(arg0, arg1);
     }
 
-    public IloConstraint addLe(IloNumExpr arg0, IloNumExpr arg1)
-            throws IloException {
+    public IloConstraint addLe(IloNumExpr arg0, IloNumExpr arg1) throws IloException {
         constraintCount++;
         return cplex.addLe(arg0, arg1);
     }
 
-    public IloConstraint addEq(IloNumExpr arg0, double arg1)
-            throws IloException {
+    public IloConstraint addEq(IloNumExpr arg0, double arg1) throws IloException {
         constraintCount++;
         return cplex.addEq(arg0, arg1);
     }
 
-    public IloConstraint addEq(IloNumExpr arg0, IloNumExpr arg1)
-            throws IloException {
+    public IloConstraint addEq(IloNumExpr arg0, IloNumExpr arg1) throws IloException {
         constraintCount++;
         return cplex.addEq(arg0, arg1);
     }

@@ -53,6 +53,22 @@ public class SeqInumCost implements Serializable {
     public boolean addTransitionCostToObjective = false;
     public boolean eachWindowContainsOneQuery = false;
 
+    public void reduceIndexSize(int size) {
+        HashSet<SeqInumIndex> remove = new HashSet<SeqInumIndex>();
+        for (int i = size; i < indices.size(); i++)
+            remove.add(indices.get(i));
+        indices.setSize(size);
+        for (SeqInumQuery query : queries) {
+            for (SeqInumPlan plan : query.plans) {
+                for (SeqInumSlot slot : plan.slots) {
+                    slot.removeIndex(remove);
+                }
+            }
+        }
+        for (SeqInumIndex index : remove)
+            indexHash.remove(index.name);
+    }
+
     public SeqInumCost dup(int times) {
         SeqInumCost cost = new SeqInumCost();
         cost.queryHash = this.queryHash;

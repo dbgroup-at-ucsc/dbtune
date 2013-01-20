@@ -57,7 +57,7 @@ public class DATPaper {
         }
     }
 
-    static class DATExp {
+    public static class DATExp {
         WorkloadLoader loader;
         GnuPlot plot;
         GnuPlot plotWin;
@@ -73,6 +73,12 @@ public class DATPaper {
         double beta;
         double avgCreateCost;
         double windowSize;
+        double workloadRatio = 1;
+        double indexRatio = 1;
+        double bipEpGap = 0.05;
+        boolean useRunningTime = false;
+        boolean costMustDecrease = false;
+        public double[] windowWeights;
         File debugFile;
         boolean rerunExperiment;
     }
@@ -115,8 +121,21 @@ public class DATPaper {
         ps = new PrintStream(new FileOutputStream(p.debugFile, true));
         cost = p.loader.loadCost();
         p(p.plot.name + " " + p.plot.xName + "=" + p.plotX);
-        p("minCost: %,.0f", cost.costWithAllIndex);
-        p("maxCost: %,.0f", cost.costWithoutIndex);
+        if (p.workloadRatio > 0.999) {
+            p("minCost: %,.0f", cost.costWithAllIndex);
+            p("maxCost: %,.0f", cost.costWithoutIndex);
+        } else {
+            int newSize = (int) (cost.queries.size() * p.workloadRatio);
+            p("reduce workload size: %d -> %d", cost.queries.size(), newSize);
+            cost.queries.setSize(newSize);
+        }
+        if (p.indexRatio < 0.999) {
+            int newSize = (int) (cost.indices.size() * p.indexRatio);
+            p("reduce index size: %d -> %d", cost.indices.size(), newSize);
+            cost.reduceIndexSize(newSize);
+        }
+        if (p.costMustDecrease)
+            p("cost must decrease");
 
         if (eachWindowContainsOneQuery)
             p.m = cost.queries.size();
@@ -156,6 +175,8 @@ public class DATPaper {
             windowSizeS = Double.toString(p.windowSize);
         p("windowSize=%s m=%d l=%d alpha=%f beta=%f space=%,.0f", windowSizeS, m, l, alpha, beta, p.spaceBudge);
 
+        double greedyRunningTime = 0;
+        double datRunningTime = 0;
         {
             SeqCost seqCost = eachWindowContainsOneQuery ? SeqCost.fromInum(cost) : SeqCost.multiWindows(cost, m);
             if (useDB2Optimizer) {
@@ -167,10 +188,15 @@ public class DATPaper {
             seqCost.stepBoost = new double[m + 1];
             Arrays.fill(seqCost.stepBoost, alpha);
             seqCost.stepBoost[m - 1] = beta; // last
+            if (p.windowWeights != null) {
+                for (int i = 0; i < p.windowWeights.length; i++)
+                    seqCost.stepBoost[i] *= p.windowWeights[i];
+            }
             // window
             seqCost.storageConstraint = p.spaceBudge;
             seqCost.maxTransitionCost = p.windowSize;
             seqCost.maxIndexesWindow = l;
+            seqCost.costMustDecrease = p.costMustDecrease;
             RTimerN timer = new RTimerN();
             SeqGreedySeq greedySeq = new SeqGreedySeq(seqCost);
             while (greedySeq.run());
@@ -211,6 +237,7 @@ public class DATPaper {
                             conf.configuration.indices.length);
                 }
             }
+            greedyRunningTime = timer.getSecondElapse();
             p("GREEDY-SEQ time: %.2f s", timer.getSecondElapse());
             p("Obj value: %,.0f", this.greedySeq);
             p("whatIfCount: %d", seqCost.whatIfCount);
@@ -219,8 +246,10 @@ public class DATPaper {
         {
             RTimerN timer = new RTimerN();
             DATParameter params = new DATParameter(cost, windowConstraints, alpha, beta, l);
+            params.windowWeight = p.windowWeights;
+            params.costMustDecrease = p.costMustDecrease;
             DAT dat = new DAT();
-            DATOutput output = dat.runDAT(params);
+            DATOutput output = dat.runDAT(params, p.bipEpGap);
             this.dat = output.totalCost;
             datWindowCosts = new double[m];
             for (int i = 0; i < m; i++) {
@@ -253,6 +282,7 @@ public class DATPaper {
             // dsp.runMKP = false;
             // dsp.runGreedy = false;
             // dsp.run();
+            datRunningTime = timer.getSecondElapse();
             p("DAT time: %.2f s", timer.getSecondElapse());
             p("Obj value: %,.0f", this.dat);
             // dat = dsp.dat;
@@ -265,6 +295,10 @@ public class DATPaper {
             p.plot.startNewX(p.plotX, p.plotLabel, p.plotZ, p.plotLabelZ);
         } else {
             p.plot.startNewX(p.plotX, p.plotLabel);
+        }
+        if (p.useRunningTime) {
+            dat = datRunningTime;
+            greedySeq = greedyRunningTime;
         }
         if (useRatio) {
             p.plot.usePercentage = true;
