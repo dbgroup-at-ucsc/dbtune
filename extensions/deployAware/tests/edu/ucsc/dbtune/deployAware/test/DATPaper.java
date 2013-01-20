@@ -63,6 +63,8 @@ public class DATPaper {
         GnuPlot plotWin;
         double plotX;
         String plotLabel;
+        double plotZ;
+        String plotLabelZ;
         double m;
         double percentageUpdate;
         double spaceBudge;
@@ -242,7 +244,7 @@ public class DATPaper {
                             output.ws[i].drop);
                 }
             }
-            
+
             // dsp = new DATSeparateProcess(loader.dbName, loader.workloadName,
             // loader.fileName, loader.generateIndexMethod, alpha, beta,
             // m, l, spaceBudge, windowSize, 0);
@@ -259,7 +261,11 @@ public class DATPaper {
             dat.close();
         }
 
-        p.plot.startNewX(p.plotX, p.plotLabel);
+        if (p.plotLabelZ != null) {
+            p.plot.startNewX(p.plotX, p.plotLabel, p.plotZ, p.plotLabelZ);
+        } else {
+            p.plot.startNewX(p.plotX, p.plotLabel);
+        }
         if (useRatio) {
             p.plot.usePercentage = true;
             p.plot.addY(dat / greedySeq * 100);

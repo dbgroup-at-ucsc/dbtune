@@ -25,14 +25,15 @@ public class DATPaperMain {
     TestSet[] sets = { //
     new TestSet("TPCH", "tpch10g", "deployAware", "tpchPaper.sql", 10 * gigbytes, "tpch",//
             tpchWindowSize),
-            new TestSet("TPCDS", "test", "deployAware", "tpcdsPaper.sql", 10 * gigbytes, "tpcds", tpcdsWindowSize), };
+    //            new TestSet("TPCDS", "test", "deployAware", "tpcdsPaper.sql", 10 * gigbytes, "tpcds", tpcdsWindowSize), 
+    };
 
     public DATPaperMain() throws Exception {
         Rt.p("Current time: " + df.format(new Date()));
         //        windowOnly = true;
         //         rerunAllExp=true;
         //        params.spaceFactor.def = 0.1;
-        deployAwareTuning();
+        //        deployAwareTuning();
         workloadSequence();
         //         figsDir = new File(params.figsDir, "dat");
         //         figsDir.mkdirs();
@@ -77,11 +78,7 @@ public class DATPaperMain {
         return p;
     }
 
-    static interface Callback {
-        void callback(TestSet set, DATExp p, double value);
-    }
-
-    public void run(DATPaperParams.Set inputs, String name, String desc, Callback callback) throws Exception {
+    public void run(DATPaperParams.Set inputs, String name, String desc) throws Exception {
         for (TestSet set : sets) {
             DATExp p = def(set, name, desc);
             if (p.rerunExperiment) {
@@ -90,8 +87,38 @@ public class DATPaperMain {
                     double value = inputs.values[k];
                     p.plotX = value;
                     p.plotLabel = inputs.names[k];
-                    callback.callback(set, p, value);
+                    inputs.callback.callback(set, p, value);
                     new DATPaper(p);
+                }
+            }
+            p.plot.finish();
+            if (outputWinCost)
+                p.plotWin.finish();
+        }
+    }
+
+    public void run2(DATPaperParams.Set inputs1, DATPaperParams.Set inputs2, String name, String desc) throws Exception {
+        for (TestSet set : sets) {
+            DATExp p = def(set, name, desc);
+            Rt.p(p.plot.name);
+            p.plot.pm3d = true;
+            p.plot.set3dNames(inputs1.names, inputs2.names);
+            p.plot.xName = inputs1.name;
+            p.plot.yName = inputs2.name;
+            if (p.rerunExperiment) {
+                p.debugFile.delete();
+                for (int i = 0; i < inputs1.values.length; i++) {
+                    for (int j = 0; j < inputs2.values.length; j++) {
+                        double value1 = inputs1.values[i];
+                        double value2 = inputs2.values[j];
+                        p.plotX = value1;
+                        p.plotLabel = inputs1.names[i];
+                        p.plotZ = value2;
+                        p.plotLabelZ = inputs2.names[j];
+                        inputs1.callback.callback(set, p, value1);
+                        inputs2.callback.callback(set, p, value2);
+                        new DATPaper(p);
+                    }
                 }
             }
             p.plot.finish();
@@ -139,30 +166,12 @@ public class DATPaperMain {
         } else {
             // useDB2Optimizer = true;
             // verifyByDB2Optimizer=true;
-            run(params.spaceFactor, "space", "Varying space budget", new Callback() {
-                @Override
-                public void callback(TestSet set, DATExp p, double value) {
-                    p.spaceBudge = set.size * value;
-                }
-            });
-            run(params.winFactor, "window", "Varying window size", new Callback() {
-                @Override
-                public void callback(TestSet set, DATExp p, double value) {
-                    p.windowSize = p.avgCreateCost * value;
-                }
-            });
-            run(params.l, "l", "Varying numberof indexes in a window", new Callback() {
-                @Override
-                public void callback(TestSet set, DATExp p, double value) {
-                    p.l = value;
-                }
-            });
-            run(params.percentageUpdate, "update", "Varying ratio of udpates", new Callback() {
-                @Override
-                public void callback(TestSet set, DATExp p, double value) {
-                    p.percentageUpdate = value;
-                }
-            });
+            run(params.spaceFactor, "space", "Varying space budget");
+            run(params.winFactor, "window", "Varying window size");
+            run(params.l, "l", "Varying numberof indexes in a window");
+            run(params.percentageUpdate, "update", "Varying ratio of udpates");
+            run2(params.spaceFactor, params.m, "spaceNm", "Varying space budget and number of windows");
+            run2(params.spaceFactor, params.winFactor, "spaceNwin", "Varying space budget and window size");
         }
         DATPaperOthers.generatePdf(new File(params.outputDir, "seq.tex"), params, sets);
     }
@@ -186,36 +195,14 @@ public class DATPaperMain {
             return;
         }
 
-        run(params.m, "m", "Varying number of windows", new Callback() {
-            @Override
-            public void callback(TestSet set, DATExp p, double value) {
-                p.m = value;
-            }
-        });
+        run(params.m, "m", "Varying number of windows");
 
-        run(params.spaceFactor, "space", "Varying space budget", new Callback() {
-            @Override
-            public void callback(TestSet set, DATExp p, double value) {
-                p.spaceBudge = set.size * value;
-            }
-        });
+        run(params.spaceFactor, "space", "Varying space budget");
 
-        run(params.winFactor, "window", "Varying window size", new Callback() {
-            @Override
-            public void callback(TestSet set, DATExp p, double value) {
-                if (value < 0)
-                    p.windowSize = -1;
-                else
-                    p.windowSize = p.avgCreateCost * value;
-            }
-        });
+        run(params.winFactor, "window", "Varying window size");
 
-        run(params.l, "l", "Varying numberof indexes in a window", new Callback() {
-            @Override
-            public void callback(TestSet set, DATExp p, double value) {
-                p.l = value;
-            }
-        });
+        run(params.l, "l", "Varying numberof indexes in a window");
+
         DATPaperOthers.generatePdf(new File(params.outputDir, "dat.tex"), params, sets);
     }
 

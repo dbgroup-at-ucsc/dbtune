@@ -3,6 +3,7 @@ package edu.ucsc.dbtune.deployAware.test;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Hashtable;
 import java.util.Vector;
 
 import edu.ucsc.dbtune.util.Rt;
@@ -21,6 +22,7 @@ public class GnuPlot {
     Vector<Double> current = new Vector<Double>();
     String[] plotNames;
     Vector<String> xtics = new Vector<String>();
+    Vector<String> ztics = new Vector<String>();
 
     public GnuPlot(File dir, String name, String xName, String yName) {
         this.dir = dir;
@@ -56,6 +58,17 @@ public class GnuPlot {
             xtics.add(label);
     }
 
+    public void startNewX(double x, String label, double z, String zlabel) {
+        pm3d = true;
+        finishX();
+        current.add(x);
+        current.add(z);
+        if (label != null)
+            xtics.add(label);
+        if (zlabel != null)
+            ztics.add(zlabel);
+    }
+
     public void addY(double y) {
         current.add(y);
     }
@@ -70,6 +83,7 @@ public class GnuPlot {
     public boolean logscale = false;
     public boolean xGrid = true;
     public boolean yGrid = true;
+    public boolean pm3d = false;
     public String extra;
     public String[] dataFiles;
     public String y2label;
@@ -157,6 +171,10 @@ public class GnuPlot {
                             if (xtics.size() > 0)
                                 s += "," + xtics.get(i);
                         }
+                        if (pm3d && j == 1) {
+                            if (ztics.size() > 0)
+                                s += "," + ztics.get(i);
+                        }
                         ps.print(s);
                     }
                     if (i < vs.size() - 1)
@@ -173,7 +191,7 @@ public class GnuPlot {
                 double x = Double.parseDouble(ss2[0]);
                 if (x > maxX)
                     maxX = x;
-                for (int i = 1; i < ss.length; i++) {
+                for (int i = pm3d ? 2 : 1; i < ss.length; i++) {
                     double y = Double.parseDouble(ss[i]);
                     if (y > maxY)
                         maxY = y;
@@ -191,6 +209,11 @@ public class GnuPlot {
                 power = 0;
                 factor = 1;
             }
+            if (pm3d) {
+                finish3d();
+                return;
+            }
+
             PrintStream ps = new PrintStream(dataFile);
             if (plotNames != null) {
                 ps.print("x");
@@ -221,6 +244,10 @@ public class GnuPlot {
                     ps.println();
             }
             ps.close();
+        }
+        if (pm3d) {
+            finish3d();
+            return;
         }
         PrintStream ps = new PrintStream(pltFile);
         ps.println("reset");
@@ -296,6 +323,106 @@ public class GnuPlot {
                 // }
             }
         }
+        ps.close();
+        Rt.runAndShowCommand("gnuplot " + name + ".plt", dir);
+    }
+
+    String[] xname3d;
+    String[] yname3d;
+
+    void set3dNames(String[] x, String[] y) {
+        this.xname3d = x;
+        this.yname3d = y;
+    }
+
+    void finish3d() throws IOException {
+        double[][][] ds = new double[xname3d.length][yname3d.length][];
+        Hashtable<String, Integer> xh = new Hashtable<String, Integer>();
+        Hashtable<String, Integer> yh = new Hashtable<String, Integer>();
+        for (int i = 0; i < xname3d.length; i++)
+            xh.put(xname3d[i], i);
+        for (int i = 0; i < yname3d.length; i++) {
+//            Rt.p(yname3d[i]);
+            yh.put(yname3d[i], i);
+        }
+        String[] lines = Rt.readFileAsLines(orgDataFile);
+        double max = 0;
+        for (int i = 0; i < lines.length; i++) {
+            String[] ss = lines[i].split("\t");
+            String[] x = ss[0].split(",", 2);
+            String[] y = ss[1].split(",", 2);
+            double[] d = new double[ss.length - 2];
+            for (int j = 2; j < ss.length; j++) {
+                double d2 = Double.parseDouble(ss[j]);
+                if (d2 > max)
+                    max = d2;
+                d[j - 2] = d2;
+            }
+            d[0] = d[0] / d[1];
+            Integer t1=xh.get(x[1]);
+            if (t1==null)
+                throw new Error(x[1]);
+            Integer t2=yh.get(y[1]);
+            if (t2==null)
+                throw new Error(y[1]);
+            ds[t1][t2] = d;
+        }
+        //        double power = (int) Math.floor(Math.log10(max)) - 1;
+        //        double factor = Math.pow(10, power);
+        //        for (double[][] ds2 : ds) {
+        //            for (double[] ds3 : ds2) {
+        //                for (int i = 0; i < ds3.length; i++) {
+        //                    ds3[i] /= factor;
+        //                }
+        //            }
+        //        }
+
+        uniform = true;
+        int pt = 0;
+        PrintStream ps = new PrintStream(dataFile.getAbsolutePath());
+        for (int xi = 0; xi < xh.size(); xi++) {
+            double start = 0;
+            double end = 1;
+            for (int yi = 0; yi < yh.size(); yi++) {
+                ps.format("%f %s %f %s %f\n", xi + start, xname3d[xi], yi + start, yname3d[yi], ds[xi][yi][pt]);
+                ps.format("%f %s %f %s %f\n", xi + start, xname3d[xi], yi + end, yname3d[yi], ds[xi][yi][pt]);
+            }
+            ps.println();
+            for (int yi = 0; yi < yh.size(); yi++) {
+                ps.format("%f %s %f %s %f\n", xi + end, xname3d[xi], yi + start, yname3d[yi], ds[xi][yi][pt]);
+                ps.format("%f %s %f %s %f\n", xi + end, xname3d[xi], yi + end, yname3d[yi], ds[xi][yi][pt]);
+            }
+            ps.println();
+        }
+        ps.close();
+
+        ps = new PrintStream(pltFile);
+
+        ps.println("reset");
+        ps.println("set terminal postscript eps enhanced monochrome 26");
+        ps.println("set output \"" + (outputName != null ? outputName : name) + ".eps\"");
+        ps.println("set pm3d");
+        ps.println("set palette gray");
+        ps.println("set grid x y z");
+        ps.println("set xlabel \"" + xName + "\"");
+        ps.println("set ylabel \"" + yName+ "\"");
+        ps.print("set xtics (");
+        for (int i = 0; i < xname3d.length; i++) {
+            if (i > 0)
+                ps.print(",");
+            ps.print("\"" + xname3d[i] + "\" " + (i + 0.5));
+        }
+        ps.println(")");
+        ps.print("set ytics (");
+        for (int i = 0; i < yname3d.length; i++) {
+            if (i > 0)
+                ps.print(",");
+            ps.print("\"" + yname3d[i] + "\" " + (i + 0.5));
+        }
+        ps.println(")");
+
+        ps.println("splot '" + dataFile.getName() + "' using 1:3:5 with pm3d title \"" + plotNames[0] + "/"
+                + plotNames[1] + "\"");
         ps.close();
         Rt.runAndShowCommand("gnuplot " + name + ".plt", dir);
     }
