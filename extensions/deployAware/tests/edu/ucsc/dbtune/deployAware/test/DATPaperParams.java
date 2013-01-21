@@ -4,6 +4,7 @@ import java.io.File;
 
 import edu.ucsc.dbtune.deployAware.test.DATPaper.DATExp;
 import edu.ucsc.dbtune.deployAware.test.DATPaper.TestSet;
+import edu.ucsc.dbtune.util.Rt;
 
 public class DATPaperParams {
     public static interface Callback {
@@ -55,8 +56,8 @@ public class DATPaperParams {
                 p.windowSize = p.avgCreateCost * value;
         }
     });
-    public Set spaceFactor = new Set(0.05, "space", new double[] { 0.025, 0.05, 0.1, 1000000 }, new String[] { "0.025x",
-            "0.05x", "0.1x", "INF" }, new Callback() {
+    public Set spaceFactor = new Set(0.05, "space", new double[] { 0.025, 0.05, 0.1, 1000000 }, new String[] {
+            "0.025x", "0.05x", "0.1x", "INF" }, new Callback() {
         @Override
         public void callback(TestSet set, DATExp p, double value) {
             p.spaceBudge = set.size * value;
@@ -81,6 +82,9 @@ public class DATPaperParams {
         @Override
         public void callback(TestSet set, DATExp p, double value) {
             p.workloadRatio = value;
+            int newSize = (int) (p.cost.queries.size() * p.workloadRatio);
+            Rt.p("reduce workload size: %d -> %d", p.cost.queries.size(), newSize);
+            p.cost.queries.setSize(newSize);
         }
     });
     public Set indexRatio = new Set(1, "configuration size", new double[] { 1.0 / 8, 1.0 / 4, 1.0 / 2, 1 },
@@ -90,13 +94,13 @@ public class DATPaperParams {
                     p.indexRatio = value;
                 }
             });
-    public Set bipEpGap = new Set(1, "bip EpGap", new double[] { 0.05, 0.1, 0.15 }, new String[] { "5%", "10%",
-            "15%" }, new Callback() {
-        @Override
-        public void callback(TestSet set, DATExp p, double value) {
-            p.bipEpGap = value;
-        }
-    });
+    public Set bipEpGap = new Set(1, "bip EpGap", new double[] { 0.05, 0.1, 0.15 },
+            new String[] { "5%", "10%", "15%" }, new Callback() {
+                @Override
+                public void callback(TestSet set, DATExp p, double value) {
+                    p.bipEpGap = value;
+                }
+            });
     public Set _1mada = new Set(1, "a", new double[] { 1, 2, 4, 16 }, null, new Callback() {
         @Override
         public void callback(TestSet set, DATExp p, double value) {

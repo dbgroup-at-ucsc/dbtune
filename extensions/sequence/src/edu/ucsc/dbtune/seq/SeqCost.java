@@ -365,20 +365,6 @@ public class SeqCost {
         return costModel;
     }
 
-    public static class QueryMap {
-        public int queryId, windowId;
-
-        public QueryMap(int queryId, int windowId) {
-            this.queryId = queryId;
-            this.windowId = windowId;
-        }
-
-        @Override
-        public String toString() {
-            return "(" + queryId + "," + windowId + ")";
-        }
-    }
-
     public static SeqCost multiWindows(SeqInumCost cost, int[][] queryMap) throws SQLException {
         if (queryMap == null)
             return fromInum(cost);

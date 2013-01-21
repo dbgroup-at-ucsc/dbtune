@@ -8,9 +8,9 @@ import java.util.Date;
 import edu.ucsc.dbtune.deployAware.test.DATPaper.DATExp;
 import edu.ucsc.dbtune.deployAware.test.DATPaper.TestSet;
 import edu.ucsc.dbtune.deployAware.test.DATPaperParams.Callback;
-import edu.ucsc.dbtune.seq.SeqCost.QueryMap;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
+import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
 import edu.ucsc.dbtune.util.Rt;
 
 public class DATPaperMain {
@@ -29,8 +29,9 @@ public class DATPaperMain {
     TestSet tpcds = new TestSet("TPCDS", "test", "deployAware", "tpcdsPaper.sql", 10 * gigbytes, "tpcds",
             tpcdsWindowSize);
     TestSet[] sets = { 
-            //tpch, 
-            tpcds, };
+//            tpch,
+        tpcds,
+    };
 
     public DATPaperMain() throws Exception {
         Rt.p("Current time: " + df.format(new Date()));
@@ -98,6 +99,7 @@ public class DATPaperMain {
         if (p.rerunExperiment) {
             p.debugFile.delete();
             for (int k = 0; k < inputs.values.length; k++) {
+                p.cost = p.loader.loadCost();
                 double value = inputs.values[k];
                 p.plotX = value;
                 p.plotLabel = inputs.names[k];
@@ -131,6 +133,7 @@ public class DATPaperMain {
                 p.debugFile.delete();
                 for (int i = 0; i < inputs1.values.length; i++) {
                     for (int j = 0; j < inputs2.values.length; j++) {
+                        p.cost = p.loader.loadCost();
                         double value1 = inputs1.values[i];
                         double value2 = inputs2.values[j];
                         p.plotX = value1;
@@ -190,7 +193,7 @@ public class DATPaperMain {
                 p.queryMap = map;
             }
             */
-            
+
             // TRUNG -- sequence of set of queries
             @Override
             public void callback(TestSet set, DATExp p, double value) {
@@ -198,7 +201,7 @@ public class DATPaperMain {
                 int numQueriesOneWindow = (int) Math.ceil(p.cost.queries.size() / p.m);
                 // Might distribute the last query more than one times
                 // in the last window
-                int lastQueryId = p.cost.queries.size() - 1; 
+                int lastQueryId = p.cost.queries.size() - 1;
                 int[][] map = new int[(int) p.m][numQueriesOneWindow];
                 int counter = 0;
                 for (int i = 0; i < p.m; i++)
@@ -207,10 +210,32 @@ public class DATPaperMain {
                     for (int j = 0; j < numQueriesOneWindow; j++) {
                         if (counter > lastQueryId)
                             map[i][j] = lastQueryId;
-                        else 
+                        else
                             map[i][j] = counter++;
-                        
+
                     }
+                if (false) {
+                    p.m = 50;
+                    p.l = 1;
+                    map = new int[(int) p.m][];
+                    int update = 0;
+                    for (int i = 0; i < p.cost.queries.size(); i++) {
+                        SeqInumQuery query = p.cost.queries.get(i);
+                        if (!"select".equalsIgnoreCase(query.sql.getSQLCategory().name())) {
+                            update = i;
+                            break;
+                        }
+                    }
+                    for (int i = 0; i < p.m; i++) {
+                        if (i < p.m - 1) {
+                            map[i] = new int[] { update };
+                        } else {
+                            map[i] = new int[p.cost.queries.size()];
+                            for (int j = 0; j < p.cost.queries.size(); j++)
+                                map[i][j] = j;
+                        }
+                    }
+                }
                 p.queryMap = map;
             }
         };
@@ -243,17 +268,17 @@ public class DATPaperMain {
             */
             //run2(params.spaceFactor, params.m, "spaceNm", "Varying space budget and number of windows");
             //run2(params.spaceFactor, params.winFactor, "spaceNwin", "Varying space budget and window size");
-           
+
             Rt.p("=== Varying workload input sizes =============");
             run(tpcds, params.workloadRatio, "inputSize", "Running time w.r.t. input size", true, null);
-           
+
             /*
             Rt.p("=== Varying index sizes =============");
             run(tpcds, params.indexRatio, "indexSize", "Running time w.r.t. index size", true, null);
-              */          
+              */
             //run(tpcds, params.bipEpGap, "bipTime", "Running time w.r.t. bip EpGap", true, null);
             //run(tpcds, params.bipEpGap, "bipQuality", "Result w.r.t. bip EpGap", false, null);
-           
+
         }
         DATPaperOthers.generatePdf(new File(params.outputDir, "seq.tex"), params, sets);
     }

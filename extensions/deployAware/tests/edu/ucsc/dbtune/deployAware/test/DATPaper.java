@@ -13,7 +13,6 @@ import edu.ucsc.dbtune.deployAware.DATParameter;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.seq.SeqCost;
 import edu.ucsc.dbtune.seq.SeqGreedySeq;
-import edu.ucsc.dbtune.seq.SeqCost.QueryMap;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
@@ -161,13 +160,10 @@ public class DATPaper {
         cost = p.cost;
         p(p.plot.name + " " + p.plot.xName + "=" + p.plotX);
         if (p.workloadRatio > 0.999) {
-            p("minCost: %,.0f", cost.costWithAllIndex);
-            p("maxCost: %,.0f", cost.costWithoutIndex);
-        } else {
-            int newSize = (int) (cost.queries.size() * p.workloadRatio);
-            p("reduce workload size: %d -> %d", cost.queries.size(), newSize);
-            cost.queries.setSize(newSize);
+            p("minCost: %,.0f", p.cost.costWithAllIndex);
+            p("maxCost: %,.0f", p.cost.costWithoutIndex);
         }
+        p("wordload: "+p.cost.queries.size());
         if (p.indexRatio < 0.999) {
             int newSize = (int) (cost.indices.size() * p.indexRatio);
             p("reduce index size: %d -> %d", cost.indices.size(), newSize);
