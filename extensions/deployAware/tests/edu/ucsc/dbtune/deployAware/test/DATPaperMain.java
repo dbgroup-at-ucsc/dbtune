@@ -205,9 +205,11 @@ public class DATPaperMain {
                     // Distribute a set of consecutive @numberQueriesOneWindow 
                     // statements into a window
                     for (int j = 0; j < numQueriesOneWindow; j++) {
-                        map[i][j] = counter++;
                         if (counter > lastQueryId)
                             map[i][j] = lastQueryId;
+                        else 
+                            map[i][j] = counter++;
+                        
                     }
                 p.queryMap = map;
             }
@@ -241,9 +243,10 @@ public class DATPaperMain {
             */
             //run2(params.spaceFactor, params.m, "spaceNm", "Varying space budget and number of windows");
             //run2(params.spaceFactor, params.winFactor, "spaceNwin", "Varying space budget and window size");
-            
+           
             Rt.p("=== Varying workload input sizes =============");
             run(tpcds, params.workloadRatio, "inputSize", "Running time w.r.t. input size", true, null);
+           
             /*
             Rt.p("=== Varying index sizes =============");
             run(tpcds, params.indexRatio, "indexSize", "Running time w.r.t. index size", true, null);
