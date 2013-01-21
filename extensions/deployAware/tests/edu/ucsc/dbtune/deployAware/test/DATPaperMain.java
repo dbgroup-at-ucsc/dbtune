@@ -8,6 +8,7 @@ import java.util.Date;
 import edu.ucsc.dbtune.deployAware.test.DATPaper.DATExp;
 import edu.ucsc.dbtune.deployAware.test.DATPaper.TestSet;
 import edu.ucsc.dbtune.deployAware.test.DATPaperParams.Callback;
+import edu.ucsc.dbtune.seq.SeqCost.QueryMap;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
 import edu.ucsc.dbtune.util.Rt;
@@ -47,6 +48,8 @@ public class DATPaperMain {
         //        });
     }
 
+    Callback defCallback;
+
     DATExp def(TestSet set, String name, String desc) throws Exception {
         GnuPlot.defaultStyle = GnuPlot.Style.histograms;
         GnuPlot.uniform = true;
@@ -57,6 +60,7 @@ public class DATPaperMain {
                 params.generateIndexMethod);
         SeqInumCost cost = loader.loadCost();
         p.loader = loader;
+        p.cost = cost;
         p.percentageUpdate = params.percentageUpdate.def;
         p.plot = new GnuPlot(figsDir, set.shortName + "X" + name, name, "cost");
         p.plot.setPlotNames(DATPaper.curNames);
@@ -76,6 +80,8 @@ public class DATPaperMain {
             p.windowSize = params.winFactor.def * p.avgCreateCost;
         p.rerunExperiment = rerunAllExp || !p.plot.orgDataFile.exists()
                 || p.plot.orgDataFile.lastModified() < rerunTime;
+        if (defCallback != null)
+            defCallback.callback(null, p, 0);
         return p;
     }
 
@@ -166,7 +172,15 @@ public class DATPaperMain {
     public void workloadSequence() throws Exception {
         outputWinCost = false;
         DATPaper.addTransitionCostToObjective = true;
-        DATPaper.eachWindowContainsOneQuery = true;
+        defCallback = new Callback() {
+            @Override
+            public void callback(TestSet set, DATExp p, double value) {
+                QueryMap[] map = new QueryMap[p.cost.queries.size()];
+                for (int i = 0; i < map.length; i++)
+                    map[i] = new QueryMap(i, i);
+                p.queryMapping = map;
+            }
+        };
         DATPaper.noAlphaBeta = true;
 
         figsDir = new File(params.figsDir, "seq");
@@ -198,7 +212,19 @@ public class DATPaperMain {
     public void deployAwareTuning() throws Exception {
         outputWinCost = false;
         DATPaper.addTransitionCostToObjective = false;
-        DATPaper.eachWindowContainsOneQuery = false;
+        defCallback = new Callback() {
+            @Override
+            public void callback(TestSet set, DATExp p, double value) {
+                QueryMap[] map = new QueryMap[p.cost.queries.size() * (int) p.m];
+                int pos = 0;
+                for (int i = 0; i < p.m; i++) {
+                    for (int j = 0; j < p.cost.queries.size(); j++) {
+                        map[pos++] = new QueryMap(j, i);
+                    }
+                }
+                p.queryMapping = map;
+            }
+        };
         DATPaper.noAlphaBeta = false;
 
         figsDir = new File(params.figsDir, "dat");

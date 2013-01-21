@@ -365,7 +365,30 @@ public class SeqCost {
         return costModel;
     }
 
-    public static SeqCost multiWindows(SeqInumCost cost, int windows) throws SQLException {
+    public static class QueryMap {
+        public int queryId, windowId;
+
+        public QueryMap(int queryId, int windowId) {
+            this.queryId = queryId;
+            this.windowId = windowId;
+        }
+
+        @Override
+        public String toString() {
+            return "(" + queryId + "," + windowId + ")";
+        }
+    }
+
+    public static SeqCost multiWindows(SeqInumCost cost, QueryMap[] queryMapping) throws SQLException {
+        if (queryMapping == null)
+            return fromInum(cost);
+        int max = 0;
+        for (QueryMap t : queryMapping) {
+            if (t.windowId > max)
+                max = t.windowId;
+        }
+        int windows = max + 1;
+
         SeqCost costModel = new SeqCost();
         costModel.addTransitionCostToObjective = cost.addTransitionCostToObjective;
         int indexId = 0;
@@ -388,15 +411,23 @@ public class SeqCost {
         for (int windowId = 0; windowId < windows; windowId++) {
             SeqQuerySet set = new SeqQuerySet();
             set.name = "W" + windowId;
-            set.queries = new SeqQuery[cost.queries.size()];
-            for (int queryId = 0; queryId < cost.queries.size(); queryId++) {
-                SeqQuery q = new SeqQuery(queryId);
-                q.name = "Q" + queryId;
-                q.inumCached = cost.queries.get(queryId);
-                q.sql = q.inumCached.sql;
-                q.weight = q.inumCached.weight;
-                q.costWithoutIndex = q.inumCached.cost(new SeqInumIndex[0]);
-                set.queries[queryId] = q;
+            int totalQueires = 0;
+            for (QueryMap map : queryMapping) {
+                if (map.windowId == windowId)
+                    totalQueires++;
+            }
+            set.queries = new SeqQuery[totalQueires];
+            int pos = 0;
+            for (QueryMap map : queryMapping) {
+                if (map.windowId == windowId) {
+                    SeqQuery q = new SeqQuery(map.queryId);
+                    q.name = "Q" + map.queryId;
+                    q.inumCached = cost.queries.get(map.queryId);
+                    q.sql = q.inumCached.sql;
+                    q.weight = q.inumCached.weight;
+                    q.costWithoutIndex = q.inumCached.cost(new SeqInumIndex[0]);
+                    set.queries[pos++] = q;
+                }
             }
             costModel.queries.put(set.name, set);
             costModel.sequence[windowId] = set;

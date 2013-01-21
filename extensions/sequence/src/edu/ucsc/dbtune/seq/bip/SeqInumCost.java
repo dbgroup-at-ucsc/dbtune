@@ -29,6 +29,7 @@ import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.optimizer.plan.Operator;
 import edu.ucsc.dbtune.optimizer.plan.TableAccessSlot;
 import edu.ucsc.dbtune.seq.SeqCost;
+import edu.ucsc.dbtune.seq.SeqCost.QueryMap;
 import edu.ucsc.dbtune.seq.bip.def.*;
 import edu.ucsc.dbtune.seq.utils.PerfTest;
 import edu.ucsc.dbtune.seq.utils.RTimer;
@@ -51,7 +52,7 @@ public class SeqInumCost implements Serializable {
     public double costWithoutIndex;
     public double costWithAllIndex;
     public boolean addTransitionCostToObjective = false;
-    public boolean eachWindowContainsOneQuery = false;
+    public QueryMap[] queryMapping;
 
     public void reduceIndexSize(int size) {
         HashSet<SeqInumIndex> remove = new HashSet<SeqInumIndex>();

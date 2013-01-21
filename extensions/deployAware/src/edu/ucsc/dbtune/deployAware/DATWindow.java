@@ -14,6 +14,7 @@ import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
+import edu.ucsc.dbtune.seq.SeqCost.QueryMap;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.util.Rt;
@@ -40,10 +41,19 @@ public class DATWindow {
         this.id = id;
         this.lastWindow = lastWindow;
         this.costConstraint = costConstraint;
-        if (costModel.eachWindowContainsOneQuery) {
-            this.totalQueires = 1;
+        if (costModel.queryMapping != null) {
+            int n = 0;
+            for (QueryMap map : costModel.queryMapping) {
+                if (map.windowId == id)
+                    n++;
+            }
+            this.totalQueires = n;
             this.queries = new DATQuery[totalQueires];
-            this.queries[0] = new DATQuery(cplex, this, costModel.queries.get(id));
+            int pos = 0;
+            for (QueryMap map : costModel.queryMapping) {
+                if (map.windowId == id)
+                    this.queries[pos++] = new DATQuery(cplex, this, costModel.queries.get(map.queryId));
+            }
         } else {
             this.totalQueires = costModel.queries.size();
             this.queries = new DATQuery[totalQueires];

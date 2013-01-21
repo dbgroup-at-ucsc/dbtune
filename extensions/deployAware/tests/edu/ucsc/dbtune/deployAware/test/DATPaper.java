@@ -1,27 +1,21 @@
 package edu.ucsc.dbtune.deployAware.test;
 
-import ilog.concert.IloException;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Vector;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.deployAware.DAT;
 import edu.ucsc.dbtune.deployAware.DATOutput;
 import edu.ucsc.dbtune.deployAware.DATParameter;
-import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
-import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.seq.SeqCost;
 import edu.ucsc.dbtune.seq.SeqGreedySeq;
-import edu.ucsc.dbtune.seq.SeqOptimal;
+import edu.ucsc.dbtune.seq.SeqCost.QueryMap;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.WorkloadLoader;
-import edu.ucsc.dbtune.seq.bip.WorkloadLoaderSettings;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumQuery;
 import edu.ucsc.dbtune.seq.def.SeqIndex;
@@ -59,6 +53,7 @@ public class DATPaper {
 
     public static class DATExp {
         WorkloadLoader loader;
+        SeqInumCost cost;
         GnuPlot plot;
         GnuPlot plotWin;
         double plotX;
@@ -81,11 +76,55 @@ public class DATPaper {
         public double[] windowWeights;
         File debugFile;
         boolean rerunExperiment;
+        /**
+         * Map query to a window.
+         * For DAT, input {{0,0},{1,0},...,{n-1,0},
+         * {0,1},{1,1},...,{n-1,1},...,{0,m-1},{1,m-1},...,{n-1,m-1}}
+         * For Seq, input {{0,0},{1,1},...,{n-1,n-1}}
+         */
+        public QueryMap[] queryMapping;
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("m=%f l=%f\n", m, l));
+            sb.append(String.format("alpha=%f beta=%f \n", alpha, beta));
+            sb.append(String.format("windowSize=%f\n", windowSize));
+            sb.append(String.format("space=%,.0f\n", spaceBudge));
+            sb.append(String.format("plotX=%f plotLabel=%s\n", plotX, plotLabel));
+            sb.append(String.format("plotZ=%f plotLabelZ=%s\n", plotZ, plotLabelZ));
+            sb.append(String.format("percentageUpdate=%f\n", percentageUpdate));
+            sb.append(String.format("avgCreateCost=%f\n", avgCreateCost));
+            sb.append(String.format("workloadRatio=%f\n", workloadRatio));
+            sb.append(String.format("indexRatio=%f\n", indexRatio));
+            sb.append(String.format("bipEpGap=%f\n", bipEpGap));
+            sb.append(String.format("useRunningTime=" + useRunningTime + "\n"));
+            sb.append(String.format("costMustDecrease=" + costMustDecrease + "\n"));
+            if (windowWeights != null) {
+                sb.append(String.format("windowWeights: "));
+                for (int i = 0; i < windowWeights.length; i++) {
+                    sb.append(windowWeights[i] + ",");
+                    if (i % 16 == 15)
+                        sb.append("\n");
+                }
+                sb.append("\n");
+            }
+            if (queryMapping != null) {
+                sb.append(String.format("queryMapping: "));
+                for (int i = 0; i < queryMapping.length; i++) {
+                    sb.append(queryMapping[i] + ",");
+                    if (i % 16 == 15)
+                        sb.append("\n");
+                }
+                sb.append("\n");
+            }
+            return sb.toString();
+        }
     }
 
     public static boolean useRatio = false;
     public static boolean addTransitionCostToObjective = false;
-    public static boolean eachWindowContainsOneQuery = false;
+    //    public static boolean eachWindowContainsOneQuery = false;
     public static boolean useDB2Optimizer = false;
     public static boolean verifyByDB2Optimizer = false;
     public static boolean noAlphaBeta = false;
@@ -119,7 +158,7 @@ public class DATPaper {
 
     public DATPaper(DATExp p) throws Exception {
         ps = new PrintStream(new FileOutputStream(p.debugFile, true));
-        cost = p.loader.loadCost();
+        cost = p.cost;
         p(p.plot.name + " " + p.plot.xName + "=" + p.plotX);
         if (p.workloadRatio > 0.999) {
             p("minCost: %,.0f", cost.costWithAllIndex);
@@ -137,10 +176,16 @@ public class DATPaper {
         if (p.costMustDecrease)
             p("cost must decrease");
 
-        if (eachWindowContainsOneQuery)
-            p.m = cost.queries.size();
+        if (p.queryMapping != null) {
+            int max = 0;
+            for (QueryMap t : p.queryMapping) {
+                if (t.windowId > max)
+                    max = t.windowId;
+            }
+            p.m = max + 1;
+        }
         cost.addTransitionCostToObjective = DATPaper.addTransitionCostToObjective;
-        cost.eachWindowContainsOneQuery = DATPaper.eachWindowContainsOneQuery;
+        cost.queryMapping = p.queryMapping;
         // Rt.p(cost.queries.get(0)
         // .cost(cost.indices.toArray(new SeqInumIndex[0])));
         long totalCost = 0;
@@ -162,6 +207,7 @@ public class DATPaper {
             throw new Error();
         this.alpha = p.alpha;
         this.beta = p.beta;
+        p(p.toString());
         if (noAlphaBeta) {
             this.alpha = 1;
             this.beta = 1;
@@ -178,7 +224,8 @@ public class DATPaper {
         double greedyRunningTime = 0;
         double datRunningTime = 0;
         {
-            SeqCost seqCost = eachWindowContainsOneQuery ? SeqCost.fromInum(cost) : SeqCost.multiWindows(cost, m);
+            SeqCost seqCost = p.queryMapping == null ? SeqCost.fromInum(cost) : SeqCost.multiWindows(cost,
+                    p.queryMapping);
             if (useDB2Optimizer) {
                 seqCost.useDB2Optimizer = useDB2Optimizer;
                 seqCost.db = p.loader.getDb();
