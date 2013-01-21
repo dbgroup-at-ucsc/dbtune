@@ -41,19 +41,13 @@ public class DATWindow {
         this.id = id;
         this.lastWindow = lastWindow;
         this.costConstraint = costConstraint;
-        if (costModel.queryMapping != null) {
-            int n = 0;
-            for (QueryMap map : costModel.queryMapping) {
-                if (map.windowId == id)
-                    n++;
-            }
-            this.totalQueires = n;
+        if (costModel.queryMap != null) {
+            int[] queryMap = costModel.queryMap[id];
+            this.totalQueires = queryMap.length;
             this.queries = new DATQuery[totalQueires];
             int pos = 0;
-            for (QueryMap map : costModel.queryMapping) {
-                if (map.windowId == id)
-                    this.queries[pos++] = new DATQuery(cplex, this, costModel.queries.get(map.queryId));
-            }
+            for (int queryId : queryMap)
+                this.queries[pos++] = new DATQuery(cplex, this, costModel.queries.get(queryId));
         } else {
             this.totalQueires = costModel.queries.size();
             this.queries = new DATQuery[totalQueires];

@@ -77,12 +77,9 @@ public class DATPaper {
         File debugFile;
         boolean rerunExperiment;
         /**
-         * Map query to a window.
-         * For DAT, input {{0,0},{1,0},...,{n-1,0},
-         * {0,1},{1,1},...,{n-1,1},...,{0,m-1},{1,m-1},...,{n-1,m-1}}
-         * For Seq, input {{0,0},{1,1},...,{n-1,n-1}}
+         * Specify list of queries in each window
          */
-        public QueryMap[] queryMapping;
+        public int[][] queryMap;
 
         @Override
         public String toString() {
@@ -109,14 +106,17 @@ public class DATPaper {
                 }
                 sb.append("\n");
             }
-            if (queryMapping != null) {
-                sb.append(String.format("queryMapping: "));
-                for (int i = 0; i < queryMapping.length; i++) {
-                    sb.append(queryMapping[i] + ",");
-                    if (i % 16 == 15)
-                        sb.append("\n");
+            if (queryMap != null) {
+                sb.append(String.format("queryMapping:\n"));
+                for (int i = 0; i < queryMap.length; i++) {
+                    sb.append("Window " + i + ": ");
+                    for (int j = 0; j < queryMap[i].length; j++) {
+                        sb.append(queryMap[i][j] + ",");
+                        if (j % 16 == 15)
+                            sb.append("\n");
+                    }
+                    sb.append("\n");
                 }
-                sb.append("\n");
             }
             return sb.toString();
         }
@@ -176,16 +176,10 @@ public class DATPaper {
         if (p.costMustDecrease)
             p("cost must decrease");
 
-        if (p.queryMapping != null) {
-            int max = 0;
-            for (QueryMap t : p.queryMapping) {
-                if (t.windowId > max)
-                    max = t.windowId;
-            }
-            p.m = max + 1;
-        }
+        if (p.queryMap != null)
+            p.m = p.queryMap.length;
         cost.addTransitionCostToObjective = DATPaper.addTransitionCostToObjective;
-        cost.queryMapping = p.queryMapping;
+        cost.queryMap = p.queryMap;
         // Rt.p(cost.queries.get(0)
         // .cost(cost.indices.toArray(new SeqInumIndex[0])));
         long totalCost = 0;
@@ -224,8 +218,8 @@ public class DATPaper {
         double greedyRunningTime = 0;
         double datRunningTime = 0;
         {
-            SeqCost seqCost = p.queryMapping == null ? SeqCost.fromInum(cost) : SeqCost.multiWindows(cost,
-                    p.queryMapping);
+            SeqCost seqCost = p.queryMap == null ? SeqCost.fromInum(cost) : SeqCost.multiWindows(cost,
+                    p.queryMap);
             if (useDB2Optimizer) {
                 seqCost.useDB2Optimizer = useDB2Optimizer;
                 seqCost.db = p.loader.getDb();

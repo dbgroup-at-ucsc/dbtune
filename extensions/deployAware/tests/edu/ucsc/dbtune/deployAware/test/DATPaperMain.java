@@ -102,6 +102,8 @@ public class DATPaperMain {
                 if (callback != null)
                     callback.callback(set, p, value);
                 inputs.callback.callback(set, p, value);
+                if (defCallback != null)
+                    defCallback.callback(null, p, 0);
                 new DATPaper(p);
             }
         }
@@ -135,6 +137,8 @@ public class DATPaperMain {
                         p.plotLabelZ = inputs2.names[j];
                         inputs1.callback.callback(set, p, value1);
                         inputs2.callback.callback(set, p, value2);
+                        if (defCallback != null)
+                            defCallback.callback(null, p, 0);
                         new DATPaper(p);
                     }
                 }
@@ -151,6 +155,8 @@ public class DATPaperMain {
             p.plot.xName = "window";
             if (callback != null)
                 callback.callback(set, p, 0);
+            if (defCallback != null)
+                defCallback.callback(null, p, 0);
             if (callback == null || p.rerunExperiment) {
                 p.debugFile.delete();
                 DATPaper run = new DATPaper(p);
@@ -175,10 +181,10 @@ public class DATPaperMain {
         defCallback = new Callback() {
             @Override
             public void callback(TestSet set, DATExp p, double value) {
-                QueryMap[] map = new QueryMap[p.cost.queries.size()];
+                int[][] map = new int[p.cost.queries.size()][1];
                 for (int i = 0; i < map.length; i++)
-                    map[i] = new QueryMap(i, i);
-                p.queryMapping = map;
+                    map[i][0] = i;
+                p.queryMap = map;
             }
         };
         DATPaper.noAlphaBeta = true;
@@ -215,14 +221,11 @@ public class DATPaperMain {
         defCallback = new Callback() {
             @Override
             public void callback(TestSet set, DATExp p, double value) {
-                QueryMap[] map = new QueryMap[p.cost.queries.size() * (int) p.m];
-                int pos = 0;
-                for (int i = 0; i < p.m; i++) {
-                    for (int j = 0; j < p.cost.queries.size(); j++) {
-                        map[pos++] = new QueryMap(j, i);
-                    }
-                }
-                p.queryMapping = map;
+                int[][] map = new int[(int) p.m][p.cost.queries.size()];
+                for (int i = 0; i < p.m; i++)
+                    for (int j = 0; j < p.cost.queries.size(); j++)
+                        map[i][j] = j;
+                p.queryMap = map;
             }
         };
         DATPaper.noAlphaBeta = false;

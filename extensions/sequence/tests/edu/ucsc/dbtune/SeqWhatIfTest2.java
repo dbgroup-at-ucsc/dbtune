@@ -64,7 +64,7 @@ public class SeqWhatIfTest2 {
         // "recommend");
 
         int windows = 3;
-        cost = SeqCost.multiWindows(loader.loadCost(), windows);
+        cost = SeqCost.multiWindows(loader.loadCost(), null);
         cost.stepBoost = new double[windows + 1];
         Arrays.fill(cost.stepBoost, 1);
         // cost.stepBoost[2] = 10000;

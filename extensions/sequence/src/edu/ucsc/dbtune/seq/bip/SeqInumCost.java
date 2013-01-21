@@ -52,7 +52,7 @@ public class SeqInumCost implements Serializable {
     public double costWithoutIndex;
     public double costWithAllIndex;
     public boolean addTransitionCostToObjective = false;
-    public QueryMap[] queryMapping;
+    public int[][] queryMap;
 
     public void reduceIndexSize(int size) {
         HashSet<SeqInumIndex> remove = new HashSet<SeqInumIndex>();
