@@ -31,7 +31,7 @@ public class SQLStatement
      * @param position
      *      position of the statement in the workload
      */
-    SQLStatement(String workload, String sql, int position)
+    public SQLStatement(String workload, String sql, int position)
     {
         this(workload, sql, SQLCategory.from(sql), position);
     }
@@ -50,7 +50,9 @@ public class SQLStatement
     }
 
     /**
-     * Constructs a {@code SQLStatement} given its category and the literal contents.
+     * Constructs a {@code SQLStatement} given the name of the workload it belongs to, the SQL 
+     * category, the literal contents of the statement and the position of the statement in relation 
+     * to others in the workload.
      *
      * @param workload
      *      workload this statement corresponds to.
