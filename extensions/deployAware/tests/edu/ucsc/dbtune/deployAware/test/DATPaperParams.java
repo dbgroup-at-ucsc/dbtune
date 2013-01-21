@@ -39,7 +39,7 @@ public class DATPaperParams {
     File figsDir = new File(outputDir, "figs");
     File skylineLatexFile = new File(outputDir, "skyline.tex");
 
-    public Set m = new Set(4, "m", new double[] { 2, 4, 6 }, null, new Callback() {
+    public Set m = new Set(4, "m", new double[] { 6, 8, 10, 12 }, null, new Callback() {
         @Override
         public void callback(TestSet set, DATExp p, double value) {
             p.m = value;
@@ -55,8 +55,8 @@ public class DATPaperParams {
                 p.windowSize = p.avgCreateCost * value;
         }
     });
-    public Set spaceFactor = new Set(0.5, "space", new double[] { 0.25, 0.5, 1, 1000000 }, new String[] { "0.25x",
-            "0.5x", "1x", "INF" }, new Callback() {
+    public Set spaceFactor = new Set(0.05, "space", new double[] { 0.025, 0.05, 0.1, 1000000 }, new String[] { "0.025x",
+            "0.05x", "0.1x", "INF" }, new Callback() {
         @Override
         public void callback(TestSet set, DATExp p, double value) {
             p.spaceBudge = set.size * value;
