@@ -10,6 +10,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
+import edu.ucsc.dbtune.advisor.WorkloadObserverAdvisor;
 
 import edu.ucsc.dbtune.metadata.Index;
 
@@ -22,13 +23,19 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getColumnListString;
  */
 public class IndexSetPartitionTable extends SwingVisualizer
 {
+    static final long serialVersionUID = 0;
     protected String[] columnNames;
 
     /**
      * constructor.
+     *
+     * @param advisor
+     *      the advisor
      */
-    public IndexSetPartitionTable()
+    public IndexSetPartitionTable(WorkloadObserverAdvisor advisor)
     {
+        super(advisor);
+
         columnNames = new String[6];
 
         columnNames[0] = "NAME";
@@ -52,21 +59,13 @@ public class IndexSetPartitionTable extends SwingVisualizer
      * {@inheritDoc}
      */
     @Override
-    public void updateContent()
+    public void updateContent() throws Exception
     {
+        RecommendationStatistics stats = advisor.getRecommendationStatistics();
+
         getContentPane().removeAll();
 
-        if (stats.size() < 1)
-            return;
-
-        if (stats.size() > 1)
-            throw new RuntimeException(
-                "Can only display partition for one instance of an algorithm");
-
-        if (stats.get(0).size() == 0)
-            return;
-
-        RecommendationStatistics.Entry e = stats.get(0).getLastEntry();
+        RecommendationStatistics.Entry e = stats.getLastEntry();
         Set<Set<Index>> partitions = e.getCandidatePartitioning();
 
         for (Set<Index> partition : partitions)
@@ -91,7 +90,7 @@ public class IndexSetPartitionTable extends SwingVisualizer
 
         for (Index index : indexes)
             dataValues[i++] = newRow(e, index);
-            
+
         return new JTable(dataValues, columnNames);
     }
 

@@ -18,6 +18,8 @@ import edu.ucsc.dbtune.metadata.Index
 import edu.ucsc.dbtune.util.Environment
 import edu.ucsc.dbtune.util.Environment._
 
+import edu.ucsc.dbtune.viz.VisualizationFactory._
+
 import edu.ucsc.dbtune.workload.SQLStatement
 import edu.ucsc.dbtune.workload.Workload
 
@@ -41,10 +43,11 @@ class WFIT(
     histSize: Integer = getInstance.getIndexStatisticsWindow,
     partitionIters: Integer = getInstance.getNumPartitionIterations)
   extends edu.ucsc.dbtune.advisor.wfit.WFIT(
-      db.DBMS, initialSet, stateCnt, idxCnt, histSize, partitionIters)
+      db.DBMS, wl.workloadReader.getWorkload, initialSet, stateCnt, idxCnt, histSize,
+      partitionIters)
 {
   val workload = wl
-  wl.register(this)
+  val visualizer = newVisualizer(this)
 
   def this(db: Database, workload: WorkloadStream) = {
     this(db, workload, new HashSet[Index], getInstance.getMaxNumStates)
@@ -70,7 +73,13 @@ class WFIT(
     this.getRecommendationStatistics.setAlgorithmName(name)
   }
 
-  override def voteUp(id: Integer) = { super.voteUp(id); wl.visualizers.foreach(_.refresh) }
+  override def voteUp(id: Integer) = { super.voteUp(id) }
 
-  override def voteDown(id: Integer) = { super.voteDown(id); wl.visualizers.foreach(_.refresh) }
+  override def voteDown(id: Integer) = { super.voteDown(id) }
+}
+
+object WFIT {
+  def show(wfit: WFIT) = {
+    wfit.visualizer.showit
+  }
 }

@@ -3,6 +3,8 @@ package edu.ucsc.dbtune.viz;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.ucsc.dbtune.advisor.WorkloadObserverAdvisor;
+
 /**
  * A visualizer that aggregates {@link SwingVisualizer SwingVisualizer's} in a tabbed interface.
  *
@@ -19,8 +21,10 @@ public class TabbedSwingVisualizer extends SwingVisualizer
     /**
      * Creates new form Window
      */
-    public TabbedSwingVisualizer()
+    public TabbedSwingVisualizer(WorkloadObserverAdvisor advisor)
     {
+        super(advisor);
+
         initComponents();
 
         swingVisualizers = new ArrayList<SwingVisualizer>();
@@ -67,7 +71,7 @@ public class TabbedSwingVisualizer extends SwingVisualizer
     /**
      */
     @Override
-    public void updateContent()
+    public void updateContent() throws Exception
     {
         for (SwingVisualizer vis : swingVisualizers) {
             vis.updateContent();

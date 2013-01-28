@@ -1,5 +1,7 @@
 package edu.ucsc.dbtune.cli
 
+import java.sql.Connection
+
 import edu.ucsc.dbtune.DatabaseSystem
 import edu.ucsc.dbtune.metadata.Catalog
 import edu.ucsc.dbtune.metadata.ColumnOrdering
@@ -68,6 +70,15 @@ class Database(dbms: DatabaseSystem) extends Catalog(dbms.getCatalog) {
     */
   def close() =  {
     dbms.getConnection.close
+  }
+
+  /** Returns the underlying JDBC connection
+    *
+    * @return
+    *   the JDBC connection
+    */
+  def connection() : Connection =  {
+    dbms.getConnection
   }
 
   /** Explains a SQL statement

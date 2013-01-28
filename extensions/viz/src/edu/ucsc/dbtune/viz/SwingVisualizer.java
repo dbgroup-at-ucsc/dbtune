@@ -1,11 +1,13 @@
 package edu.ucsc.dbtune.viz;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.swing.JFrame;
 
-import edu.ucsc.dbtune.advisor.RecommendationStatistics;
+import com.google.common.eventbus.Subscribe;
+
+import edu.ucsc.dbtune.advisor.WorkloadObserverAdvisor;
+
+import edu.ucsc.dbtune.util.EventBusFactory;
+
 import edu.ucsc.dbtune.workload.Workload;
 
 /**
@@ -15,40 +17,41 @@ public abstract class SwingVisualizer extends JFrame implements AdvisorVisualize
 {
     static final long serialVersionUID = 0;
 
-    protected List<RecommendationStatistics> stats;
-
-    protected Workload wl;
+    protected WorkloadObserverAdvisor advisor;
+    protected Workload workload;
 
     /**
-     * Sets the stats for this instance.
-     *
-     * @param stats The stats.
+     * @param advisor
+     *      the advisor being observed by the visualizer
      */
-    public void setStatistics(RecommendationStatistics... stats)
+    public SwingVisualizer(WorkloadObserverAdvisor advisor)
     {
-        this.stats = new ArrayList<RecommendationStatistics>();
+        this.advisor = advisor;
+        this.workload = advisor.getWorkload();
 
-        for (RecommendationStatistics stat : stats)
-            this.stats.add(stat);
-
-        refresh();
+        EventBusFactory.getEventBusInstance().register(this);
     }
 
     /**
      * Sets the stats for this instance.
      *
-     * @param stats The stats.
+     * @param eventId
+     *      a string identifying the event that this visualizer is waiting for
+     * @throws Exception
+     *      if an error occurs while refreshing the content
      */
-    public void setStatistics(List<RecommendationStatistics> stats)
+    @Subscribe
+    public void handleUpdateToAdvisor(String eventId) throws Exception
     {
-        setStatistics(stats.toArray(new RecommendationStatistics[0]));
+        if (eventId.equals(advisor.hashCode() + "_" + workload.hashCode()))
+            refreshit();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public final void hide()
+    public final void hideit()
     {
         dispose();
         setVisible(false);
@@ -69,7 +72,7 @@ public abstract class SwingVisualizer extends JFrame implements AdvisorVisualize
      * {@inheritDoc}
      */
     @Override
-    public final void refresh()
+    public final void refreshit() throws Exception
     {
         updateContent();
 
@@ -78,14 +81,11 @@ public abstract class SwingVisualizer extends JFrame implements AdvisorVisualize
         repaint();
     }
 
-    @Override
-    public void setWorkload(Workload wl)
-    {
-        this.wl = wl;
-    }
-
     /**
      * updates the content.
+     *
+     * @throws Exception
+     *      if an error occurs while updating the content
      */
-    public abstract void updateContent();
+    public abstract void updateContent() throws Exception;
 }

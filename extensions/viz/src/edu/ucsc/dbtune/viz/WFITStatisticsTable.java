@@ -13,6 +13,7 @@ import javax.swing.JTable;
 import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
+import edu.ucsc.dbtune.advisor.WorkloadObserverAdvisor;
 import edu.ucsc.dbtune.advisor.wfit.WFITRecommendationStatistics;
 import edu.ucsc.dbtune.metadata.Index;
 
@@ -25,13 +26,17 @@ import static edu.ucsc.dbtune.util.MetadataUtils.transitionCost;
  */
 public class WFITStatisticsTable extends SwingVisualizer
 {
-    private String[] columnNames;
     static final long serialVersionUID = 0;
+    private String[] columnNames;
 
     /**
+     *
+     * @param advisor
+     *      the advisor for which a visualizer is being built
      */
-    public WFITStatisticsTable()
+    public WFITStatisticsTable(WorkloadObserverAdvisor advisor)
     {
+        super(advisor);
         columnNames = new String[6];
 
         columnNames[0] = "PARTITION";
@@ -56,25 +61,20 @@ public class WFITStatisticsTable extends SwingVisualizer
      * {@inheritDoc}
      */
     @Override
-    public void updateContent()
+    public void updateContent() throws Exception
     {
+        RecommendationStatistics stats = advisor.getRecommendationStatistics();
+
         getContentPane().removeAll();
 
-        if (stats.size() < 1)
-            return;
-
-        if (stats.size() > 1)
-            throw new RuntimeException(
-                    "Can only display partition for one instance of an algorithm");
-
-        if (!(stats.get(0) instanceof WFITRecommendationStatistics))
+        if (!(stats instanceof WFITRecommendationStatistics))
             throw new RuntimeException(
                     "Expecting WFIT-specific recommendation statistics");
 
-        if (stats.get(0).size() == 0)
+        if (stats.size() == 0)
             return;
 
-        RecommendationStatistics.Entry e = stats.get(0).getLastEntry();
+        RecommendationStatistics.Entry e = stats.getLastEntry();
         Set<Set<Index>> partitions = e.getCandidatePartitioning();
         Set<Index> currentState = e.getRecommendation();
         Set<Index> previousState = e.getPreviousRecommendation();

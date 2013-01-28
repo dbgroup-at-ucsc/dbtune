@@ -1,7 +1,5 @@
 package edu.ucsc.dbtune.viz;
 
-import edu.ucsc.dbtune.workload.Workload;
-
 /**
  * A visualizer of recommendation algorithms.
  *
@@ -10,8 +8,10 @@ import edu.ucsc.dbtune.workload.Workload;
 public interface AdvisorVisualizer
 {
     /**
+     * @throws Exception
+     *      if an error occurs while refreshing the visualizer
      */
-    void refresh();
+    void refreshit() throws Exception;
 
     /**
      */
@@ -19,9 +19,5 @@ public interface AdvisorVisualizer
 
     /**
      */
-    void hide();
-
-    /**
-     */
-    void setWorkload(Workload wl);
+    void hideit();
 }

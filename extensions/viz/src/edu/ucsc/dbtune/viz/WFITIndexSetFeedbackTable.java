@@ -6,6 +6,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
+import edu.ucsc.dbtune.advisor.WorkloadObserverAdvisor;
 
 import edu.ucsc.dbtune.advisor.wfit.WFITRecommendationStatistics;
 
@@ -24,9 +25,13 @@ public class WFITIndexSetFeedbackTable extends IndexSetPartitionTable
 
     /**
      * constructor.
+     *
+     * @param advisor
+     *      the advisor for which a visualizer is being built
      */
-    public WFITIndexSetFeedbackTable()
+    public WFITIndexSetFeedbackTable(WorkloadObserverAdvisor advisor)
     {
+        super(advisor);
         columnNames = new String[7];
 
         columnNames[0] = "NAME";

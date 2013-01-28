@@ -1,12 +1,12 @@
 package edu.ucsc.dbtune.viz;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import edu.ucsc.dbtune.advisor.RecommendationStatistics;
+import edu.ucsc.dbtune.advisor.WorkloadObserverAdvisor;
 
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-
-import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 
 /**
  * Interface for plotters.
@@ -15,18 +15,21 @@ import edu.ucsc.dbtune.advisor.RecommendationStatistics;
  */
 public class TotalWorkPlotter extends SwingVisualizer
 {
-    private XYChart xyChart;
     static final long serialVersionUID = 0;
+    private XYChart xyChart;
 
     /**
      * Creates a total work plotter.
+     *
+     * @param advisor
+     *      the advisor being observed
      */
-    public TotalWorkPlotter()
+    public TotalWorkPlotter(WorkloadObserverAdvisor advisor)
     {
+        super(advisor);
         XYSeriesCollection c = new XYSeriesCollection();
         xyChart = VizUtils.createXYChart("Performance", c, "", "Queries", "Total Work");
         setContentPane(xyChart.getPanel());
-        stats = new ArrayList<RecommendationStatistics>();
         setLocation(513, 375);
     }
 
@@ -34,9 +37,9 @@ public class TotalWorkPlotter extends SwingVisualizer
      * {@inheritDoc}
      */
     @Override
-    public void updateContent()
+    public void updateContent() throws Exception
     {
-        plot(stats);
+        plot(advisor.getRecommendationStatistics());
     }
 
     /**
