@@ -1,33 +1,30 @@
 package edu.ucsc.dbtune.advisor;
 
 import java.sql.SQLException;
+
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
+
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 /**
  * Represents an advisor that recommends physical design modifications.
  *
  * @author Ivo Jimenez
  */
-public abstract class Advisor
+public interface Advisor
 {
     /**
-     * Adds the statements contained in a workload to the set of statements that are considered for 
-     * recommendation.
+     * Adds an element to the set of statements that are considered for recommendation.
      *
-     * @param workload
-     *      sql statements
+     * @param sql
+     *      sql statement
      * @throws SQLException
-     *      if the given workload can't be processed
+     *      if the given statement can't be processed
      */
-    public void process(Workload workload) throws SQLException
-    {
-        for (SQLStatement sql : workload)
-            process(sql);
-    }
+    void process(String sql) throws SQLException;
 
     /**
      * Adds an element to the set of statements that are considered for recommendation.
@@ -37,20 +34,7 @@ public abstract class Advisor
      * @throws SQLException
      *      if the given statement can't be processed
      */
-    public void process(String sql) throws SQLException
-    {
-        process(new SQLStatement(sql));
-    }
-
-    /**
-     * Adds an element to the set of statements that are considered for recommendation.
-     *
-     * @param sql
-     *      sql statement
-     * @throws SQLException
-     *      if the given statement can't be processed
-     */
-    public abstract void process(SQLStatement sql) throws SQLException;
+    void process(SQLStatement sql) throws SQLException;
 
     /**
      * Returns the configuration obtained by the Advisor.
@@ -62,7 +46,7 @@ public abstract class Advisor
      * @throws SQLException
      *      if the recommendation can't be retrieved
      */
-    public abstract Set<Index> getRecommendation() throws SQLException;
+    Set<Index> getRecommendation() throws SQLException;
 
     /**
      * Returns statistics about the recommendation done by the advisor.
@@ -72,5 +56,10 @@ public abstract class Advisor
      * @throws SQLException
      *      if the given statement can't be processed
      */
-    public abstract RecommendationStatistics getRecommendationStatistics() throws SQLException;
+    RecommendationStatistics getRecommendationStatistics() throws SQLException;
+
+    /**
+     * @return the statements that have been processed so far
+     */
+    List<SQLStatement> getProcessedStatements();
 }

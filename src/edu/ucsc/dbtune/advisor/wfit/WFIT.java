@@ -8,8 +8,8 @@ import java.util.TreeSet;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 
-import edu.ucsc.dbtune.advisor.Advisor;
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
+import edu.ucsc.dbtune.advisor.WorkloadObserverAdvisor;
 import edu.ucsc.dbtune.advisor.interactions.DegreeOfInteractionFinder;
 import edu.ucsc.dbtune.advisor.interactions.IBGDoiFinder;
 import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
@@ -20,6 +20,7 @@ import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
 
 import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.findOrThrow;
 import static edu.ucsc.dbtune.util.OptimizerUtils.getBenefits;
@@ -27,8 +28,15 @@ import static edu.ucsc.dbtune.util.OptimizerUtils.getBenefits;
 /**
  * @author Ivo Jimenez
  */
-public class WFIT extends Advisor
+public class WFIT extends WorkloadObserverAdvisor
 {
+    /**
+     * in order to make the advisor behave as a non-observer, we just assign a workload that doesn't
+     * correspond to any workload that a statement will have. See {@link WorkloadObserverAdvisor}
+     * for more.
+     */
+    private static final Workload NO_WORKLOAD = new Workload("no_workload_given");
+
     private DatabaseSystem db;
     private SATuningDBTuneTranslator wfitDriver;
     private Set<Index> pool;
@@ -42,6 +50,10 @@ public class WFIT extends Advisor
      *
      * @param db
      *      the dbms where wfit will run on
+     * @param workload
+     *      workload that the advisor will be observing
+     * @param initialSet
+     *      initial candidate set
      * @param maxNumberOfStates
      *      maximum number of states per partition
      * @param maxHotSetSize
@@ -49,7 +61,35 @@ public class WFIT extends Advisor
      * @param indexStatisticsWindowSize
      *      size of the sliding window of interaction-related measurements
      * @param numberOfPartitionIterations
-     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate 
+     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate
+     *      set partition
+     */
+    public WFIT(
+        DatabaseSystem db,
+        Workload workload,
+        Set<Index> initialSet,
+        int maxNumberOfStates,
+        int maxHotSetSize,
+        int indexStatisticsWindowSize,
+        int numberOfPartitionIterations)
+    {
+        this(db, workload, initialSet, new IBGDoiFinder(), maxNumberOfStates, maxHotSetSize, 
+                indexStatisticsWindowSize, numberOfPartitionIterations);
+    }
+
+    /**
+     * Creates a WFIT advisor, with an empty initial candidate set.
+     *
+     * @param db
+     *      the dbms where wfit will run on
+     * @param maxNumberOfStates
+     *      maximum number of states per partition
+     * @param maxHotSetSize
+     *      maximum number of candidates to keep in the hot set
+     * @param indexStatisticsWindowSize
+     *      size of the sliding window of interaction-related measurements
+     * @param numberOfPartitionIterations
+     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate
      *      set partition
      */
     public WFIT(
@@ -59,8 +99,8 @@ public class WFIT extends Advisor
         int indexStatisticsWindowSize,
         int numberOfPartitionIterations)
     {
-        this(db, new TreeSet<Index>(), maxHotSetSize, indexStatisticsWindowSize, maxNumberOfStates, 
-                numberOfPartitionIterations);
+        this(db, new TreeSet<Index>(), maxHotSetSize, indexStatisticsWindowSize,
+                maxNumberOfStates, numberOfPartitionIterations);
 
         this.isCandidateSetFixed = false;
     }
@@ -79,7 +119,7 @@ public class WFIT extends Advisor
      * @param indexStatisticsWindowSize
      *      size of the sliding window of interaction-related measurements
      * @param numberOfPartitionIterations
-     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate 
+     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate
      *      set partition
      */
     public WFIT(
@@ -90,16 +130,18 @@ public class WFIT extends Advisor
             int indexStatisticsWindowSize,
             int numberOfPartitionIterations)
     {
-        this(db, initialSet, new IBGDoiFinder(), maxNumberOfStates, maxHotSetSize, 
+        this(db, NO_WORKLOAD, initialSet, new IBGDoiFinder(), maxNumberOfStates, maxHotSetSize,
                 indexStatisticsWindowSize, numberOfPartitionIterations);
     }
 
     /**
-     * Creates a WFIT advisor with the given initial candidate set, DoI finder and components 
+     * Creates a WFIT advisor with the given initial candidate set, DoI finder and components
      * parameters.
      *
      * @param db
      *      the dbms where wfit will run on
+     * @param workload
+     *      workload that the advisor will be observing
      * @param initialSet
      *      initial candidate set
      * @param doiFinder
@@ -111,11 +153,12 @@ public class WFIT extends Advisor
      * @param indexStatisticsWindowSize
      *      size of the sliding window of interaction-related measurements
      * @param numberOfPartitionIterations
-     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate 
+     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate
      *      set partition
      */
     WFIT(
             DatabaseSystem db,
+            Workload workload,
             Set<Index> initialSet,
             DegreeOfInteractionFinder doiFinder,
             int maxNumberOfStates,
@@ -123,6 +166,8 @@ public class WFIT extends Advisor
             int indexStatisticsWindowSize,
             int numberOfPartitionIterations)
     {
+        super(workload);
+
         this.db = db;
         this.doiFinder = doiFinder;
 
@@ -148,14 +193,14 @@ public class WFIT extends Advisor
     /**
      * Adds a query to the set of queries that are considered for
      * recommendation.
-     * 
+     *
      * @param sql
      *      sql statement
      * @throws SQLException
      *      if the given statement can't be processed
      */
     @Override
-    public void process(SQLStatement sql) throws SQLException
+    public void processNewStatement(SQLStatement sql) throws SQLException
     {
         if (!isCandidateSetFixed)
             pool.addAll(db.getOptimizer().recommendIndexes(sql));
@@ -201,12 +246,12 @@ public class WFIT extends Advisor
     }
 
     /**
-     * Returns the usefulness map. This map rates the usefulness of each index in the candidate set 
-     * by comparing it against the indexes in the next step of the OPT schedule. An index is useful 
+     * Returns the usefulness map. This map rates the usefulness of each index in the candidate set
+     * by comparing it against the indexes in the next step of the OPT schedule. An index is useful
      * if gets recommended in OPT and is not useful if it gets dropped.
      *
      * @return
-     *      the usefulness map, which might be empty if {@link #isCandidateSetFixed} is {@code 
+     *      the usefulness map, which might be empty if {@link #isCandidateSetFixed} is {@code
      *      false}
      */
     public Map<Index, Boolean> getUsefulnessMap()
@@ -249,7 +294,7 @@ public class WFIT extends Advisor
     {
         if (!isCandidateSetFixed)
             throw new SQLException("Can't produce OPT without specifying an initial candidate set");
-            
+
         optStats.clear();
 
         int i = 0;
