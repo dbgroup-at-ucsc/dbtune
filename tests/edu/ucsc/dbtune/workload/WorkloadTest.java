@@ -1,6 +1,8 @@
 package edu.ucsc.dbtune.workload;
 
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -47,9 +49,16 @@ public class WorkloadTest
             "      -- this one also;    \n" +
             "    DELETE from a where b = 110;\n";
 
-        Workload wl = new Workload("test", new StringReader(sqls));
+        FileWorkloadReader wr = new FileWorkloadReader("test", new StringReader(sqls));
 
-        assertThat(wl.getName(), is("test"));
+        assertThat(wr.getWorkload().getWorkloadName(), is("test"));
+
+        List<SQLStatement> wl = new ArrayList<SQLStatement>();
+
+        for (SQLStatement sql : wr) {
+            wl.add(sql);
+        }
+
         assertThat(wl.size(), is(10));
 
         assertThat(wl.get(0).getSQL(), is("SELECT * from a"));
@@ -203,9 +212,16 @@ public class WorkloadTest
             "    revenue desc, \n" +
             "    o_orderdate;\n";
 
-        Workload wl = new Workload("test", new StringReader(sqls));
+        FileWorkloadReader wr = new FileWorkloadReader("test", new StringReader(sqls));
 
-        assertThat(wl.getName(), is("test"));
+        assertThat(wr.getWorkload().getWorkloadName(), is("test"));
+
+        List<SQLStatement> wl = new ArrayList<SQLStatement>();
+
+        for (SQLStatement sql : wr) {
+            wl.add(sql);
+        }
+
         assertThat(wl.size(), is(3));
 
         assertThat(wl.get(0).getSQLCategory(), is(SELECT));

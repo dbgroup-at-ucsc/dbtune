@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune;
 
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
@@ -12,7 +13,6 @@ import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.util.OptimizerUtils;
 import edu.ucsc.dbtune.util.TestUtils;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 /**
  * Temporary code, for debugging purpose only
@@ -41,7 +41,7 @@ public class RInumPerf {
         timer.reset();
 
         // TestUtils.loadWorkloads(db.getConnection());
-        Workload wl = TestUtils.workload(env.getWorkloadsFoldername()
+        List<SQLStatement> wl = TestUtils.workload(env.getWorkloadsFoldername()
                 + "/tpch-cophy");
         // final Set<Index> allRecommendedIndexes = candGen.generate(wl);
         timer.finish("loading");

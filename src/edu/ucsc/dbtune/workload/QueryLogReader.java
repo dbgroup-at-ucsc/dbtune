@@ -12,6 +12,15 @@ import java.sql.SQLException;
 public abstract class QueryLogReader extends ObservableWorkloadReader
 {
     /**
+     * @param workload
+     *      workload that is assigned to each of the statements that are instantiated.
+     */
+    protected QueryLogReader(Workload workload)
+    {
+        super(workload);
+    }
+
+    /**
      * Creates a query log reader based on the connection's associated driver. The method reads the 
      * driver name and instantiates the appropriate query log reader.
      *
@@ -29,12 +38,12 @@ public abstract class QueryLogReader extends ObservableWorkloadReader
         if (connection.isClosed())
             throw new SQLException("Connection is closed");
 
-        String driver = connection.getMetaData().getURL().toLowerCase();
+        String url = connection.getMetaData().getURL().toLowerCase();
 
-        if (driver.contains("db2")) {
+        if (url.contains("db2")) {
             return new DB2WorkloadReader(connection);
         } else {
-            throw new SQLException("No known reader for driver " + driver);
+            throw new SQLException("No known reader for url " + url);
         }
     }
 }

@@ -7,7 +7,7 @@ import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.workload.WorkloadReader;
 
 import org.junit.Test;
 
@@ -33,7 +33,7 @@ public class OneColumnCandidateGeneratorTest
     public void testBasicUsage() throws Exception
     {
         CandidateGenerator cg = mock(CandidateGenerator.class);
-        Workload wl = mock(Workload.class);
+        WorkloadReader wl = mock(WorkloadReader.class);
         SQLStatement sql = mock(SQLStatement.class);
 
         @SuppressWarnings("unchecked")

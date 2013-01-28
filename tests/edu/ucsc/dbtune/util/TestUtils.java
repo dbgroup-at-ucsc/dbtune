@@ -15,7 +15,9 @@ import java.util.Set;
 
 import com.google.common.collect.Iterables;
 
-import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.workload.FileWorkloadReader;
+import edu.ucsc.dbtune.workload.SQLStatement;
+import edu.ucsc.dbtune.workload.WorkloadReader;
 
 import static edu.ucsc.dbtune.util.SQLScriptExecuter.execute;
 
@@ -123,10 +125,10 @@ public final class TestUtils
      * @throws SQLException
      *      if {@link Workload} constructor throws an exception
      */
-    public static List<Workload> workloads(List<String> fullyQualifiedWorkloadFolderNames)
+    public static List<List<SQLStatement>> workloads(List<String> fullyQualifiedWorkloadFolderNames)
         throws IOException, SQLException
     {
-        List<Workload> workloads = new ArrayList<Workload>();
+        List<List<SQLStatement>> workloads = new ArrayList<List<SQLStatement>>();
 
         for (String wlFolderName : fullyQualifiedWorkloadFolderNames) {
             if (new File(wlFolderName).isHidden())
@@ -150,12 +152,20 @@ public final class TestUtils
      * @throws SQLException
      *      if {@link Workload} constructor throws an exception
      */
-    public static Workload workload(String fullyQualifiedWorkloadFolderName)
+    public static List<SQLStatement> workload(String fullyQualifiedWorkloadFolderName)
         throws IOException, SQLException
     {
-        return new Workload(
+        WorkloadReader wr = new FileWorkloadReader(
                 fullyQualifiedWorkloadFolderName,
                 new FileReader(fullyQualifiedWorkloadFolderName + "/workload.sql"));
+
+        List<SQLStatement> sqls = new ArrayList<SQLStatement>();
+
+        for (SQLStatement sql : wr) {
+            sqls.add(sql);
+        }
+
+        return sqls;
     }
 
     /**

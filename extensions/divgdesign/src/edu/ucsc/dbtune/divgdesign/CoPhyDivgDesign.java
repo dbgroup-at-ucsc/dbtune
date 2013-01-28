@@ -17,7 +17,6 @@ import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.bip.core.InumQueryPlanDesc.preparedStmts;
 import static edu.ucsc.dbtune.bip.util.LogListener.EVENT_POPULATING_INUM;
@@ -72,7 +71,7 @@ public class CoPhyDivgDesign extends DivgDesign
     }
     
     @Override
-    public void recommend(Workload workload, int nReplicas, int loadfactor, double B)
+    public void recommend(List<SQLStatement> workload, int nReplicas, int loadfactor, double B)
                           throws Exception
     {
         this.workload = workload;
@@ -106,7 +105,7 @@ public class CoPhyDivgDesign extends DivgDesign
             candidates.addAll(recommendedIndexStmt.get(sql));
         
         Optimizer io = db.getOptimizer();
-        Workload wlPartition = new Workload(sqls);
+        List<SQLStatement> wlPartition = new ArrayList<SQLStatement>(sqls);
         cophy.setCandidateIndexes(candidates);
         cophy.setWorkload(wlPartition); 
         cophy.setOptimizer(io);

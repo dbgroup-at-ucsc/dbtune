@@ -5,23 +5,21 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+
 import java.sql.SQLException;
+
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Reader of SQLStatement objects constructed from a plain text file.
  *
  * @author Ivo Jimenez
  */
-public class FileWorkloadReader extends AbstractWorkloadReader
+public class FileWorkloadReader extends ObservableWorkloadReader
 {
-    /**
-     * Creates an emtpy workload.
-     */
-    public FileWorkloadReader()
-    {
-        sqls = new ArrayList<SQLStatement>();
-    }
+    private boolean hasAlreadyPublishedAll;
+    private List<SQLStatement> sqlsHolder;
 
     /**
      * Creates a workload containing the set of SQL statements provided by the {@code
@@ -62,12 +60,15 @@ public class FileWorkloadReader extends AbstractWorkloadReader
      */
     public FileWorkloadReader(String name, Reader workloadStream) throws IOException, SQLException
     {
+        super(new Workload(name));
+
         BufferedReader reader;
         StringBuilder sb;
         String line;
         int stmtNumber = 1;
 
         sqls = new ArrayList<SQLStatement>();
+        sqlsHolder = new ArrayList<SQLStatement>();
         reader = new BufferedReader(workloadStream);
         sb = new StringBuilder();
 
@@ -84,7 +85,7 @@ public class FileWorkloadReader extends AbstractWorkloadReader
                 final String sql = sb.toString();
 
                 if (!sql.isEmpty())
-                    sqls.add(new SQLStatement(name, sb.toString(), stmtNumber++));
+                    sqlsHolder.add(new SQLStatement(sb.toString(), getWorkload(), stmtNumber++));
 
                 sb = new StringBuilder();
             } else {
@@ -92,7 +93,7 @@ public class FileWorkloadReader extends AbstractWorkloadReader
             }
         }
 
-        this.name = name;
+        startWatcher(5);
     }
 
     /**
@@ -107,14 +108,21 @@ public class FileWorkloadReader extends AbstractWorkloadReader
      */
     public FileWorkloadReader(String workloadFile) throws IOException, SQLException
     {
-        this("temp", new FileReader(workloadFile));
+        this((new File(workloadFile)).getName(), new FileReader(workloadFile));
+    }
 
-        File f = new File(workloadFile);
+    /**
+     * {@inheritDoc}
+     */
+    protected List<SQLStatement> hasNewStatement() throws SQLException
+    {
+        if (!hasAlreadyPublishedAll) {
 
-        if (f.getName().split(".").length == 1)
-            this.name = f.getName();
-        else
-            for (int i = 0; i < f.getName().split(".").length - 1; i++)
-                this.name += f.getName().split(".")[i];
+            hasAlreadyPublishedAll = true;
+
+            return sqlsHolder;
+        }
+
+        return new ArrayList<SQLStatement>();
     }
 }

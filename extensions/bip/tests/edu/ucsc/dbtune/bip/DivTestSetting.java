@@ -23,9 +23,6 @@ import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
-
- 
 
 /**
  * The common setting parameters for DIVBIP test
@@ -38,7 +35,7 @@ public class DivTestSetting
     protected static DatabaseSystem db;
     protected static Environment    en;
     protected static Optimizer io;
-    protected static Workload workload;
+    protected static List<SQLStatement> workload;
     
     protected static int nReplicas;
     protected static int loadfactor;
@@ -202,7 +199,7 @@ public class DivTestSetting
         // extra workload
         if (isExtraWorkload) {
             //Workload wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-extra");
-            Workload wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-inum");
+            List<SQLStatement> wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-inum");
             
             for (SQLStatement sql : wlExtra)
                 if (sql.getSQLCategory().isSame(SELECT))
@@ -210,7 +207,7 @@ public class DivTestSetting
             
         }
         
-        Workload wlCandidate = new Workload(sqls);
+        List<SQLStatement> wlCandidate = new ArrayList<SQLStatement>(sqls);
         candidates = candGen.generate(wlCandidate);
         
         // Calculate the total size (for solely information)
@@ -241,7 +238,7 @@ public class DivTestSetting
             if (sql.getSQLCategory().isSame(SELECT))
                 sqls.add(sql);
         
-        Workload wlCandidate = new Workload(sqls);
+        List<SQLStatement> wlCandidate = new ArrayList<SQLStatement>(sqls);
         candidates = candGen.generate(wlCandidate);
         
         // Calculate the total size (for solely information)

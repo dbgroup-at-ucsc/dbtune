@@ -7,7 +7,7 @@ import static edu.ucsc.dbtune.util.TestUtils.workload;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-
+import java.util.List;
 import java.util.Set;
 
 import org.junit.Test;
@@ -24,7 +24,6 @@ import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.optimizer.plan.InumPlan;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 public class QueryPlanDescFunctionalTest  
 {
@@ -40,7 +39,7 @@ public class QueryPlanDescFunctionalTest
         if (!(db.getOptimizer() instanceof InumOptimizer))
             return;
 
-        Workload workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
+        List<SQLStatement> workload = workload(en.getWorkloadsFoldername() + "/tpch-inum");
         CandidateGenerator candGen = 
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         Set<Index> candidates = candGen.generate(workload);

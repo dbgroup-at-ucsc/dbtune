@@ -23,7 +23,7 @@ import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.InumPreparedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
@@ -35,7 +35,7 @@ public class CoPhyFunctionalTest
     private static double B;
     private static long totalIndexSize;
     private static Set<Index> candidates;
-    private static Workload workload;
+    private static List<SQLStatement> workload;
     
     /**
      * Setup for the test.

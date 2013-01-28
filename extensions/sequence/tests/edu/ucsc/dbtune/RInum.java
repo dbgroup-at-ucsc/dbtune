@@ -4,7 +4,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
@@ -23,8 +25,9 @@ import edu.ucsc.dbtune.optimizer.plan.SQLStatementPlan;
 import edu.ucsc.dbtune.seq.utils.RTimer;
 import edu.ucsc.dbtune.seq.utils.Rt;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.workload.FileWorkloadReader;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.workload.WorkloadReader;
 
 public class RInum {
 	private static DatabaseSystem inum;
@@ -40,7 +43,7 @@ public class RInum {
 		String workloadFile = en
 				.getScriptAtWorkloadsFolder("tpch/workload_seq.sql");
 		FileReader fileReader = new FileReader(workloadFile);
-		Workload workload = new Workload("a",fileReader);
+        WorkloadReader workload = new FileWorkloadReader("a",fileReader);
 		Optimizer inumOptimizer = inum.getOptimizer();
 		Optimizer dbmsOptimizer = dbms.getOptimizer();
 

@@ -91,7 +91,7 @@ public class MatchingStrategyFunctionalTest
         for (MatchingStrategy s : available)
             report.append(s.getClass().getName() + " time,");
         
-        for (Workload wl : workloads(env.getWorkloadFolders())) {
+        for (List<SQLStatement> wl : workloads(env.getWorkloadFolders())) {
 
             Set<Index> conf = candGen.generate(wl);
 
@@ -115,7 +115,10 @@ public class MatchingStrategyFunctionalTest
                 new ExhaustiveMatchingStrategy().match(inumSpace, conf).getInstantiatedPlan();
                 cacheWarmingTime = System.nanoTime() - time;
 
-                report.append(wl.getName() + "," + queryNumber + "," + cacheWarmingTime + ",");
+                report.append(
+                    sql.getWorkload().getWorkloadName() + "," +
+                    queryNumber + "," +
+                    cacheWarmingTime + ",");
 
                 for (MatchingStrategy s : available) {
                     time = System.nanoTime();
@@ -129,7 +132,7 @@ public class MatchingStrategyFunctionalTest
                     MatchingStrategy one = get(pair, 0);
                     MatchingStrategy two = get(pair, 1);
                     assertThat(
-                            "Workload: " + wl.getName() + "\n" +
+                            "Workload: " + sql.getWorkload().getWorkloadName() + "\n" +
                             "Statement: " + queryNumber + "\n" +
                             "MatchingStrategy one: " + one.getClass().getName() + "\n" +
                             "MatchingStrategy one: " + two.getClass().getName() + "\n" +

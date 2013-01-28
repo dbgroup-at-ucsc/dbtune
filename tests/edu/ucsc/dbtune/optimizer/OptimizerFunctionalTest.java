@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.optimizer;
 
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
@@ -8,7 +9,6 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLCategory;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -160,7 +160,7 @@ public class OptimizerFunctionalTest
     {
         CandidateGenerator candGen = CandidateGenerator.Factory.newCandidateGenerator(env, opt);
         
-        for (Workload wl : workloads(env.getWorkloadFolders())) {
+        for (List<SQLStatement> wl : workloads(env.getWorkloadFolders())) {
 
             final Set<Index> allIndexes = candGen.generate(wl);
 

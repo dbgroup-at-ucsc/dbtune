@@ -8,11 +8,15 @@ package edu.ucsc.dbtune.workload;
  */
 public class SQLStatement
 {
+    /** unknown workload. For statements that are constructed without its workload being specified. 
+     */
+    private static final Workload UNKNOWN_WL = new Workload("unknown");
+
     /** category of statement. */
     private SQLCategory category;
 
     /** workload this statement corresponds to. */
-    private String workload;
+    private Workload workload;
 
     /** literal contents of the statement. */
     private String sql;
@@ -24,19 +28,6 @@ public class SQLStatement
     private int position;
 
     /**
-     * @param workload
-     *      workload this statement corresponds to.
-     * @param sql
-     *      a sql statement.
-     * @param position
-     *      position of the statement in the workload
-     */
-    public SQLStatement(String workload, String sql, int position)
-    {
-        this(workload, sql, SQLCategory.from(sql), position);
-    }
-
-    /**
      * Constructs a {@code SQLStatement}. The constructor tries to infer the category of the
      * statement using the {@link SQLCategory#from} method.
      *
@@ -46,13 +37,45 @@ public class SQLStatement
      */
     public SQLStatement(String sql)
     {
-        this(null, sql, SQLCategory.from(sql), 0);
+        this(sql, SQLCategory.from(sql), UNKNOWN_WL, 0);
+    }
+
+    /**
+     * Constructs a {@code SQLStatement} given its position in the workload. The constructor tries 
+     * to infer the category of the statement using the {@link SQLCategory#from} method.
+     *
+     * @param sql
+     *      a sql statement.
+     * @param position
+     *      position of the statement in the workload
+     * @see SQLCategory#from
+     */
+    public SQLStatement(String sql, int position)
+    {
+        this(sql, SQLCategory.from(sql), UNKNOWN_WL, position);
     }
 
     /**
      * Constructs a {@code SQLStatement} given the name of the workload it belongs to, the SQL 
      * category, the literal contents of the statement and the position of the statement in relation 
      * to others in the workload.
+     *
+     * @param workload
+     *      workload this statement corresponds to.
+     * @param sql
+     *      a sql statement.
+     * @param position
+     *      position of the statement in the workload
+     */
+    public SQLStatement(String sql, Workload workload, int position)
+    {
+        this(sql, SQLCategory.from(sql), workload, position);
+    }
+
+    /**
+     * Constructs a {@code SQLStatement} given the name of the workload it belongs to, the 
+     * identifier of the workload, the SQL category, the literal contents of the statement and the 
+     * position of the statement in relation to others in the workload.
      *
      * @param workload
      *      workload this statement corresponds to.
@@ -63,11 +86,11 @@ public class SQLStatement
      * @param position
      *      position of the statement in the workload
      */
-    public SQLStatement(String workload, String sql, SQLCategory category, int position)
+    public SQLStatement(String sql, SQLCategory category, Workload workload, int position)
     {
         this.workload = workload;
         this.category = category;
-        this.sql      = sql;
+        this.sql = sql;
         this.position = position;
 
         // the default weight of the statement is 1.0
@@ -96,7 +119,6 @@ public class SQLStatement
     {
         return sql;
     }
-
 
     /**
      * Retrieves the weight of the statement.
@@ -163,7 +185,7 @@ public class SQLStatement
      *
      * @return The workload.
      */
-    public String getWorkload()
+    public Workload getWorkload()
     {
         return this.workload;
     }

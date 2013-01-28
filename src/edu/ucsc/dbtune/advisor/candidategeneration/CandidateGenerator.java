@@ -1,13 +1,14 @@
 package edu.ucsc.dbtune.advisor.candidategeneration;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.workload.WorkloadReader;
 
 import static com.google.common.collect.Lists.reverse;
 
@@ -33,7 +34,19 @@ public interface CandidateGenerator
      * @throws SQLException
      *      if the generation of candidates can't be done
      */
-    Set<Index> generate(Workload workload) throws SQLException;
+    Set<Index> generate(WorkloadReader workload) throws SQLException;
+
+    /**
+     * Generates candidates for the given workload.
+     *
+     * @param workload
+     *      the workload for which to generate candidates
+     * @return
+     *      a candidate set for the given workload
+     * @throws SQLException
+     *      if the generation of candidates can't be done
+     */
+    Set<Index> generate(List<SQLStatement> workload) throws SQLException;
 
     /**
      * Generates candidates for the given statement.

@@ -2,11 +2,12 @@ package edu.ucsc.dbtune.bip.core;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * It serves as the entry interface for the approach that formulates 
@@ -31,7 +32,7 @@ public interface BIPSolver
      *      The input workload
      * 
      */
-    void setWorkload(Workload wl);
+    void setWorkload(List<SQLStatement> wl);
     
     
     /**

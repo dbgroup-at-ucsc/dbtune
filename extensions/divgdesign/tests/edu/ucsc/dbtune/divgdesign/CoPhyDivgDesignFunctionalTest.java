@@ -25,7 +25,6 @@ import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.SELECT;
 
@@ -91,14 +90,14 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
     protected void generateOptimalCandidatesCoPhy() throws Exception
     {
         Set<Index> candidate;
-        Workload wl;
+        List<SQLStatement> wl;
         CandidateGenerator candGen =
             new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer()));
         
         recommendedIndexStmt = new HashMap<SQLStatement, Set<Index>>();
         List<SQLStatement> sqls;
         //Workload wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-extra");
-        Workload wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-10-counts");
+        List<SQLStatement> wlExtra = workload(en.getWorkloadsFoldername() + "/tpch-10-counts");
         
         for (SQLStatement sql : workload) {
         
@@ -113,7 +112,7 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
                 
             }
             
-            wl = new Workload(sqls);
+            wl = new ArrayList<SQLStatement>(sqls);
             
             if (sql.getSQLCategory().isSame(SELECT))
                 candidate = candGen.generate(wl);
@@ -133,7 +132,7 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
     protected void generatePowersetCandidatesCoPhy() throws Exception
     {
         Set<Index> candidate;
-        Workload wl;
+        List<SQLStatement> wl;
         CandidateGenerator candGen = 
             new PowerSetOptimalCandidateGenerator(
                     new OptimizerCandidateGenerator
@@ -143,7 +142,7 @@ public class CoPhyDivgDesignFunctionalTest extends DivTestSetting
         
         for (SQLStatement sql : workload) {
             
-            wl = new Workload(Lists.newArrayList(sql));
+            wl = new ArrayList<SQLStatement>(Lists.newArrayList(sql));
             
             if (sql.getSQLCategory().isSame(SELECT))
                 candidate = candGen.generate(wl);

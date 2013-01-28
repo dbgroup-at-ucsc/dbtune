@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.optimizer.plan;
 
+import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
@@ -12,7 +13,6 @@ import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -80,9 +80,9 @@ public class InumPlanFunctionalTest
         Set<Index> conf;
         double costLeafs;
 
-        for (Workload wl : workloads(env.getWorkloadFolders())) {
+        for (List<SQLStatement> wl : workloads(env.getWorkloadFolders())) {
 
-            System.out.println("Checking workload " + wl.getName());
+            System.out.println("Checking workload " + wl.get(0).getWorkload().getWorkloadName());
             
             conf = candGen.generate(wl);
 

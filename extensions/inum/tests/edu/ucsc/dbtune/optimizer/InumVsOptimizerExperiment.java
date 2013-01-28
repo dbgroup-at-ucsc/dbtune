@@ -52,7 +52,7 @@ public final class InumVsOptimizerExperiment
     private static Optimizer delegate;
     private static SQLStatement currentSql;
     private static CandidateGenerator candGen;
-    private static Workload wl;
+    private static List<SQLStatement> wl;
     private static int numberOfSubsets;
     private static long time;
     private static long prepareTime;
@@ -158,7 +158,7 @@ public final class InumVsOptimizerExperiment
         wl = workload(env.getWorkloadsFoldername() + "/" + workloadName);
 
         System.out.println("--------------------------");
-        System.out.println("Processing workload: " + wl.getName());
+        System.out.println("Processing workload: " + wl.get(0).getWorkload().getWorkloadName());
 
         allIndexes = candGen.generate(wl);
 
@@ -225,7 +225,7 @@ public final class InumVsOptimizerExperiment
                     indexForEntry = startedAt + whatIfCallNumber - 1;
 
                     System.out.println(
-                            wl.getName() + "," +
+                            sql.getWorkload().getWorkloadName() + "," +
                             queryNumber + "," +
                             numberOfSubsets + "," +
                             conf.size() + "," +
@@ -299,7 +299,7 @@ public final class InumVsOptimizerExperiment
                 ex.printStackTrace(new PrintWriter(sw));
                 crashReport
                     .append("------------------------------")
-                    .append("Workload " + wl.getName() + "\n")
+                    .append("Workload " + sql.getWorkload().getWorkloadName() + "\n")
                     .append("Statement " + queryNumber + "\n")
                     .append("SQL " + sql.getSQL() + "\n")
                     .append("Error msg: " + ex.getMessage() + "\n")

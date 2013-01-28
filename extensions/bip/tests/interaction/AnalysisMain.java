@@ -44,10 +44,10 @@ public class AnalysisMain {
     
     private static DatabaseSystem db;
     private static Environment    en;
-    private static Workload workload;
+    private static List<edu.ucsc.dbtune.workload.SQLStatement> workload;
     
     // INUM's implementation	
-	public static void setWorkload(Workload wl)
+    public static void setWorkload(List<edu.ucsc.dbtune.workload.SQLStatement> wl)
 	{
 	    workload = wl;
 	}
@@ -71,8 +71,8 @@ public class AnalysisMain {
         }
     }
 	
-	private static void analyzeINUM(DBConnection conn, Workload workload, 
-	                                Generation.Strategy strategy,
+    private static void analyzeINUM(DBConnection conn, List<edu.ucsc.dbtune.workload.SQLStatement> 
+            workload, Generation.Strategy strategy,
 	                                String tableOwner)
                 throws IOException, ClassNotFoundException, SQLException {
 
@@ -130,9 +130,8 @@ public class AnalysisMain {
 	
 	
 	public static SerialIndexBenefitGraph[] analyzeSerialINUM
-	                (Workload workload, DB2IndexSet candidateSet, 
-	                 InteractionLogger logger) 
-                throws SQLException {
+                    (List<edu.ucsc.dbtune.workload.SQLStatement> workload, DB2IndexSet candidateSet, 
+                     InteractionLogger logger) throws SQLException {
 	    
         SerialIndexBenefitGraph[] ibgs;
         int i;

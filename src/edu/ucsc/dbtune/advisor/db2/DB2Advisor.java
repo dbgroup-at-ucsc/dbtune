@@ -5,15 +5,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
-import edu.ucsc.dbtune.advisor.Advisor;
+import edu.ucsc.dbtune.advisor.AbstractAdvisor;
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 
@@ -22,7 +22,7 @@ import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
  * 
  * @author Ivo Jimenez
  */
-public class DB2Advisor extends Advisor
+public class DB2Advisor extends AbstractAdvisor
 {
     private DatabaseSystem dbms;
     private int spaceBudget;
@@ -50,8 +50,7 @@ public class DB2Advisor extends Advisor
     /**
      * {@inheritDoc}
      */
-    @Override
-    public void process(Workload workload) throws SQLException
+    public void process(List<SQLStatement> workload) throws SQLException
     {
         Statement stmt = dbms.getConnection().createStatement();
 
@@ -75,7 +74,7 @@ public class DB2Advisor extends Advisor
      * {@inheritDoc}
      */
     @Override
-    public void process(SQLStatement sql) throws SQLException
+    public void processNewStatement(SQLStatement sql) throws SQLException
     {
         throw new SQLException("Can't recommend single statements");
     }

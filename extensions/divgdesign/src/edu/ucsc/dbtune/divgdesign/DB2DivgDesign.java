@@ -9,7 +9,6 @@ import edu.ucsc.dbtune.advisor.db2.DB2Advisor;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 public class DB2DivgDesign extends DivgDesign 
 {
@@ -33,7 +32,7 @@ public class DB2DivgDesign extends DivgDesign
     @Override
     protected Set<Index> getRecommendation(List<SQLStatement> sqls) throws SQLException 
     {
-        Workload wlPartition = new Workload(sqls);
+        List<SQLStatement> wlPartition = new ArrayList<SQLStatement>(sqls);
         db2Advis.process(wlPartition);
         return db2Advis.getRecommendation();
     }

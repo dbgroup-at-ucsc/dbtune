@@ -57,7 +57,7 @@ public class ObservableWorkloadReaderTest
         }
 
         assertThat(wr.getStatements().size(), is(2));
-        assertThat(wr.getStatements().get(1).getSQL(), is("SELECT control_2 FROM foo"));
+        assertThat(wr.getStatements().get(1).getSQL(), is("SELECT control FROM foo"));
     }
 
     /**
@@ -70,6 +70,7 @@ public class ObservableWorkloadReaderTest
          */
         public TestableWorkloadReader()
         {
+            super(new Workload("test"));
             sqls = new ArrayList<SQLStatement>();
             startWatcher();
         }
@@ -83,7 +84,7 @@ public class ObservableWorkloadReaderTest
 
             if (control > 0)
                 newStmts.add(
-                    new SQLStatement("test_workload", "SELECT control FROM foo", control));
+                    new SQLStatement("SELECT control FROM foo", getWorkload(), control));
 
             return newStmts;
         }

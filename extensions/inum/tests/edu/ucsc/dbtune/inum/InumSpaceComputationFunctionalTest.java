@@ -109,7 +109,7 @@ public class InumSpaceComputationFunctionalTest
 
         report.append("\n");
 
-        for (Workload wl : workloads(env.getWorkloadFolders())) {
+        for (List<SQLStatement> wl : workloads(env.getWorkloadFolders())) {
 
             int i = 0;
 
@@ -126,7 +126,7 @@ public class InumSpaceComputationFunctionalTest
                 Map<InumSpaceComputation, MatchingStrategy.Result> results =
                     new HashMap<InumSpaceComputation, MatchingStrategy.Result>();
 
-                report.append(wl.getName()).append(",").append(i).append(",");
+                report.append(sql.getWorkload().getWorkloadName()).append(",").append(i).append(",");
 
                 for (InumSpaceComputation c : available) {
                     Set<InumPlan> space = new HashSet<InumPlan>();
@@ -154,7 +154,7 @@ public class InumSpaceComputationFunctionalTest
                     InumSpaceComputation one = get(pair, 0);
                     InumSpaceComputation two = get(pair, 1);
                     assertThat(
-                        "Workload: " + wl.getName() + "\n" +
+                        "Workload: " + sql.getWorkload().getWorkloadName() + "\n" +
                         "Statement: " + i + "\n" +
                         "SpaceComputation one: " + one.getClass().getName() + "\n" +
                         "SpaceComputation two: " + two.getClass().getName() + "\n" +

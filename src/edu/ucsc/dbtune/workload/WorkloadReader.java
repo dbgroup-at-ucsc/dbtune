@@ -1,16 +1,17 @@
 package edu.ucsc.dbtune.workload;
 
 /**
- * Reader of SQLStatement objects
+ * Reader of SQLStatement objects.
  *
  * @author Ivo Jimenez
  */
 public interface WorkloadReader extends Iterable<SQLStatement>
 {
     /**
-     * Gets the name of the workload, if given during construction.
+     * The workload that this reader is reading.
      *
-     * @return The name.
+     * @return
+     *      name of the workload that it's being read.
      */
-    String getName();
+    Workload getWorkload();
 }

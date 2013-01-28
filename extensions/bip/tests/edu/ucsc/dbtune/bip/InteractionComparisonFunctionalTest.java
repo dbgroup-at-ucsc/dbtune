@@ -32,7 +32,7 @@ import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -50,7 +50,7 @@ public class InteractionComparisonFunctionalTest
     private static DatabaseSystem db;
     @SuppressWarnings("unused")
 	private static Environment    en;    
-    private static Workload       workload;
+    private static List<SQLStatement>       workload;
     private static String         folder;
     @SuppressWarnings("unused")
 	private static String         dbName;

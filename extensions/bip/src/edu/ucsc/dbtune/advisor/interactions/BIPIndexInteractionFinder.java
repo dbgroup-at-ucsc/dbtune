@@ -7,7 +7,7 @@ import edu.ucsc.dbtune.bip.interactions.InteractionBIP;
 import edu.ucsc.dbtune.bip.interactions.InteractionOutput;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
-import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class BIPIndexInteractionFinder implements IndexInteractionFinder 
 {
@@ -19,12 +19,12 @@ public class BIPIndexInteractionFinder implements IndexInteractionFinder
     }
     
     @Override
-    public List<IndexInteraction> getInteractingIndexes(Workload w, Set<Index> c, double delta) 
-    {
+    public List<IndexInteraction> getInteractingIndexes(List<SQLStatement> wl, Set<Index> c, double 
+            delta) {
         InteractionOutput out = new InteractionOutput();
         InteractionBIP bip = new InteractionBIP(delta);
         bip.setCandidateIndexes(c);
-        bip.setWorkload(w);        
+        bip.setWorkload(wl);        
         
         try {
             bip.setOptimizer(inumOptimizer);                        

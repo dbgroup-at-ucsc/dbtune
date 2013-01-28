@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -28,9 +30,13 @@ public class DB2WorkloadReader extends QueryLogReader
      *
      * @param connection
      *      an already-opened connection to a DB2 database
+     * @throws SQLException
+     *      if {@link Connection#getMetaData} throws an exception
      */
-    public DB2WorkloadReader(Connection connection)
+    public DB2WorkloadReader(Connection connection) throws SQLException
     {
+        super(new Workload(connection.getMetaData().getURL() + "_" + (new Date()).toString()));
+
         this.sqls = new ArrayList<SQLStatement>();
         this.connection = connection;
 
@@ -57,7 +63,7 @@ public class DB2WorkloadReader extends QueryLogReader
 
         while (rs.next()) {
             newStmts.add(
-                    new SQLStatement(getName(), rs.getString("stmt_text"), sqls.size() + counter));
+                    new SQLStatement(rs.getString("stmt_text"), workload, sqls.size() + counter));
             counter++;
         }
 

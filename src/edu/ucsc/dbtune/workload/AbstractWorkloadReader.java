@@ -11,15 +11,21 @@ import java.util.List;
  */
 public abstract class AbstractWorkloadReader implements WorkloadReader
 {
-    protected String name;
     protected List<SQLStatement> sqls;
 
+    protected Workload workload;
+
     /**
-     * {@inheritDoc}
+     * Creates an abstract reader that is associated to the given workload object. Every child of 
+     * this abstract class has to provide the workload at construction time, since this is the 
+     * object that it's associated to every new {@link SQLStatement} instantiated by the reader.
+     *
+     * @param workload
+     *      workload that the reader is reading
      */
-    public String getName()
+    protected AbstractWorkloadReader(Workload workload)
     {
-        return name;
+        this.workload = workload;
     }
 
     /**
@@ -40,5 +46,14 @@ public abstract class AbstractWorkloadReader implements WorkloadReader
     public Iterator<SQLStatement> iterator()
     {
         return sqls.iterator();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Workload getWorkload()
+    {
+        return workload;
     }
 }

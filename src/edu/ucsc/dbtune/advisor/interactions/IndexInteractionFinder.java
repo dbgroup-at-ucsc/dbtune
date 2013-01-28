@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
-import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
  * XXX for issue #146 an implementation of this interface should port the InteractionSelector class 
@@ -15,7 +15,7 @@ public interface IndexInteractionFinder
 {
     /**
      * 
-     * @param w
+     * @param wl
      *      the workload
      * @param c
      *      the configuration
@@ -24,5 +24,5 @@ public interface IndexInteractionFinder
      * @return
      *      the interactions that were found
      */
-    List<IndexInteraction> getInteractingIndexes(Workload w, Set<Index> c, double delta);
+    List<IndexInteraction> getInteractingIndexes(List<SQLStatement> wl, Set<Index> c, double delta);
 }

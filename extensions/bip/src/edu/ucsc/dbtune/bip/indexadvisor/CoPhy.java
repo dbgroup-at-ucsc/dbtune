@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.bip.indexadvisor;
 
+import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.bip.core.BIPSolver;
@@ -9,13 +10,13 @@ import edu.ucsc.dbtune.bip.div.DivConfiguration;
 import edu.ucsc.dbtune.bip.util.LogListener;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.Optimizer;
-import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 public class CoPhy implements BIPSolver, ConstraintIndexAdvisor 
 {
     private Set<Index> candidates;
     private Optimizer  optimizer;
-    private Workload   workload;
+    private List<SQLStatement> workload;
     private double     B;
     private LogListener logger;
     private double      objVal;
@@ -33,7 +34,7 @@ public class CoPhy implements BIPSolver, ConstraintIndexAdvisor
     }
 
     @Override
-    public void setWorkload(Workload wl) 
+    public void setWorkload(List<SQLStatement> wl) 
     {
         workload = wl;
     }

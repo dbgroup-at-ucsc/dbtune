@@ -10,7 +10,6 @@ import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 import static edu.ucsc.dbtune.workload.SQLCategory.NOT_SELECT;
 
@@ -20,7 +19,7 @@ public abstract class DivgDesign
     protected int n;
     protected int m;
     protected double B;
-    protected Workload workload;
+    protected List<SQLStatement> workload;
     
     // constrol knobs
     protected int maxIters;
@@ -103,7 +102,7 @@ public abstract class DivgDesign
      * @throws SQLException
      *      if the given statements can't be processed
      */
-    public void recommend(Workload workload, int nReplicas, int loadfactor, double B)
+    public void recommend(List<SQLStatement> workload, int nReplicas, int loadfactor, double B)
                          throws Exception
     {
         this.workload = workload;

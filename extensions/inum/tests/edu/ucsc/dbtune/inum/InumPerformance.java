@@ -149,7 +149,7 @@ public class InumPerformance
         if (delegate == null)
             return;
 
-        Workload wl = TestUtils.workload(env.getWorkloadsFoldername()
+        List<SQLStatement> wl = TestUtils.workload(env.getWorkloadsFoldername()
                 + "/tpch-cophy");
         final Set<Index> allRecommendedIndexes = candGen.generate(wl);
 

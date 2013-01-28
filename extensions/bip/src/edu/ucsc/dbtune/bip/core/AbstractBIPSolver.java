@@ -20,7 +20,7 @@ import edu.ucsc.dbtune.metadata.Table;
 import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.util.Environment;
-import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.inum.FullTableScanIndex.getFullTableScanIndexInstance;
 import static edu.ucsc.dbtune.workload.SQLCategory.UPDATE;
@@ -38,7 +38,7 @@ public abstract class AbstractBIPSolver implements BIPSolver
     public static double UNKNOWN_OBJ_VALUE = -99999999;
     
     protected Set<Index>          candidateIndexes;    
-    protected Workload            workload;
+    protected List<SQLStatement>  workload;
     protected List<QueryPlanDesc> queryPlanDescs;
     
     protected CPlexBuffer     buf;
@@ -55,9 +55,9 @@ public abstract class AbstractBIPSolver implements BIPSolver
     protected double        gapObj;
     
     @Override    
-    public void setWorkload(Workload wl)
+    public void setWorkload(List<SQLStatement> wl)
     {
-        this.workload = wl;
+        this.workload = new ArrayList<SQLStatement>(wl);
     }
     
     @Override

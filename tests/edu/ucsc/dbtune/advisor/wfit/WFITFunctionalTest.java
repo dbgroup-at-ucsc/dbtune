@@ -13,8 +13,8 @@ import edu.ucsc.dbtune.optimizer.IBGOptimizer;
 import edu.ucsc.dbtune.optimizer.MySQLOptimizer;
 import edu.ucsc.dbtune.optimizer.PGOptimizer;
 import edu.ucsc.dbtune.util.Environment;
+import edu.ucsc.dbtune.workload.FileWorkloadReader;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -132,8 +132,8 @@ public class WFITFunctionalTest
 
         db.getCatalog().dropIndexes();
 
-        Workload wl =
-            new Workload(
+        FileWorkloadReader wl =
+            new FileWorkloadReader(
                 env.getWorkloadsFoldername() + 
                 "/../../workloads/db2/kaizen-demo/advisor-workload.sql");
 
@@ -141,11 +141,11 @@ public class WFITFunctionalTest
 
         WFIT wfit = new WFIT(db, candidateSet, maxCandidateCnt, stateCnt, windowSize, partIters);
 
-        wl = 
-            new Workload(
+        wl = new FileWorkloadReader(
                 env.getWorkloadsFoldername() + "/../../workloads/db2/kaizen-demo/scenario-1.sql");
 
-        wfit.process(wl);
+        for (SQLStatement sql : wl)
+            wfit.process(sql);
 
         RecommendationStatistics wfitStats = wfit.getRecommendationStatistics();
         RecommendationStatistics optStats = wfit.getOptimalRecommendationStatistics();

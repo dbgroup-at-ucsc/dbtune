@@ -12,7 +12,7 @@ import edu.ucsc.dbtune.metadata.Index;
 
 import edu.ucsc.dbtune.optimizer.Optimizer;
 import edu.ucsc.dbtune.workload.SQLStatement;
-import edu.ucsc.dbtune.workload.Workload;
+import edu.ucsc.dbtune.workload.WorkloadReader;
 
 import org.junit.Test;
 
@@ -39,7 +39,7 @@ public class OptimizerCandidateGeneratorTest
     public void testBasicUsage() throws Exception
     {
         Optimizer opt = mock(Optimizer.class);
-        Workload wl = mock(Workload.class);
+        WorkloadReader wl = mock(WorkloadReader.class);
         List<SQLStatement> stmts = new ArrayList<SQLStatement>();
         Set<Index> a = Sets.newHashSet(Iterables.filter(configureCatalog().getAll(), Index.class));
         Set<Index> actuallyConsidered = new HashSet<Index>();
