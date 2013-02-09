@@ -56,7 +56,7 @@ public abstract class ObservableWorkloadReader extends AbstractWorkloadReader
     }
 
     /**
-     * Invokes {@link #hasNewStatement} every second.
+     * Invokes {@link #hasNewStatement} every ten seconds.
      */
     protected void startWatcher()
     {

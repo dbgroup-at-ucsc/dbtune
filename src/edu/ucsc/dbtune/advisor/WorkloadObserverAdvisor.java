@@ -4,6 +4,8 @@ import java.sql.SQLException;
 
 import com.google.common.eventbus.Subscribe;
 
+import edu.ucsc.dbtune.metadata.Index;
+
 import edu.ucsc.dbtune.util.EventBusFactory;
 
 import edu.ucsc.dbtune.workload.ObservableWorkloadReader;
@@ -21,7 +23,9 @@ import edu.ucsc.dbtune.workload.Workload;
  *
  * @author Ivo Jimenez
  */
-public abstract class WorkloadObserverAdvisor extends AbstractAdvisor implements ObservableAdvisor
+public abstract class WorkloadObserverAdvisor // a.k.a. ObservableWorkloadObserverAdvisor
+    extends AbstractAdvisor
+    implements ObservableAdvisor, VoteableAdvisor
 {
     private Workload workload;
 
@@ -70,12 +74,55 @@ public abstract class WorkloadObserverAdvisor extends AbstractAdvisor implements
 
             processNewStatement(statement);
 
-            String eventId = this.hashCode() + "_" + workload.hashCode();
-
-            EventBusFactory.getEventBusInstance().post(eventId);
+            post();
         }
 
         // ignore it otherwise since the statement is not of interest to this advisor
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void voteUp(Index index)
+        throws SQLException
+    {
+        vote(index, true);
+
+        post();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void voteDown(Index index)
+        throws SQLException
+    {
+        vote(index, false);
+
+        post();
+    }
+
+    /**
+     * Gives a negative vote for the given index.
+     *
+     * @param index
+     *      index being voted
+     * @param up
+     *      whether to vote the index up or down
+     * @throws SQLException
+     *      if the index can't be voted
+     */
+    public abstract void vote(Index index, boolean up)
+        throws SQLException;
+
+    /**
+     * Posts to the event bus to indicate that the state of the advisor has change.
+     */
+    public void post()
+    {
+        String eventId = this.hashCode() + "_" + workload.hashCode();
+
+        EventBusFactory.getEventBusInstance().post(eventId);
     }
 
     /**

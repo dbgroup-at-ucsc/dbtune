@@ -9,6 +9,7 @@ import java.util.TreeSet;
 import edu.ucsc.dbtune.DatabaseSystem;
 
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
+import edu.ucsc.dbtune.advisor.VoteableAdvisor;
 import edu.ucsc.dbtune.advisor.WorkloadObserverAdvisor;
 import edu.ucsc.dbtune.advisor.interactions.DegreeOfInteractionFinder;
 import edu.ucsc.dbtune.advisor.interactions.IBGDoiFinder;
@@ -28,7 +29,7 @@ import static edu.ucsc.dbtune.util.OptimizerUtils.getBenefits;
 /**
  * @author Ivo Jimenez
  */
-public class WFIT extends WorkloadObserverAdvisor
+public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor
 {
     /**
      * in order to make the advisor behave as a non-observer, we just assign a workload that doesn't
@@ -322,12 +323,7 @@ public class WFIT extends WorkloadObserverAdvisor
     }
 
     /**
-     * Gives a positive vote for the given index.
-     *
-     * @param id
-     *      id of index being voted
-     * @throws SQLException
-     *      if the index can't be voted
+     * {@inheritDoc}
      */
     public void voteUp(Integer id)
         throws SQLException
@@ -336,28 +332,7 @@ public class WFIT extends WorkloadObserverAdvisor
     }
 
     /**
-     * Gives a positive vote for the given index.
-     *
-     * @param index
-     *      index being voted
-     * @throws SQLException
-     *      if the index can't be voted
-     */
-    public void voteUp(Index index)
-        throws SQLException
-    {
-        wfitDriver.vote(index, true);
-
-        updateLastEntry();
-    }
-
-    /**
-     * Gives a negative vote for the given index.
-     *
-     * @param id
-     *      id of index being voted
-     * @throws SQLException
-     *      if the index can't be voted
+     * {@inheritDoc}
      */
     public void voteDown(Integer id) throws SQLException
     {
@@ -365,17 +340,13 @@ public class WFIT extends WorkloadObserverAdvisor
     }
 
     /**
-     * Gives a negative vote for the given index.
-     *
-     * @param index
-     *      index being voted
-     * @throws SQLException
-     *      if the index can't be voted
+     * {@inheritDoc}
      */
-    public void voteDown(Index index)
+    @Override
+    public void vote(Index index, boolean up)
         throws SQLException
     {
-        wfitDriver.vote(index, false);
+        wfitDriver.vote(index, up);
 
         updateLastEntry();
     }

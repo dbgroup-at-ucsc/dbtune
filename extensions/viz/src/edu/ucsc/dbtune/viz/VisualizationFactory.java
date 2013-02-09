@@ -36,7 +36,8 @@ public final class VisualizationFactory
 
             WorkloadTable workloadTable = new WorkloadTable(advisor);
             TotalWorkPlotter twPlotter = new TotalWorkPlotter(advisor);
-            IndexSetPartitionTable partitionTable = new IndexSetPartitionTable(advisor);
+            VoteableCandidateSetPartitionTable partitionTable =
+                new VoteableCandidateSetPartitionTable(advisor);
 
             tViz.add("Workload", workloadTable);
             tViz.add("Total Work", twPlotter);

@@ -32,7 +32,7 @@ import edu.ucsc.dbtune.workload.WorkloadReader
 class WorkloadStream(fileName: String, dbms: Option[Database]) {
   val workloadReader =
     dbms match {
-      case None => new FileWorkloadReader(fileName)
+      case None => new FileWorkloadReader(fileName, false)
       case Some(db) => QueryLogReader.newQueryLogReader(db.connection)
     }
 

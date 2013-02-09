@@ -11,8 +11,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.ucsc.dbtune.util.EventBusFactory;
+
 /**
- * Reader of SQLStatement objects constructed from a plain text file.
+ * Reader of SQLStatement objects constructed from a plain text file. The file is read once and 
+ * never updates its internal state. This means that observers will only get notified of new 
+ * statements when the class is instantiated and will never get notified after that.
  *
  * @author Ivo Jimenez
  */
@@ -53,12 +57,15 @@ public class FileWorkloadReader extends ObservableWorkloadReader
      * @param workloadStream
      *     stream that provides the set of SQL statements. One statement per line is assumed;
      *     single-line comments only.
+     * @param publishImmediately
+     *      whether to push immediately or not
      * @throws IOException
      *     if an error occurs while retrieving information from the given reader
      * @throws SQLException
      *     if a statement can't get a category assigned to it
      */
-    public FileWorkloadReader(String name, Reader workloadStream) throws IOException, SQLException
+    public FileWorkloadReader(String name, Reader workloadStream, boolean publishImmediately)
+        throws IOException, SQLException
     {
         super(new Workload(name));
 
@@ -82,10 +89,21 @@ public class FileWorkloadReader extends ObservableWorkloadReader
             if (line.endsWith(";")) {
                 sb.append(line.substring(0, line.length() - 1));
 
-                final String sql = sb.toString();
+                final String sqlStr = sb.toString();
 
-                if (!sql.isEmpty())
-                    sqlsHolder.add(new SQLStatement(sb.toString(), getWorkload(), stmtNumber++));
+                if (!sqlStr.isEmpty()) {
+                    SQLStatement sql = new SQLStatement(sqlStr, getWorkload(), stmtNumber++);
+
+                    if (publishImmediately) {
+                        // we'll publish the statements right here, since new
+                        // statements won't non-event-based workload reader
+                        EventBusFactory.getEventBusInstance().post(sql);
+                        sqls.add(sql);
+                    } else {
+                        // some users will expect to have a regular delay
+                        sqlsHolder.add(sql);
+                    }
+                }
 
                 sb = new StringBuilder();
             } else {
@@ -93,7 +111,33 @@ public class FileWorkloadReader extends ObservableWorkloadReader
             }
         }
 
-        startWatcher(5);
+        if (publishImmediately) {
+            // start a watcher with a ten-hour check interval
+            // (we don't need to have the bus to check again, since
+            // we don't check the file for changes)
+            startWatcher(36000);
+        } else {
+            // do as usual
+            startWatcher(5);
+        }
+    }
+
+    /**
+     * Construct a workload extracted from the given file.
+     *
+     * @param workloadFile
+     *      a plain text file containing SQL statements
+     * @param publishImmediately
+     *      whether to push immediately or not
+     * @throws IOException
+     *     if an error occurs while retrieving information from the given reader
+     * @throws SQLException
+     *     if a statement can't get a category assigned to it
+     */
+    public FileWorkloadReader(String workloadFile, boolean publishImmediately) throws IOException, 
+           SQLException
+    {
+        this((new File(workloadFile)).getName(), new FileReader(workloadFile), publishImmediately);
     }
 
     /**
@@ -108,7 +152,7 @@ public class FileWorkloadReader extends ObservableWorkloadReader
      */
     public FileWorkloadReader(String workloadFile) throws IOException, SQLException
     {
-        this((new File(workloadFile)).getName(), new FileReader(workloadFile));
+        this((new File(workloadFile)).getName(), new FileReader(workloadFile), true);
     }
 
     /**
