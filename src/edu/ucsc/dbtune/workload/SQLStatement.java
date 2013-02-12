@@ -164,7 +164,10 @@ public class SQLStatement
 
         SQLStatement o = (SQLStatement) obj;
 
-        if (category.isSame(o.category) && sql.equals(o.sql))
+        if (category.isSame(o.category) &&
+                sql.equals(o.sql) &&
+                workload.equals(o.workload) &&
+                position == o.position)
             return true;
 
         return false;

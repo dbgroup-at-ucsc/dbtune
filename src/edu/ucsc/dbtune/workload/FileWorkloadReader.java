@@ -57,6 +57,49 @@ public class FileWorkloadReader extends ObservableWorkloadReader
      * @param workloadStream
      *     stream that provides the set of SQL statements. One statement per line is assumed;
      *     single-line comments only.
+     * @throws IOException
+     *     if an error occurs while retrieving information from the given reader
+     * @throws SQLException
+     *     if a statement can't get a category assigned to it
+     */
+    public FileWorkloadReader(String name, Reader workloadStream)
+        throws IOException, SQLException
+    {
+        this(name, workloadStream, true);
+    }
+
+    /**
+     * Creates a workload containing the set of SQL statements provided by the {@code
+     * workloadStream} object. It's assumed that statements are delimited by <strong> ONLY ONE
+     * </strong> {@code ';'} semi-colon character (see examples below) and only one-line comments (
+     * a line beginning with string {@code "--"}) are contained in the SQL script, i.e. multi-line
+     * comments aren't supported.
+     * <p>
+     * The constructor can detect empty statements as long as there is one per line, i.e. the
+     * following produces a Workload of {@link #size} 1:
+     * <pre>
+     * {@code .
+     * "SELECT * FROM bla ; \n" +
+     * "; \n" +
+     * "; \n" +
+     * }
+     * </pre>
+     * while the following:
+     * <pre>
+     * {@code .
+     * "SELECT * FROM bla ; ; ; ; \n" +
+     * "; \n" +
+     * "; \n" +
+     * }
+     * </pre>
+     * produces a workload of size 1, but with the first query being {@code SELECT * FROM bla ; ;
+     * ;}, which will produce an error if gets executed by a JDBC-compliant driver.
+     *
+     * @param name
+     *     name assigned to the workload
+     * @param workloadStream
+     *     stream that provides the set of SQL statements. One statement per line is assumed;
+     *     single-line comments only.
      * @param publishImmediately
      *      whether to push immediately or not
      * @throws IOException
