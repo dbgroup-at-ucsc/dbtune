@@ -13,8 +13,7 @@ import edu.ucsc.dbtune.advisor.WorkloadObserverAdvisor;
 import edu.ucsc.dbtune.workload.SQLStatement;
 
 /**
- * A JFrame that displays the statements contained in a workload and marks the one that is currently 
- * being processed by the given advisor.
+ * A JFrame that displays the statements contained in a workload.
  *
  * @author Ivo Jimenez
  */

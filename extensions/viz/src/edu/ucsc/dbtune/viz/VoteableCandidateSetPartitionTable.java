@@ -15,7 +15,6 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.UIManager;
@@ -46,10 +45,16 @@ public class VoteableCandidateSetPartitionTable extends SwingVisualizer
      *
      * @param advisor
      *      the advisor
+     * @throws SQLException
+     *      if the given advisor is not an instance of {@link VoteableAdvisor}
      */
     public VoteableCandidateSetPartitionTable(WorkloadObserverAdvisor advisor)
+        throws SQLException
     {
         super(advisor);
+
+        if (!(advisor instanceof VoteableAdvisor))
+            throw new SQLException("Advisor should implement the Voteable interface");
 
         columnNames = new String[8];
 
@@ -142,7 +147,7 @@ public class VoteableCandidateSetPartitionTable extends SwingVisualizer
         row[4] = e.getBenefits().get(index) == null ? "0.0" : (e.getBenefits().get(index) + "");
         row[5] = e.getRecommendation().contains(index) ? "Y" : "N";
         row[6] = new StringWithAttachment("Up", index, (VoteableAdvisor) advisor);
-        row[7] = new StringWithAttachment("Down", index, (VoteableAdvisor) advisor);;
+        row[7] = new StringWithAttachment("Down", index, (VoteableAdvisor) advisor);
 
         return row;
     }

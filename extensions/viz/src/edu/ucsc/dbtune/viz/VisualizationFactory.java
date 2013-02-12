@@ -34,7 +34,7 @@ public final class VisualizationFactory
         if (advisor instanceof WFIT) {
             TabbedSwingVisualizer tViz = new TabbedSwingVisualizer(advisor);
 
-            WorkloadTable workloadTable = new WorkloadTable(advisor);
+            WorkloadTableWithWindow workloadTable = new WorkloadTableWithWindow(advisor);
             TotalWorkPlotter twPlotter = new TotalWorkPlotter(advisor);
             VoteableCandidateSetPartitionTable partitionTable =
                 new VoteableCandidateSetPartitionTable(advisor);
