@@ -1,9 +1,12 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 import edu.ucsc.dbtune.metadata.Index;
+
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 //CHECKSTYLE:OFF
 public class IndexStatistics implements BenefitFunction, DoiFunction {
@@ -11,10 +14,13 @@ public class IndexStatistics implements BenefitFunction, DoiFunction {
     Map<Index,Window> benefitWindows = new HashMap<Index,Window>();
     Map<IndexPair,Window> doiWindows = new HashMap<IndexPair,Window>();
     IndexPair tempPair = new IndexPair(null, null); // for lookups
+    LimitedQueue<SQLStatement> window;
     private int minId;
     private int windowSize;
     
     public IndexStatistics(int windowSize, int minId) {
+
+        window = new LimitedQueue<SQLStatement>(windowSize);
         this.minId = minId;
         this.windowSize = windowSize;
     }
@@ -58,10 +64,13 @@ public class IndexStatistics implements BenefitFunction, DoiFunction {
                     tempPair.a = null; tempPair.b = null;
                 }
             }
+
         }
         
         double executionCost = qinfo.cost(matSet.bitSet());
         currentTimeStamp += executionCost;
+
+        window.add(qinfo.explainInfo.getStatement());
     }
 
     @Override
@@ -91,6 +100,13 @@ public class IndexStatistics implements BenefitFunction, DoiFunction {
             return window.maxRate(currentTimeStamp);
     }
     
+    /**
+     * @return the window
+     */
+    public LimitedQueue<SQLStatement> getWindow() {
+        return window;
+    }
+
     /*
      * Maintains a sliding window of measurements
      * This class is agnostic about what the measurements indicate, and just treats them as numbers
@@ -178,5 +194,24 @@ public class IndexStatistics implements BenefitFunction, DoiFunction {
                 || (a.equals(pair.b) && b.equals(pair.a));
         }
     }       
+
+    private static class LimitedQueue<E> extends LinkedList<E> {
+
+        private static final long serialVersionUID = 1L;
+
+        private int limit;
+
+        public LimitedQueue(int limit)
+        {
+            this.limit = limit;
+        }
+
+        @Override
+        public boolean add(E o) {
+            super.add(o);
+            while (size() > limit) { super.remove(); }
+            return true;
+        }
+    }
 }
 //CHECKSTYLE:ON

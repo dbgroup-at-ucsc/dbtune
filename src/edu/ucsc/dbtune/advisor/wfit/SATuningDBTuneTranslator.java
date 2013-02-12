@@ -15,12 +15,15 @@ import edu.ucsc.dbtune.metadata.Index;
 
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
 import edu.ucsc.dbtune.optimizer.PreparedSQLStatement;
+
 import edu.ucsc.dbtune.util.MetadataUtils;
+
+import edu.ucsc.dbtune.workload.SQLStatement;
 
 import static edu.ucsc.dbtune.util.MetadataUtils.getDisplayList;
 
 /**
- * Transforms data structures in the format the the SATuning API expects them, i.e. mainly BitSet- 
+ * Transforms data structures in the format the the SATuning API expects them, i.e. mainly BitSet-
  * and array-based ones.
  *
  * @author Ivo Jimenez
@@ -42,7 +45,7 @@ public class SATuningDBTuneTranslator
     private List<ProfiledQuery> qinfos;
     private int queryCount;
     private int idOffset;
-    
+
     /**
      * @param cat
      *      when no initial set is used, the catalog must be provided
@@ -55,7 +58,7 @@ public class SATuningDBTuneTranslator
      * @param indexStatisticsWindowSize
      *      size of the sliding window of interaction-related measurements
      * @param numberOfPartitionIterations
-     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate 
+     *      number of attempts that the repartitioning algorithm executes to stabilize the candidate
      *      set partition
      */
     public SATuningDBTuneTranslator(
@@ -93,7 +96,7 @@ public class SATuningDBTuneTranslator
 
         if (!isInitialSetValid(initialSet))
             throw new RuntimeException(
-                "Initial set should contain indexes with consecutive IDs, the given has " + 
+                "Initial set should contain indexes with consecutive IDs, the given has " +
                 getDisplayList(new TreeSet<Index>(initialSet), "   "));
 
         if (fromCatalog) {
@@ -149,7 +152,7 @@ public class SATuningDBTuneTranslator
         idxStats.addQuery(qinfo, matSet);
 
         reorganizeCandidates(qinfo.candidateSet);
-        
+
         wfa.newTask(qinfo);
 
         queryCount++;
@@ -159,7 +162,7 @@ public class SATuningDBTuneTranslator
     }
 
     /**
-     * Returns the cost for a query using the given configuration. Looks at the list of {@link 
+     * Returns the cost for a query using the given configuration. Looks at the list of {@link
      * ProfiledQuery profiled} queries and uses the one corresponding to the given query id.
      *
      * @param queryId
@@ -169,14 +172,14 @@ public class SATuningDBTuneTranslator
      * @return
      *      cost of the query
      * @throws IndexOutOfBoundsException
-     *      if {@code queryId} is negative or greater than the total number of statements seen so 
+     *      if {@code queryId} is negative or greater than the total number of statements seen so
      *      far.
      */
     public double getCost(int queryId, Set<Index> conf)
     {
         return qinfos.get(queryId).cost(conf);
     }
-    
+
     /**
      * Returns the current candidate set partitioning.
      *
@@ -194,7 +197,7 @@ public class SATuningDBTuneTranslator
 
         return partitioning;
     }
-    
+
     /**
      * Returns the current set of work function values.
      *
@@ -207,7 +210,7 @@ public class SATuningDBTuneTranslator
     {
         return wfa.getWorkFunctionScores(pool);
     }
-    
+
     /**
      * @return
      *      recommendation for the last seen statement
@@ -225,7 +228,7 @@ public class SATuningDBTuneTranslator
     {
         return queryCount;
     }
-    
+
     /**
      * votes an index up.
      *
@@ -238,7 +241,19 @@ public class SATuningDBTuneTranslator
     {
         wfa.vote(index, isPositive);
     }
-    
+
+    /**
+     * Returns the window of statements that are considered when maintaining the index statistics 
+     * (benefits, partitions, etc.).
+     *
+     * @return
+     *      the window
+     */
+    public List<SQLStatement> getWindow()
+    {
+        return new ArrayList<SQLStatement>(idxStats.getWindow());
+    }
+
     /**
      * reorganizes the internal candidate set based on a new incoming set.
      *
@@ -251,24 +266,24 @@ public class SATuningDBTuneTranslator
         DynamicIndexSet reqIndexes = new DynamicIndexSet(idOffset);
         for (Index index : userHotSet) reqIndexes.add(index);
         for (Index index : matSet) reqIndexes.add(index);
-        StaticIndexSet newHotSet = 
+        StaticIndexSet newHotSet =
             HotSetSelector.chooseHotSet(candSet, hotSet, reqIndexes, idxStats, maxHotSetSize);
-        
+
         // determine new partitioning
         // store into local variable, since we might reject it
         IndexPartitions newHotPartitions =
             InteractionSelector.choosePartitions(
-                    newHotSet, hotPartitions, idxStats, maxNumStates, numberOfPartitionIterations, 
+                    newHotSet, hotPartitions, idxStats, maxNumStates, numberOfPartitionIterations,
                     idOffset);
-        
+
         // commit hot set
         hotSet = newHotSet;
         if (hotSet.size() > maxHotSetSize) {
             maxHotSetSize = hotSet.size();
-            //Debug.logNotice("Maximum number of monitored indexes has been automatically increased 
+            //Debug.logNotice("Maximum number of monitored indexes has been automatically increased
             //to " + maxHotSetSize);
         }
-        
+
         // commit new partitioning
         if (!newHotPartitions.equals(hotPartitions)) {
             hotPartitions = newHotPartitions;
@@ -297,14 +312,14 @@ public class SATuningDBTuneTranslator
 
         return indexSet;
     }
-    
+
     /**
      * Returns the recommendation corresponding to {@code OPT}.
      *
      * @param pool
      *      pool of all the candidate indexes referenced in any step
      * @return
-     *      a list containing a recommendation in each element. Each element in the list corresponds 
+     *      a list containing a recommendation in each element. Each element in the list corresponds
      *      to a query, in the order they've been passed to the {@code Selector}
      */
     public List<Set<Index>> getOptimalScheduleRecommendation(Set<Index> pool)
@@ -370,7 +385,7 @@ public class SATuningDBTuneTranslator
      * @param initialSet
      *      the set to be checked
      * @return
-     *      {@code true} if there are no "gaps" in the IDs of the given set; {@code false} 
+     *      {@code true} if there are no "gaps" in the IDs of the given set; {@code false}
      *      otherwise.
      */
     private static boolean isInitialSetValid(Set<Index> initialSet)

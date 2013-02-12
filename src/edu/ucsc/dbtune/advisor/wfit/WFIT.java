@@ -1,7 +1,9 @@
 package edu.ucsc.dbtune.advisor.wfit;
 
 import java.sql.SQLException;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -10,7 +12,9 @@ import edu.ucsc.dbtune.DatabaseSystem;
 
 import edu.ucsc.dbtune.advisor.RecommendationStatistics;
 import edu.ucsc.dbtune.advisor.VoteableAdvisor;
+import edu.ucsc.dbtune.advisor.WindowingAdvisor;
 import edu.ucsc.dbtune.advisor.WorkloadObserverAdvisor;
+
 import edu.ucsc.dbtune.advisor.interactions.DegreeOfInteractionFinder;
 import edu.ucsc.dbtune.advisor.interactions.IBGDoiFinder;
 import edu.ucsc.dbtune.advisor.interactions.InteractionBank;
@@ -29,7 +33,7 @@ import static edu.ucsc.dbtune.util.OptimizerUtils.getBenefits;
 /**
  * @author Ivo Jimenez
  */
-public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor
+public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor, WindowingAdvisor
 {
     /**
      * in order to make the advisor behave as a non-observer, we just assign a workload that doesn't
@@ -337,6 +341,15 @@ public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor
     public void voteDown(Integer id) throws SQLException
     {
         voteDown(findOrThrow(pool, id));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<SQLStatement> getWindow()
+    {
+        return wfitDriver.getWindow();
     }
 
     /**
