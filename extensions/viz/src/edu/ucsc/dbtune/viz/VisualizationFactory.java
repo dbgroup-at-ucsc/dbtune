@@ -32,16 +32,22 @@ public final class VisualizationFactory
         AdvisorVisualizer viz = null;
 
         if (advisor instanceof WFIT) {
+            WFIT wfitAdvisor = (WFIT) advisor;
+
             TabbedSwingVisualizer tViz = new TabbedSwingVisualizer(advisor);
 
             WorkloadTableWithWindow workloadTable = new WorkloadTableWithWindow(advisor);
+            IndexSetTable currentRec = new IndexSetTable(advisor);
+            WFITRecommendationRankTable recRank = new WFITRecommendationRankTable(wfitAdvisor);
             TotalWorkPlotter twPlotter = new TotalWorkPlotter(advisor);
             VoteableCandidateSetPartitionTable partitionTable =
                 new VoteableCandidateSetPartitionTable(advisor);
 
             tViz.add("Workload", workloadTable);
+            tViz.add("Current Recommendation", currentRec);
+            tViz.add("Recommendation Rank", recRank);
+            tViz.add("Candidate Partitioning", partitionTable);
             tViz.add("Total Work", twPlotter);
-            tViz.add("Candidate Set", partitionTable);
 
             viz = tViz;
         } else {
