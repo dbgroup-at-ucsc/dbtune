@@ -53,6 +53,9 @@ public class TabbedSwingVisualizer extends SwingVisualizer
         );
 
         pack();
+
+        setSize(1012, 1072);
+        setLocation(512, 24);
     }
 
     /**

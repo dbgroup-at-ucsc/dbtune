@@ -50,7 +50,7 @@ public class WorkloadTableWithWindow extends SwingVisualizer
 
         columnNames = new String[2];
 
-        columnNames[0] = "WNDW";
+        columnNames[0] = "";
         columnNames[1] = "SQL";
 
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);

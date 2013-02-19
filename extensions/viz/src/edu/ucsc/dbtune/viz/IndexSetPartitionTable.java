@@ -82,7 +82,7 @@ public class IndexSetPartitionTable extends SwingVisualizer
      * @return
      *      the table
      */
-    private JTable newTable(RecommendationStatistics.Entry e, Set<Index> indexes)
+    protected JTable newTable(RecommendationStatistics.Entry e, Set<Index> indexes)
     {
         String[][] dataValues = new String[indexes.size()][];
 
