@@ -5,9 +5,11 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import java.sql.SQLException;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -552,6 +554,32 @@ public final class MetadataUtils
         }
 
         return indexList.toString();
+    }
+
+    /**
+     * Returns a string of the form {@code name1, name2, ..., nameN} for the list of metadata 
+     * objects.
+     *
+     * @param list
+     *      the list of objects
+     * @return
+     *      the string
+     */
+    public static String getNameListString(List<Index> list)
+    {
+        if (list.isEmpty())
+            return "";
+
+        StringBuilder nameListString = new StringBuilder();
+
+        for (Index idx : list)
+            nameListString
+                .append(idx.getName())
+                .append(", ");
+
+        nameListString.delete(nameListString.length() - 2, nameListString.length() - 0);
+
+        return nameListString.toString();
     }
 
     /**
