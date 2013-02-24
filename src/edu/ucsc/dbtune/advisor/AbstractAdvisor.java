@@ -1,8 +1,6 @@
 package edu.ucsc.dbtune.advisor;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
@@ -15,8 +13,6 @@ import edu.ucsc.dbtune.workload.SQLStatement;
  */
 public abstract class AbstractAdvisor implements Advisor
 {
-    private List<SQLStatement> processedStatements = new ArrayList<SQLStatement>();
-
     /**
      * Indicates the advisor that it should process a new statement.
      *
@@ -41,8 +37,6 @@ public abstract class AbstractAdvisor implements Advisor
     public void process(SQLStatement sql) throws SQLException
     {
         processNewStatement(sql);
-
-        processedStatements.add(sql);
     }
 
     /**
@@ -55,12 +49,4 @@ public abstract class AbstractAdvisor implements Advisor
      */
     public abstract RecommendationStatistics getRecommendationStatistics()
         throws SQLException;
-
-    /**
-     * {@inheritDoc}
-     */
-    public List<SQLStatement> getProcessedStatements()
-    {
-        return processedStatements;
-    }
 }

@@ -2,7 +2,6 @@ package edu.ucsc.dbtune.advisor;
 
 import java.sql.SQLException;
 
-import java.util.List;
 import java.util.Set;
 
 import edu.ucsc.dbtune.metadata.Index;
@@ -57,9 +56,4 @@ public interface Advisor
      *      if the given statement can't be processed
      */
     RecommendationStatistics getRecommendationStatistics() throws SQLException;
-
-    /**
-     * @return the statements that have been processed so far
-     */
-    List<SQLStatement> getProcessedStatements();
 }

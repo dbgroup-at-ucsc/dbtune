@@ -2,6 +2,8 @@ package edu.ucsc.dbtune.advisor;
 
 import java.sql.SQLException;
 
+import java.util.LinkedList;
+
 import com.google.common.eventbus.Subscribe;
 
 import edu.ucsc.dbtune.metadata.Index;
@@ -20,14 +22,18 @@ import edu.ucsc.dbtune.workload.Workload;
  * This class also posts events to the event bus every time that it processes a new statement. Thus, 
  * other classes can subscribe to it. The event identifier is a {@link String}
  * of the form {@code "workload.getWorkloadName()" + "_" + "workload.hashCode()"}
+ * <p>
+ * <b>This class is not thread-safe</b>
  *
  * @author Ivo Jimenez
  */
-public abstract class WorkloadObserverAdvisor // a.k.a. ObservableWorkloadObserverAdvisor
+public abstract class WorkloadObserverAdvisor
     extends AbstractAdvisor
-    implements ObservableAdvisor, VoteableAdvisor
+    implements ObservableAdvisor, VoteableAdvisor, PlayableAdvisor
 {
     private Workload workload;
+    private LinkedList<SQLStatement> statementQueue;
+    private boolean isStopped;
 
     /**
      * Constructs a workload-observer advisor that will be listening for statements that correspond 
@@ -40,6 +46,8 @@ public abstract class WorkloadObserverAdvisor // a.k.a. ObservableWorkloadObserv
     protected WorkloadObserverAdvisor(Workload workload)
     {
         this.workload = workload;
+        this.isStopped = false;
+        this.statementQueue = new LinkedList<SQLStatement>();
 
         EventBusFactory.getEventBusInstance().register(this);
     }
@@ -72,12 +80,60 @@ public abstract class WorkloadObserverAdvisor // a.k.a. ObservableWorkloadObserv
         // check that the statement being added corresponds to the workload being observed
         if (statement.getWorkload().equals(workload)) {
 
-            processNewStatement(statement);
-
-            post();
+            if (isStopped) {
+                statementQueue.add(statement);
+            } else {
+                processNewStatement(statement);
+                post();
+            }
         }
 
         // ignore it otherwise since the statement is not of interest to this advisor
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void play() throws SQLException
+    {
+        isStopped = false;
+
+        for (SQLStatement sql : statementQueue) {
+            processNewStatement(sql);
+            post();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void stop()
+    {
+        isStopped = true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void next() throws SQLException
+    {
+        SQLStatement sql = statementQueue.poll();
+
+        processNewStatement(sql);
+        post();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final void process(SQLStatement sql) throws SQLException
+    {
+        throw new SQLException(
+                "Can't use this directly. New statements are read by a WorkloadReader");
     }
 
     /**
