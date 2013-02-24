@@ -31,7 +31,7 @@ import static edu.ucsc.dbtune.util.EnvironmentProperties.INUM;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.MYSQL;
 import static edu.ucsc.dbtune.util.EnvironmentProperties.PG;
 
-import static edu.ucsc.dbtune.util.MetadataUtils.getMaterializationStatement;
+import static edu.ucsc.dbtune.util.MetadataUtils.getRecommendForStatement;
 
 /**
  * Represents a DBMS system. The class `DatabaseSystem` represents a DBMS and it's the main entry 
@@ -129,7 +129,7 @@ public class DatabaseSystem
      */
     public Index newIndex(ColumnOrdering ordering) throws SQLException
     {
-        Set<Index> idxs = optimizer.recommendIndexes(getMaterializationStatement(ordering));
+        Set<Index> idxs = optimizer.recommendIndexes(getRecommendForStatement(ordering));
 
         if (idxs.size() != 1)
             throw new RuntimeException(

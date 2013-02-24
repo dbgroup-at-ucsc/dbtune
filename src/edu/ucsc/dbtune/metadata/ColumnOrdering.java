@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- * Represents the ordering of a set of columns interesting order. All the columns contained in an 
+ * Represents the ordering of a set of columns interesting order. All the columns contained in an
  * ordering should refer to the sames table.
  *
  * @author Ivo Jimenez
@@ -69,7 +69,7 @@ public class ColumnOrdering
                 orderings.put(c, ASC);
             else
                 orderings.put(c, DESC);
-        
+
         init(index.columns(), orderings);
     }
 
@@ -93,7 +93,7 @@ public class ColumnOrdering
 
         init(columnList, orderingMap);
     }
-    
+
     /**
      * Creates an interesting order instance.
      *
@@ -136,7 +136,7 @@ public class ColumnOrdering
 
         init(columns, orderingMap);
     }
-    
+
     /**
      * Copy constructor.
      *
@@ -159,8 +159,8 @@ public class ColumnOrdering
      * @param ordering
      *      map each column in {@code columns} to an ordering value
      * @throws SQLException
-     *      if {@code columns} is empty; not all columns in the list correspond to the same table; 
-     *      size of map is distinct to size of list; a column in the list is missing an ordering 
+     *      if {@code columns} is empty; not all columns in the list correspond to the same table;
+     *      size of map is distinct to size of list; a column in the list is missing an ordering
      *      value in the map (i.e. {@code ordering.get(column) == null} is {@code true}).
      */
     private void init(List<Column> columns, Map<Column, Integer> ordering) throws SQLException
@@ -279,7 +279,7 @@ public class ColumnOrdering
      * @param orderingValue
      *      the value being checked
      * @return
-     *      {@code true} if the value is {@link #ASCENDING}, {@link #DESCENDING} or {@link #ANY}; 
+     *      {@code true} if the value is {@link #ASCENDING}, {@link #DESCENDING} or {@link #ANY};
      *      {@code false} otherwise.
      */
     public static boolean isValid(int orderingValue)
@@ -314,7 +314,7 @@ public class ColumnOrdering
     }
 
     /**
-     * Whether the given index covers this one. An index a is covered by another b if a's columns 
+     * Whether the given index covers this one. An index a is covered by another b if a's columns
      * are a prefix of b's and with the same {@link #isAscending ascending} value.
      *
      * @param index
@@ -336,7 +336,7 @@ public class ColumnOrdering
     }
 
     /**
-     * Whether the given index covers this one. An index a is covered by another b if a's columns 
+     * Whether the given index covers this one. An index a is covered by another b if a's columns
      * are a prefix of b's and with the same {@link #isAscending ascending} value.
      *
      * @param other
@@ -358,8 +358,8 @@ public class ColumnOrdering
     }
 
     /**
-     * Whether the given index covers this one without taking into account the order. An index a is 
-     * covered by another b if a's columns are contained in b's and they're in the same {@link 
+     * Whether the given index covers this one without taking into account the order. An index a is
+     * covered by another b if a's columns are contained in b's and they're in the same {@link
      * #isAscending ascending} order.
      *
      * @param index
@@ -381,8 +381,8 @@ public class ColumnOrdering
     }
 
     /**
-     * Whether the given index covers this one without taking into account the order. An index a is 
-     * covered by another b if a's columns are contained in b's and they're in the same {@link 
+     * Whether the given index covers this one without taking into account the order. An index a is
+     * covered by another b if a's columns are contained in b's and they're in the same {@link
      * #isAscending ascending} order.
      *
      * @param other
@@ -464,7 +464,7 @@ public class ColumnOrdering
     }
 
     /**
-     * creates an ordering from a string. The format of the string is {@code table (column 
+     * creates an ordering from a string. The format of the string is {@code table (column
      * [asc|desc], ...)}.
      *
      * @param catalog
@@ -518,7 +518,7 @@ public class ColumnOrdering
     }
 
     /**
-     * creates an ordering from the given arguments. The arguments should be a sequence of pairs 
+     * creates an ordering from the given arguments. The arguments should be a sequence of pairs
      * (column, asc).
      *
      * @param orderingSpec
@@ -530,7 +530,7 @@ public class ColumnOrdering
     {
         if (orderingSpec.length == 0)
             throw new IllegalArgumentException("Empty column ordering spec");
-            
+
         if (orderingSpec.length % 2 != 0)
             throw new IllegalArgumentException("Expecting a sequence of pairs (column, int)");
 

@@ -230,15 +230,30 @@ public class ColumnOrderingTest
         assertThat(co1.isCoveredBy(co2), is(false));
         assertThat(co2.isCoveredBy(co1), is(false));
         assertThat(co2.isCoveredByIgnoreOrder(co1), is(true));
-        
+
         co2 = new ColumnOrdering(columns.get(0), ASC);
 
         assertThat(co1.isCoveredBy(co2), is(false));
         assertThat(co2.isCoveredBy(co1), is(true));
-        
+
         co2 = new ColumnOrdering(columns.get(0), ANY);
 
         assertThat(co1.isCoveredBy(co2), is(false));
         assertThat(co2.isCoveredBy(co1), is(true));
+    }
+
+    /**
+     * @throws Exception
+     *      if fails
+    */
+    @Test
+    public void testUtilityMethod() throws Exception
+    {
+        ColumnOrdering co;
+
+        co = ColumnOrdering.newOrdering(
+                columns.get(0), ASC, columns.get(1), DESC, columns.get(2), DESC);
+
+        assertThat(co.getColumns().get(0), is(columns.get(0)));
     }
 }

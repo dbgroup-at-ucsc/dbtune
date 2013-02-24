@@ -27,6 +27,7 @@ import edu.ucsc.dbtune.metadata.Schema;
 import edu.ucsc.dbtune.metadata.Table;
 
 import static edu.ucsc.dbtune.metadata.ColumnOrdering.ASC;
+import static edu.ucsc.dbtune.metadata.SQLTypes.isNumeric;
 
 /**
  * @author Ivo Jimenez
@@ -471,6 +472,39 @@ public final class MetadataUtils
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    /**
+     * Generates the SQL statement for which it's very likely that the optimizer would recommend an 
+     * index.
+     *
+     * @param index
+     *      the index for which the statement is being generated
+     * @return
+     *      the SQL statement
+     */
+    public static String getRecommendForStatement(ColumnOrdering ordering) throws SQLException
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("SELECT ");
+        for (Column c : ordering.getColumns())
+            sb.append(c.getName()).append(", ");
+
+        sb.delete(sb.length() - 2, sb.length() - 1);
+        sb.append("   FROM ").append(ordering.getTable().getFullyQualifiedName());
+        sb.append("   WHERE ");
+
+        for (Column c : ordering.getColumns()) {
+            if (!isNumeric(c.getDataType()))
+                throw new SQLException("Only numeric types allowed");
+
+            sb.append(c.getName()).append(" = ").append("0");
+        }
+
+        sb.delete(sb.length() - 2, sb.length() - 1);
+
+        return sb.toString();
     }
 
     /**

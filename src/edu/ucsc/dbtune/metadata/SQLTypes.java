@@ -198,7 +198,6 @@ public class SQLTypes
      * @return true if numeric; false otherwise
      */
     public static boolean isNumeric( int type )
-    throws Exception
     {
     switch( type )
         {

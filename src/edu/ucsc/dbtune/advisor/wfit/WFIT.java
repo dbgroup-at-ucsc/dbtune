@@ -362,6 +362,19 @@ public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor, Wi
     }
 
     /**
+     * Adds a new index into the pool.
+     */
+    public void add(Index index)
+    {
+        if (this.pool.contains(index)) {
+            throw new RuntimeException("index " + index + " already in pool ");
+        }
+
+        this.pool.add(index);
+    }
+
+
+    /**
      * Gets the pool for this instance.
      *
      * @return The pool.
