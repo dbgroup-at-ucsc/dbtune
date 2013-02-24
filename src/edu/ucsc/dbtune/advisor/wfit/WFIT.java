@@ -342,8 +342,9 @@ public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor, Wi
     public RecommendationStatistics getOptimalRecommendationStatistics()
         throws SQLException
     {
-        if (!isCandidateSetFixed)
-            throw new SQLException("Can't produce OPT without specifying an initial candidate set");
+        //if (!isCandidateSetFixed)
+            //throw new SQLException("Can't produce OPT without specifying an initial candidate 
+            //set");
 
         optStats.clear();
 

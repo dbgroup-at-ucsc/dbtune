@@ -56,4 +56,14 @@ public interface Advisor
      *      if the given statement can't be processed
      */
     RecommendationStatistics getRecommendationStatistics() throws SQLException;
+
+    /**
+     * The statistics corresponding to the idealized {@code OPT} algorithm.
+     *
+     * @return
+     *      recommendation statistics for {@code OPT}
+     * @throws SQLException
+     *      if the candidate set wasn't specified from the beginning
+     */
+    RecommendationStatistics getOptimalRecommendationStatistics() throws SQLException;
 }

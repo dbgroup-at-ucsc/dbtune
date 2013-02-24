@@ -27,6 +27,7 @@ public class TotalWorkPlotter extends SwingVisualizer
     public TotalWorkPlotter(WorkloadObserverAdvisor advisor)
     {
         super(advisor);
+
         XYSeriesCollection c = new XYSeriesCollection();
         xyChart = VizUtils.createXYChart("Performance", c, "", "Queries", "Total Work");
         setContentPane(xyChart.getPanel());
@@ -39,7 +40,7 @@ public class TotalWorkPlotter extends SwingVisualizer
     @Override
     public void updateContent() throws Exception
     {
-        plot(advisor.getRecommendationStatistics());
+        plot(advisor.getRecommendationStatistics(), advisor.getOptimalRecommendationStatistics());
     }
 
     /**
