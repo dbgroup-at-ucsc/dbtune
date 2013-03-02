@@ -3,6 +3,8 @@ package edu.ucsc.dbtune.viz;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.ImageIcon;
+
 import edu.ucsc.dbtune.advisor.WorkloadObserverAdvisor;
 
 /**
@@ -54,8 +56,11 @@ public class TabbedSwingVisualizer extends SwingVisualizer
 
         pack();
 
-        setSize(1012, 1072);
+        setSize(1024, 512);
         setLocation(512, 24);
+
+        ImageIcon img = new ImageIcon("resources/images/ucsc-seal.jpg");
+        setIconImage(img.getImage());
     }
 
     /**

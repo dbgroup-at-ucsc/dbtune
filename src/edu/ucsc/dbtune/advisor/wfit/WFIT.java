@@ -386,6 +386,14 @@ public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor, Wi
     }
 
     /**
+     * @return the isCandidateSetFixed
+     */
+    public boolean isCandidateSetFixed()
+    {
+        return isCandidateSetFixed;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public void voteUp(Integer id)

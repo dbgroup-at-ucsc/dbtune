@@ -362,8 +362,7 @@ public class WorkFunctionAlgorithm {
                     == index.getId()-minId)
                     break;
             if (indexIdsPos >= numIndexes) {
-                //Debug.logError("could not process vote: index not found in subset");
-                return;
+                throw new RuntimeException("could not process vote: index not found in subset");
             }
             
             // integer with a 1 in the position of the index
@@ -416,8 +415,8 @@ public class WorkFunctionAlgorithm {
                         bestPredecessor = oldStateNum;
                     }
                 }
-                //if (Double.isInfinite(wfValueBest))
-                    //Debug.logError("failed to compute work function");
+                if (Double.isInfinite(wfValueBest))
+                    throw new RuntimeException("failed to compute work function");
                 wfNew.set(subsetNum, newStateNum, wfValueBest, bestPredecessor);
             }
             
@@ -448,6 +447,9 @@ public class WorkFunctionAlgorithm {
                     bestValue = value;
                     bestTransitionCost = transition;
                 }
+
+                // transition = cost(oldState, newState)
+                // wfValue = wfNew.get(stateNum)
             }
             
             if (bestState < 0)

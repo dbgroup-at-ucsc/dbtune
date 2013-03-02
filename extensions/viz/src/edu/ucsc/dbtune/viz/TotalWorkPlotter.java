@@ -40,7 +40,12 @@ public class TotalWorkPlotter extends SwingVisualizer
     @Override
     public void updateContent() throws Exception
     {
-        plot(advisor.getRecommendationStatistics(), advisor.getOptimalRecommendationStatistics());
+        if (advisor.isCandidateSetFixed())
+            plot(
+                advisor.getRecommendationStatistics(),
+                advisor.getOptimalRecommendationStatistics());
+        else
+            plot(advisor.getRecommendationStatistics());
     }
 
     /**

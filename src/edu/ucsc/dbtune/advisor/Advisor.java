@@ -66,4 +66,9 @@ public interface Advisor
      *      if the candidate set wasn't specified from the beginning
      */
     RecommendationStatistics getOptimalRecommendationStatistics() throws SQLException;
+
+    /**
+     * @return the isCandidateSetFixed
+     */
+    boolean isCandidateSetFixed();
 }

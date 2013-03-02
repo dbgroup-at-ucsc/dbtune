@@ -21,7 +21,7 @@ import static edu.ucsc.dbtune.util.MetadataUtils.getColumnListString;
  *
  * @author Ivo Jimenez
  */
-public class IndexSetTable extends SwingVisualizer
+public class RecommendedIndexSetTable extends SwingVisualizer
 {
     static final long serialVersionUID = 0;
     protected String[] columnNames;
@@ -32,16 +32,15 @@ public class IndexSetTable extends SwingVisualizer
      * @param advisor
      *      the advisor
      */
-    public IndexSetTable(WorkloadObserverAdvisor advisor)
+    public RecommendedIndexSetTable(WorkloadObserverAdvisor advisor)
     {
         super(advisor);
 
-        columnNames = new String[4];
+        columnNames = new String[3];
 
         columnNames[0] = "NAME";
         columnNames[1] = "TABLE";
         columnNames[2] = "COLUMNS";
-        columnNames[3] = "RECOMMENDED";
 
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
@@ -63,7 +62,7 @@ public class IndexSetTable extends SwingVisualizer
         getContentPane().removeAll();
 
         RecommendationStatistics.Entry e = stats.getLastEntry();
-        getContentPane().add(new JScrollPane(newTable(e, e.getCandidateSet())));
+        getContentPane().add(new JScrollPane(newTable(e.getRecommendation())));
     }
 
     /**
@@ -76,14 +75,14 @@ public class IndexSetTable extends SwingVisualizer
      * @return
      *      the table
      */
-    protected JTable newTable(RecommendationStatistics.Entry e, Set<Index> indexes)
+    protected JTable newTable(Set<Index> indexes)
     {
         String[][] dataValues = new String[indexes.size()][];
 
         int i = 0;
 
         for (Index index : indexes)
-            dataValues[i++] = newRow(e, index);
+            dataValues[i++] = newRow(index);
 
         return new JTable(dataValues, columnNames);
     }
@@ -96,15 +95,15 @@ public class IndexSetTable extends SwingVisualizer
      * @return
      *      an array of strings, where each corresponds to an attribute of the index
      */
-    protected String[] newRow(RecommendationStatistics.Entry e, Index index)
+    protected String[] newRow(Index index)
     {
-        String[] row = new String[4];
+        String[] row = new String[3];
 
         row[0] = index.getName();
         row[1] = index.getTable() + "";
         row[2] = getColumnListString(index);
-        row[3] = e.getRecommendation().contains(index) ? "Y" : "N";
 
         return row;
     }
 }
+
