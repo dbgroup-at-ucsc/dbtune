@@ -74,6 +74,7 @@ public class DATPaper {
         boolean costMustDecrease = false;
         public double[] windowWeights;
         File debugFile;
+        File skylineFile;
         boolean rerunExperiment;
         /**
          * Specify list of queries in each window
@@ -147,10 +148,24 @@ public class DATPaper {
 
     // DATSeparateProcess dsp;
     PrintStream ps;
+    
+    // Trung's data structures to record skyline schedules
+    public double intCostGreedy;
+    public double finalCostGreedy;
+    public double intCostBip;
+    public double finalCostBip;
 
     public void p(String format, Object... args) {
         Rt.showDate = false;
-        String s = String.format(format, args);
+        String s = "";
+        try {
+            s = String.format(format, args);
+        } catch (Exception e)
+        {
+            Rt.p("ERROR " + e.getMessage());
+            ;
+        }
+        
         ps.println(s);
         Rt.p(s);
     }
@@ -242,6 +257,12 @@ public class DATPaper {
             double objValue = greedySeq.bestPath[greedySeq.bestPath.length - 1].costUtilThisStepBoost;
             greedyWindowCosts = new double[m];
             this.greedySeq = 0;
+            
+            // Trung's modification ----------------------
+            this.intCostGreedy = 0.0;
+            this.finalCostGreedy = 0.0;
+            // -------------------------------------------
+            
             for (int i = 0; i < m; i++) {
                 SeqStepConf conf = greedySeq.bestPath[i + 1];
                 SeqIndex[] indices = conf.configuration.indices;
@@ -257,37 +278,59 @@ public class DATPaper {
                     space += index.inumIndex.storageCost;
                 p("GREEDY-SEQ window " + i + ": cost=%,.0f createCost=%,.0f usedIndexes=%d space=%,d",
                         greedyWindowCosts[i], tc, indices.length, space);
-                if (i < m - 1)
+                if (i < m - 1) {
                     this.greedySeq += alpha * greedyWindowCosts[i];
-                else
+                    // Trung's modification ------------------
+                    this.intCostGreedy += greedyWindowCosts[i];
+                    // -----------------------------------------
+                }
+                else {
                     this.greedySeq += beta * greedyWindowCosts[i];
+                    // Trung's modification ------------------
+                    this.finalCostGreedy += greedyWindowCosts[i];
+                    // -----------------------------------------
+                }
             }
             if (!useDB2Optimizer && verifyByDB2Optimizer) {
-                p("verifying window cost");
+                p("verifying window cost, REMEMBER TO RESET");
+                double costDB2 = 0.0;
+                DatabaseSystem db = p.loader.getDb();
+                p.loader.openConnection();
+                DB2Optimizer optimizer = p.loader.getDB2Optimizer();
+                                
                 for (int i = 0; i < m; i++) {
-                    SeqStepConf conf = greedySeq.bestPath[i + 1];
-                    DatabaseSystem db = p.loader.getDb();
-                    DB2Optimizer optimizer = p.loader.getDB2Optimizer();
+                    SeqStepConf conf = greedySeq.bestPath[i + 1];                                        
                     greedyWindowCosts[i] = seqCost.verifyCost(i, db, optimizer, conf)
                             + (seqCost.addTransitionCostToObjective ? conf.transitionCost : 0);
                     p("GREEDY-SEQ window " + i + ": cost=%,.0f usedIndexes=%d", greedyWindowCosts[i],
                             conf.configuration.indices.length);
+                    costDB2 += greedyWindowCosts[i];
+                    costDB2 += (seqCost.addTransitionCostToObjective ? conf.transitionCost : 0);
                 }
+                
+                Rt.p("-- total cost DB2 vs. INUM: %.0f   %.0f", costDB2, this.greedySeq);
+                Rt.p(" INUM / DB2 = " + (this.greedySeq / costDB2));
+            
             }
             greedyRunningTime = timer.getSecondElapse();
             p("GREEDY-SEQ time: %.2f s", timer.getSecondElapse());
             p("Obj value: %,.0f", this.greedySeq);
             p("whatIfCount: %d", seqCost.whatIfCount);
         }
-
+        
         {
             RTimerN timer = new RTimerN();
             DATParameter params = new DATParameter(cost, windowConstraints, alpha, beta, l);
             params.windowWeight = p.windowWeights;
             params.costMustDecrease = p.costMustDecrease;
             DAT dat = new DAT();
+            Rt.p("BIP EP gap = " + p.bipEpGap);
             DATOutput output = dat.runDAT(params, p.bipEpGap);
             this.dat = output.totalCost;
+            // Trung's modification -----------------------
+            this.intCostBip = output.intCost;
+            this.finalCostBip = output.finalCost;
+            // --------------------------------------------
             datWindowCosts = new double[m];
             for (int i = 0; i < m; i++) {
                 datWindowCosts[i] = output.ws[i].cost;
@@ -299,18 +342,27 @@ public class DATPaper {
                         datWindowCosts[i], output.ws[i].createCost, output.ws[i].present, output.ws[i].create,
                         output.ws[i].drop, space);
             }
+            
             if (useDB2Optimizer || verifyByDB2Optimizer) {
                 p("verifying window cost");
-                for (int i = 0; i < m; i++) {
-                    DatabaseSystem db = p.loader.getDb();
-                    DB2Optimizer optimizer = p.loader.getDB2Optimizer();
+                double costDB2 = 0.0;
+                DatabaseSystem db = p.loader.getDb();
+                p.loader.openConnection();
+                DB2Optimizer optimizer = p.loader.getDB2Optimizer();
+                
+                for (int i = 0; i < m; i++) {                                        
                     datWindowCosts[i] = dat.getWindowCost(i, db, optimizer);
                     p("DAT Window %d: cost=%,.0f\tcreateCost=%,.0f\tusedIndexes=%d\tcreate=%d\tdrop=%d", i,
                             datWindowCosts[i], output.ws[i].createCost, output.ws[i].present, output.ws[i].create,
                             output.ws[i].drop);
+                    costDB2 += datWindowCosts[i];
+                    costDB2 += output.ws[i].createCost;
                 }
+                
+                Rt.p("-- total cost DB2 vs. INUM: %, .0f   %.0f", costDB2, this.dat);
+                Rt.p(" INUM / DB2 = " + (this.dat / costDB2));
             }
-
+            
             // dsp = new DATSeparateProcess(loader.dbName, loader.workloadName,
             // loader.fileName, loader.generateIndexMethod, alpha, beta,
             // m, l, spaceBudge, windowSize, 0);
@@ -327,7 +379,7 @@ public class DATPaper {
             // greedyRatio = dsp.greedy;
             dat.close();
         }
-
+        
         if (p.plotLabelZ != null) {
             p.plot.startNewX(p.plotX, p.plotLabel, p.plotZ, p.plotLabelZ);
         } else {

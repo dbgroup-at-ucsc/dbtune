@@ -15,6 +15,10 @@ public class DATOutput extends IndexTuningOutput {
 
     public W[] ws;
     public double totalCost;
+    // Trung's modification ------------------
+    public double finalCost;
+    public double intCost;
+    // --------------------------------------
     public double last() {
         return ws[ws.length-1].cost;
     }
