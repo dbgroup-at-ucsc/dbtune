@@ -44,7 +44,7 @@ public class WorkloadLoader {
     public String dbName;
     public String workloadName;
     public String fileName;
-    public String generateIndexMethod = "recommend";
+    public String generateIndexMethod = "powerset";
 
     public WorkloadLoader(String dbName, String workloadName, String fileName, String generateIndexMethod) {
         this.dbName = dbName;
@@ -87,6 +87,7 @@ public class WorkloadLoader {
     }
 
     public Set<Index> getIndexes(Workload workload, DatabaseSystem db) throws Exception {
+        
         // Rt.runAndShowCommand("db2 connect to test");
         // HashSet<Index> set=new HashSet<Index>();
         // for (int i = 0; i <= 9; i++) {
@@ -115,6 +116,8 @@ public class WorkloadLoader {
             }
             Rt.np("Load index from cache: " + indexes.size());
         } else {
+            Rt.p(" generate method = " + generateIndexMethod);
+           
             if ("recommend".equals(generateIndexMethod)) {
                 DB2Advisor db2Advis = new DB2Advisor(db);
                 // CandidateGenerator candGen = new OptimizerCandidateGenerator(
@@ -123,12 +126,16 @@ public class WorkloadLoader {
                 if (spaceMB == 0) {
                     DB2AdvisorCandidateGenerator candGen = new DB2AdvisorCandidateGenerator(db2Advis);
                     indexes = candGen.generate(workload);
-                } else {
-                    db2Advis.process(workload);
-                    indexes = db2Advis.getRecommendation(spaceMB);
-                }
+                    Rt.p("TRUNG'S MODIFICATION "
+                            + " generate by DB2ADVISOR");
+                } 
+                //else {
+                  //  db2Advis.process(workload);
+                   // indexes = db2Advis.getRecommendation(spaceMB);
+                //}
             } else if (generateIndexMethod.startsWith("powerset")) {
-                int size = Integer.parseInt(generateIndexMethod.substring("powerset".length()).trim());
+                //int size = Integer.parseInt(generateIndexMethod.substring("powerset".length()).trim());
+                int size = 2;
                 CandidateGenerator candGen = new PowerSetOptimalCandidateGenerator(db.getOptimizer(),
                         new OptimizerCandidateGenerator(getBaseOptimizer(db.getOptimizer())), size);
                 indexes = candGen.generate(workload);
@@ -188,6 +195,20 @@ public class WorkloadLoader {
         return db2optimizer;
     }
 
+    /**
+     * Trung's implementation
+     * 
+     * @throws Exception
+     */
+    public void openConnection() throws Exception
+    {
+        db = getDb();
+        
+        if (db.getConnection().isClosed()){
+            db = newDatabaseSystem(en);
+        }
+    }
+    
     public Set<Index> getIndexes() throws Exception {
         Workload workload = getWorkload();
         if (db == null)

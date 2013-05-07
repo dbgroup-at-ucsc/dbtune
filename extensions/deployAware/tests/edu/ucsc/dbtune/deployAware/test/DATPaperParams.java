@@ -40,14 +40,14 @@ public class DATPaperParams {
     File figsDir = new File(outputDir, "figs");
     File skylineLatexFile = new File(outputDir, "skyline.tex");
 
-    public Set m = new Set(4, "m", new double[] { 6, 8, 10, 12 }, null, new Callback() {
+    public Set m = new Set(3, "m", new double[] {2, 4, 8, 12, 16 }, null, new Callback() {
         @Override
         public void callback(TestSet set, DATExp p, double value) {
             p.m = value;
         }
     });
-    public Set winFactor = new Set(-1, "window", new double[] { 8, 16, 32, 64, 1E100 }, new String[] { "8x", "16x",
-            "32x", "64x", "INF" }, new Callback() {
+    public Set winFactor = new Set(-1, "window", new double[] { 2, 4, 8, 16, 1E100 }, new String[] { "2x", "4x",
+            "8x", "16x", "INF" }, new Callback() {
         @Override
         public void callback(TestSet set, DATExp p, double value) {
             if (value < 0)
@@ -56,22 +56,22 @@ public class DATPaperParams {
                 p.windowSize = p.avgCreateCost * value;
         }
     });
-    public Set spaceFactor = new Set(0.05, "space", new double[] { 0.025, 0.05, 0.1, 1000000 }, new String[] {
-            "0.025x", "0.05x", "0.1x", "INF" }, new Callback() {
+    public Set spaceFactor = new Set(0.1, "space", new double[] {0.05, 0.1, 0.5, 1, 5}, new String[] {
+           "0.05x", "0.1x", "0.5x", "1x", "INF"}, new Callback() {
         @Override
         public void callback(TestSet set, DATExp p, double value) {
             p.spaceBudge = set.size * value;
         }
     });
-    public Set l = new Set(-1, "l", new double[] { 4, 6, 8, 10, 100000 }, new String[] { "4", "6", "8", "10", "INF" },
+    public Set l = new Set(-1, "l", new double[] { 1, 2, 4, 8, 100000 }, new String[] { "1", "2", "4", "8", "INF" },
             new Callback() {
                 @Override
                 public void callback(TestSet set, DATExp p, double value) {
                     p.l = value;
                 }
             });
-    public Set percentageUpdate = new Set(1E-3, "update", new double[] { 1E-5, 1E-4, 1E-3, 1E-2 }, new String[] {
-            "10^{-5}", "10^{-4}", "10^{-3}", "10^{-2}" }, new Callback() {
+    public Set percentageUpdate = new Set(1E-3, "update", new double[] {0, 1E-3, 1E-2, 1E-1 }, new String[] {
+            "0", "10^{-3}", "10^{-2}", "10^{-1}" }, new Callback() {
         @Override
         public void callback(TestSet set, DATExp p, double value) {
             p.percentageUpdate = value;
@@ -94,14 +94,14 @@ public class DATPaperParams {
                     p.indexRatio = value;
                 }
             });
-    public Set bipEpGap = new Set(1, "bip EpGap", new double[] { 0.05, 0.1, 0.15 },
+    public Set bipEpGap = new Set(0.1, "bip EpGap", new double[] { 0.05, 0.1, 0.15 },
             new String[] { "5%", "10%", "15%" }, new Callback() {
                 @Override
                 public void callback(TestSet set, DATExp p, double value) {
                     p.bipEpGap = value;
                 }
             });
-    public Set _1mada = new Set(1, "a", new double[] { 1, 2, 4, 16 }, null, new Callback() {
+    public Set _1mada = new Set(0.5, "a", new double[] {0, 0.00125, 0.25, 0.5, 16, 1024}, null, new Callback() {
         @Override
         public void callback(TestSet set, DATExp p, double value) {
             p.alpha = DATPaper.getAlpha(value);
