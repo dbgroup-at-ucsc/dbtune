@@ -13,6 +13,8 @@ public class CPlexWrapper {
     public CPlexWrapper(double gap) throws IloException {
         cplex = new IloCplex();
         cplex.setParam(IloCplex.DoubleParam.EpGap, gap);
+        // -- Trung's hardcoding (maximum 120 seconds to run a BIP)
+        cplex.setParam(IloCplex.DoubleParam.TiLim, 120);
         cplex.setOut(null);
         cplex.setWarning(null);
     }
