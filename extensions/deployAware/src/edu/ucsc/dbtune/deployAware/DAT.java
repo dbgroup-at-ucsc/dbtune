@@ -38,9 +38,14 @@ public class DAT {
     public Rx debug;
     DATParameter param;
     CPlexWrapper cplex;
+    // Trung's modification ----------------------------
+    public double intCost;
+    public double finalCost;
+    // ----------------------------------------------------
 
     public DATOutput runDAT(DATParameter param) throws IloException {
-        return runDAT(param, 0.05);
+        // TODO: set epgap to 0.1
+        return runDAT(param, 0.1);
     }
 
     public DATOutput runDAT(DATParameter param, double epGap) throws IloException {
@@ -117,6 +122,11 @@ public class DAT {
             for (DATWindow w : windows)
                 w.getValues(cplex);
             double totalCost = 0;
+            
+            // Trung's modification -------------------------------
+            this.intCost = 0.0;
+            this.finalCost = 0.0;
+            // -----------------------------------------------------
             for (int i = 0; i < output.ws.length; i++) {
                 output.ws[i].indexUsed = Arrays.copyOf(windows[i].indexPresent, param.totalIndices);
                 output.ws[i].cost = windows[i].getCost(cplex);
@@ -143,10 +153,18 @@ public class DAT {
                 // + c2);
                 // output.ws[i].cost = c2;
                 // }
-                if (i == output.ws.length - 1)
+                if (i == output.ws.length - 1) {
                     totalCost += param.beta * output.ws[i].cost;
-                else
+                    // Trung's modification ----------------------
+                    this.finalCost += output.ws[i].cost;
+                    // -------------------------------------------
+                }
+                else {
                     totalCost += param.alpha * output.ws[i].cost;
+                    // Trung's modification ----------------------
+                    this.intCost += output.ws[i].cost;
+                    // -------------------------------------------
+                }
                 // int total = 0;
                 // for (boolean b : output.ws[i].indexUsed)
                 // total++;
@@ -154,6 +172,10 @@ public class DAT {
                 // Rt.p(this.costWithIndex(output.ws[i].indexUsed));
             }
             output.totalCost = totalCost;
+            // Trung's modification --------------------------
+            output.finalCost = this.finalCost;
+            output.intCost = this.intCost;
+            // ------------------------------------------------
             if (debug != null) {
                 Rx root = debug.createChild("dat");
                 root.setAttribute("cost", output.totalCost);
