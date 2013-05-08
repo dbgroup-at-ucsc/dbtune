@@ -12,6 +12,7 @@ manifest.mf
 nbproject/
 nbbuild.xml
 *.properties
+*.class
 resources/*/*/*/*.txt
 resources/*/*/*/*.lp
 resources/*/*/*.lp

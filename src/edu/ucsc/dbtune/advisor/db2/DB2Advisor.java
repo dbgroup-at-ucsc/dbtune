@@ -122,7 +122,8 @@ public class DB2Advisor extends Advisor
         cstmt.registerOutParameter(4, Types.BLOB);
         cstmt.registerOutParameter(5, Types.BLOB);
         
-        rs = cstmt.executeQuery();
+        cstmt.execute();
+        rs = cstmt.getResultSet();
         indexBytes = new HashMap<String, Long>();
         
         while (rs.next()) {

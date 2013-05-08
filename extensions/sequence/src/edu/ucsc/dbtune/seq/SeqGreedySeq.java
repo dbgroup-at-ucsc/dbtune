@@ -18,35 +18,46 @@ public class SeqGreedySeq {
 	public SeqStepConf[] r, s, t;
 
     @SuppressWarnings({"unchecked"})
-	public SeqGreedySeq(SeqCost cost, SeqQuery[] queries, SeqIndex[] indices) throws SQLException {
+	public SeqGreedySeq(final SeqCost cost, final SeqQuery[] queries, final SeqIndex[] indices) throws SQLException {
 		this.cost = cost;
 		this.queries = queries;
-		SeqIndex[] index = new SeqIndex[1];
-        C = (HashSet<SeqConfiguration>[]) new HashSet[queries.length];
-		for (int i = 0; i < C.length; i++)
-			C[i] = new HashSet<SeqConfiguration>();
-		for (int i = 0; i < indices.length; i++) {
-			index[0] = indices[i];
-			SeqConfiguration[] confs = cost.getAllConfigurations(index);
-			SeqStep[] steps2 = SeqOptimal.getOptimalSteps(cost.source,
-					cost.destination, queries, confs);
-			SeqOptimal optimal = new SeqOptimal(cost, cost.source, cost.destination,
-					queries, steps2);
-			SeqStepConf[] best = optimal.getBestSteps();
-			P.add(best);
-		}
-		for (SeqStepConf[] confs : P) {
-			for (int i = 0; i < C.length; i++) {
-				C[i].add(confs[i + 1].configuration);
-			}
-		}
-	}
+		final SeqIndex[] index = new SeqIndex[1];
+        C = new HashSet[queries.length];
+
+        for (int i = 0; i < C.length; i++) {
+            C[i] = new HashSet<SeqConfiguration>();
+        }
+        for (int i = 0; i < indices.length; i++) {
+            index[0] = indices[i];
+            final SeqConfiguration[] confs = cost.getAllConfigurations(index);
+            final SeqStep[] steps2 = SeqOptimal.getOptimalSteps(cost.source,
+                    cost.destination, queries, confs);
+            /*
+            for (SeqStep step : steps2) {
+                Rt.p(" "+step.configurations.length + " CONF size = "
+                        + confs.length);
+            }
+            */
+            final SeqOptimal optimal = new SeqOptimal(cost, cost.source,
+                    cost.destination, queries, steps2);
+            final SeqStepConf[] best = optimal.getBestSteps();
+            if (best != null) {
+                P.add(best);
+            }
+        }
+        for (final SeqStepConf[] confs : P) {
+            for (int i = 0; i < C.length; i++) {
+                C[i].add(confs[i + 1].configuration);
+            }
+        }
+    }
+
 
 	public boolean run() throws SQLException {
 		double minCost = Double.MAX_VALUE;
 		r = null;
-		for (SeqStepConf[] confs : P) {
-			double cost = confs[confs.length - 1].costUtilThisStep;
+		for (final SeqStepConf[] confs : P) {
+			final double cost = confs[confs.length - 1].costUtilThisStep;
 			if (cost < minCost) {
 				minCost = cost;
 				r = confs;
@@ -59,20 +70,22 @@ public class SeqGreedySeq {
 		minCost = Double.MAX_VALUE;
 		s = null;
 		t = null;
-		for (SeqStepConf[] confs : P) {
-			SeqUnionPair pair = new SeqUnionPair(cost, queries, r, confs);
-			SeqStepConf[] t1 = pair.bestPath;
-			double cost = t1[t1.length - 1].costUtilThisStep;
+		for (final SeqStepConf[] confs : P) {
+			final SeqUnionPair pair = new SeqUnionPair(cost, queries, r, confs);
+			final SeqStepConf[] t1 = pair.bestPath;
+			final double cost = t1[t1.length - 1].costUtilThisStep;
 			if (cost < minCost) {
 				minCost = cost;
 				s = confs;
 				t = t1;
 			}
 		}
-		if (t == null)
-			return false;
-		if (t[t.length - 1].costUtilThisStep >= r[r.length - 1].costUtilThisStep)
-			return false;
+		if (t == null) {
+            return false;
+        }
+		if (t[t.length - 1].costUtilThisStep >= r[r.length - 1].costUtilThisStep) {
+            return false;
+        }
 		P.remove(s);
 		P.add(t);
 		return true;
@@ -81,17 +94,19 @@ public class SeqGreedySeq {
 	public SeqStep[] steps;
 	public SeqStepConf[] bestPath;
 
-	public void finish() throws SQLException {
-		int n = queries.length;
-		steps = new SeqStep[n + 2];
-		steps[0] = new SeqStep(null, cost.source);
-		steps[steps.length - 1] = new SeqStep(null, cost.destination);
-		for (int i = 0; i < n; i++) {
-			steps[1 + i] = new SeqStep(queries[i], C[i]
-					.toArray(new SeqConfiguration[C[i].size()]));
-		}
-		SeqOptimal optimal = new SeqOptimal(cost, cost.source, cost.destination,
-				queries, steps);
-		bestPath = optimal.getBestSteps();
-	}
+
+    public void finish() throws SQLException {
+        final int n = queries.length;
+        steps = new SeqStep[n + 2];
+        steps[0] = new SeqStep(null, cost.source);
+        steps[steps.length - 1] = new SeqStep(null, cost.destination);
+        for (int i = 0; i < n; i++) {
+            steps[1 + i] = new SeqStep(queries[i], C[i]
+                    .toArray(new SeqConfiguration[C[i].size()]));
+            //Rt.p(" FINAL GRAPH, i-state, " + i + " size = " + C[i].size());
+        }
+        final SeqOptimal optimal = new SeqOptimal(cost, cost.source,
+                cost.destination, queries, steps);
+        bestPath = optimal.getBestSteps();
+    }
 }
