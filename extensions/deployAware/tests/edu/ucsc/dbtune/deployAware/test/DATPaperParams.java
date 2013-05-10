@@ -56,8 +56,8 @@ public class DATPaperParams {
                 p.windowSize = p.avgCreateCost * value;
         }
     });
-    public Set spaceFactor = new Set(0.1, "space", new double[] {0.05, 0.1, 0.5, 1, 5}, new String[] {
-           "0.05x", "0.1x", "0.5x", "1x", "INF"}, new Callback() {
+    public Set spaceFactor = new Set(0.2, "space", new double[] {0.1, 0.2, 0.4, 0.8, 5}, new String[] {
+           "0.1x", "0.2x", "0.4x", "0.8x", "INF"}, new Callback() {
         @Override
         public void callback(TestSet set, DATExp p, double value) {
             p.spaceBudge = set.size * value;
@@ -94,7 +94,7 @@ public class DATPaperParams {
                     p.indexRatio = value;
                 }
             });
-    public Set bipEpGap = new Set(0.1, "bip EpGap", new double[] { 0.05, 0.1, 0.15 },
+    public Set bipEpGap = new Set(0.05, "bip EpGap", new double[] { 0.05, 0.1, 0.15 },
             new String[] { "5%", "10%", "15%" }, new Callback() {
                 @Override
                 public void callback(TestSet set, DATExp p, double value) {

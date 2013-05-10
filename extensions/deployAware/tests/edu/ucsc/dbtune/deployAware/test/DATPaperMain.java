@@ -32,7 +32,7 @@ public class DATPaperMain {
     long tpcdsWindowSize = 10 * 3600 * 3000;
     File figsDir;
     TestSet tpch = new TestSet("TPCH", "tpch10g", "deployAware", "tpchPaper.sql", 10 * gigbytes, "tpch", tpchWindowSize);
-    TestSet tpcds = new TestSet("TPCDS", "test", "deployAware", "tpcdsPaper.sql", 10 * gigbytes, "tpcds",
+    TestSet tpcds = new TestSet("TPCDS", "tpcds100", "deployAware", "tpcdsPaper.sql", 100 * gigbytes, "tpcds",
             tpcdsWindowSize);
     TestSet[] sets = { 
 //            tpch,
@@ -47,8 +47,8 @@ public class DATPaperMain {
         //        windowOnly = true;
         //         rerunAllExp=true;
         //        params.spaceFactor.def = 0.1;
-        //deployAwareTuning();
-        workloadSequence();
+        deployAwareTuning();
+        //workloadSequence();
         //         figsDir = new File(params.figsDir, "dat");
         //         figsDir.mkdirs();
         //         params.m.def=1;
@@ -315,9 +315,10 @@ public class DATPaperMain {
         }
         
         // Assume we have four windows
-        int sizeQueryWindow = 10;
-        int times = 4;
+        int sizeQueryWindow = 20;
+        int times = 1;
         int numQueryWindows = queryIDs.size() / sizeQueryWindow;
+        // get only 40 queries
         p.m = 2 * numQueryWindows;
         p.m *= times;
         
@@ -340,10 +341,15 @@ public class DATPaperMain {
                     map[mapID][i] = splitQueryIDs.get(j).get(i);                
                 mapID++;
                 
+                /*
                 // then updates
-                // updates
                 map[mapID] = new int[1];
                 map[mapID][0] = updateIDs.get(j % updateIDs.size()); 
+                mapID++;
+                */
+                map[mapID] = new int[updateIDs.size()];
+                for (int i = 0; i < updateIDs.size(); i++)
+                    map[mapID][i] = updateIDs.get(i);
                 mapID++;
             }
         }   
@@ -545,9 +551,9 @@ public class DATPaperMain {
                 
                 // Find out queries and updates
                 // TODO: this is the main workload used in the paper                
-                // map = workloadSeqQ(p);
-                    
                 map = workloadSeqQ(p);
+                    
+                //map = workloadSeqSynthetic(p);
                 
                 // Another way to distribute queries over windows
                 //map = workloadSeqSynthetic(p);
@@ -572,10 +578,10 @@ public class DATPaperMain {
             Rt.p("=== Expt 1: Varying space budget =============");
             run(params.spaceFactor, "space", "Varying space budget");
             */
-            
+            /*
             Rt.p("=== Expt 1: Time for varying space budget =============");
             runUseRunningTime(params.spaceFactor, "space", "Varying space budget, use running time");
-            
+            */
             
             /* 
              //remove this expt.
@@ -589,9 +595,8 @@ public class DATPaperMain {
             /*
             Rt.p("=== Varying number of indexes in a window =============");            
             run(params.l, "l", "Varying number of indexes in a window");
-            */
             
-            /*
+            
             Rt.p("=== Expt 4: Varying ratio of updates =============");
             run(params.percentageUpdate, "update", "Varying ratio of udpates");
             */
@@ -600,6 +605,10 @@ public class DATPaperMain {
             /*
             run2(params.spaceFactor, params.l, "spaceL", "Varying space budget and number of indexes per window");
             */
+            /*
+            run2(params.percentageUpdate, params.l, "updateL", "Varying percentage update and number of indexes per window");
+            */
+            run2(params.percentageUpdate, params.spaceFactor, "spaceUpdate", "Varying percentage update and space factor");
             
             /*
             Rt.p("=== Expt 5: Varying workload input sizes =============");
@@ -612,8 +621,9 @@ public class DATPaperMain {
             /*
             Rt.p("=== Expt 6: Varying BIP running time =============");
             run(tpcds, params.bipEpGap, "bipTime", "Running time w.r.t. bip EpGap", true, null);
-            run(tpcds, params.bipEpGap, "bipQuality", "Result w.r.t. bip EpGap", false, null);
             */
+            //run(tpcds, params.bipEpGap, "bipQuality", "Result w.r.t. bip EpGap", false, null);
+            
         }
         DATPaperOthers.generatePdf(new File(params.outputDir, "seq.tex"), params, sets);
     }
@@ -650,19 +660,19 @@ public class DATPaperMain {
         Rt.p("=== Expt 1: varying number of windows");
         run(params.m, "m", "Varying number of windows");
         */
-        
-        // use at most 6 indexes at each window
-        
+        /*
+        // use at most 8 indexes at each window
+        // TODO: rerun this expt. 
         Rt.p("=== Expt 1: skylines");
-        params.l.def = 20;
+        params.l.def = 4;
+        params.spaceFactor.def = 0.2;
         runSkyline(params._1mada, "_1mada", "Varying number of windows");
-        
-        
+        */
         /*
         params.m.def = 1;
         run(params.spaceFactor, "space", "Varying space budget");
         */
-        // we not need this constraint
+        // DO NOT need this constraint
         /*
         Rt.p("=== Expt 2: varying window size");
         run(params.winFactor, "window", "Varying window size");
@@ -675,19 +685,20 @@ public class DATPaperMain {
         //run(params.l, "l", "Varying number of indexes in a window");
         
         Rt.p("=== Expt 4: boost first window");
-        params.spaceFactor.def = 0.5;
+        params.spaceFactor.def = 0.2;
         params._1mada.def = 0.5;
+        params.l.def = 4;
         
         windowOnly("firstWindow", "Boost first window", new Callback() {
             @Override
             public void callback(TestSet set, DATExp p, double value) {
                 double[] weights = new double[(int) params.m.def];                
                 Arrays.fill(weights, 1);
-                weights[0] = 10;
+                weights[0] = 1;
                 p.windowWeights = weights;
             }
         });
-       
+        
         /*
         Rt.p("=== Expt 5: cost must decrease");
         windowOnly("mustDesc", "Cost must decrease", new Callback() {

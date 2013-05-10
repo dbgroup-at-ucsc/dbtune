@@ -1,5 +1,6 @@
 package edu.ucsc.dbtune.deployAware;
 
+import edu.ucsc.dbtune.util.Rt;
 import ilog.cplex.*;
 import ilog.concert.*;
 
@@ -13,9 +14,10 @@ public class CPlexWrapper {
     public CPlexWrapper(double gap) throws IloException {
         cplex = new IloCplex();
         cplex.setParam(IloCplex.DoubleParam.EpGap, gap);
+        Rt.p("gap = " + gap);
         // -- Trung's hardcoding (maximum 120 seconds to run a BIP)
-        cplex.setParam(IloCplex.DoubleParam.TiLim, 120);
-        cplex.setOut(null);
+        cplex.setParam(IloCplex.DoubleParam.TiLim, 150);
+        //cplex.setOut(null);
         cplex.setWarning(null);
     }
 
