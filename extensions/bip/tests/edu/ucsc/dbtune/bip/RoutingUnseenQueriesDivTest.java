@@ -194,7 +194,7 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
         LogListener logger = LogListener.getInstance();
         div = new RoutingDivergent(-1.0, 0, 0);
         loadfactor = (int) Math.ceil( (double) nReplicas / 2);
-        totalCostSeen = -1;
+        totalCostSeen = 0.0;
         Optimizer io = db.getOptimizer();
         div.setCandidateIndexes(candidates);
         div.setWorkload(workload); 
@@ -211,10 +211,10 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
         if (output != null) {
             divConf = (DivConfiguration) output;
             Rt.p(divConf.indexAtReplicaInfo());
-            /*
+            
             totalCostSeen = div.computeOptimizerQueryCost(divConf)
                 + div.computeOptimizerUpdateCost(divConf);
-                */
+            
             // TODO: recording the result
             entry.divTraining = divConf;
         }
@@ -232,7 +232,7 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
         entry.divTesting = divTest;
         entry.costSplitting = totalCostSeen + totalCostUnseen;
         
-        //Rt.p(" cost seen = " + totalCostSeen);
+        Rt.p(" cost seen = " + totalCostSeen);
         Rt.p(" cost unseen = " + totalCostUnseen);
         return (totalCostUnseen);
     }

@@ -170,7 +170,7 @@ public class RobustDivBIPTest extends DIVPaper
         double costUnifUnderFailure = 1.0;
         double costUnif;
         //  1. Read the result from UNIF file
-        unifFile = new File(rawDataDir, wlName + "_" + UNIF_DB2_FILE);
+        unifFile = new File(rawDataDir, wlName + "_" + UNIF_DETAIL_DB2_FILE);
         Rt.p(" file name = " + unifFile.getName()
                 + " absolute path = "
                 + unifFile.getAbsolutePath());

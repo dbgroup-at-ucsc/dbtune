@@ -92,18 +92,20 @@ public class DIVPaper extends DivTestSetting
                                      Math.pow(10, -3),
                                      Math.pow(10, -2)};
     
+    protected static double baseSize = 100 * Math.pow(2, 30);
+    
     // change weight of update
     protected static double[] constraintUpdateRatios = new double[] 
                                     {0.4, 0.6, 0.8, 1.0};
     
-    protected static boolean isEquivalent = true;
+    protected static boolean isEquivalent = false;
     
     // draw figures
     protected static boolean isFailure = false;
     protected static boolean isImbalance = false;
     // online & elasticity
     protected static boolean isOnline = false;
-    protected static boolean isElastic = false;
+    protected static boolean isElastic = true;
     
     // generate PDF file
     protected static boolean isLatex = false;
@@ -135,7 +137,7 @@ public class DIVPaper extends DivTestSetting
             // ratio
             //drawEquivalent(dbName, wlName, true, false);
             // absolute value
-            drawEquivalent(dbName, wlName, false, false);
+            drawEquivalent(dbName, wlName, false, true, true, false);
             /*
             boolean isDesign = false;
             // draw ratio with design
@@ -213,8 +215,11 @@ public class DIVPaper extends DivTestSetting
     /**
      * Read the data from files and draw the graphs
      */
-    public static void drawEquivalent(String dbName, String wlName, boolean drawRatio, 
-                    boolean isDesign) 
+    public static void drawEquivalent(String dbName, String wlName, 
+                    boolean drawRatio, 
+                    boolean isDesign,
+                    boolean isSpace,
+                    boolean isReplica) 
                 throws Exception
     {   
         DivPaperEntry entry;
@@ -251,92 +256,96 @@ public class DIVPaper extends DivTestSetting
         int numX;
         double ratio; 
         long budget;
-        /*
-        // varying space budget
-        for (int n : listNumberReplicas) {
-            double B;
-            numX = listBudgets.size();
-            double[] xtics = new double[numX];
-            String[] xaxis = new String[numX];
-            List<Point> points = new ArrayList<Point>();
-            
-            for (int i = 0; i < numX; i++) {
-                B = listBudgets.get(i);
-                budget = convertBudgetToMB(B);
-                xtics[i] = i;
-                ratio = (double) B / Math.pow(2, 30) / 10;
-                if (ratio > 1.0)
-                    xaxis[i] = "INF";
-                else
-                    xaxis[i] = Double.toString(ratio) + "x";
-                entry = new DivPaperEntry(dbName, wlName, n, budget, null);
-                if (drawRatio)
-                    addPointRatioDIVEquivBIP(xtics[i], entry, points, isDesign);
-                else 
-                    addPointDIVEquivBIP(xtics[i], entry, points, isDesign);
-            }
-            
-            plotName = dbName + "_" + wlName + "_number_replica" + Integer.toString(n);
-            if (drawRatio)
-                plotName += "_ratio";
-            else
-                plotName += "_absolute";
-            
-            xname = "Number of replicas";
-            if (drawRatio)
-                yname = "TotalCost Improvement (%)";
-            else 
-                yname = "TotalCost";
-            
-            drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
-                    competitors, figsDir, points);
-            
-            plots.add(new Plot("figs/" + plotName, 
-                    " Database = " + dbName + " workload = " + wlName +
-                    " Varying space budget, n = " + n, 0.5));
-        }
-        */
-        // varying number of replicas
-        int n;
-        for (double  B : listBudgets) {
-           
-            numX = listNumberReplicas.size();
-            double[] xtics = new double[numX];
-            String[] xaxis = new String[numX];
-            List<Point> points = new ArrayList<Point>();
-            ratio = (double) B / Math.pow(2, 30) / 10;
-            budget = convertBudgetToMB (B);
-            
-            for (int i = 0; i < numX; i++) {
-                n = listNumberReplicas.get(i);
-                xtics[i] = i;
+        
+        if (isSpace) {
+            // varying space budget
+            for (int n : listNumberReplicas) {
+                double B;
+                numX = listBudgets.size();
+                double[] xtics = new double[numX];
+                String[] xaxis = new String[numX];
+                List<Point> points = new ArrayList<Point>();
                 
-                xaxis[i] = Integer.toString(n);
-                entry = new DivPaperEntry(dbName, wlName, n, budget, null);
+                for (int i = 0; i < numX; i++) {
+                    B = listBudgets.get(i);
+                    budget = convertBudgetToMB(B);
+                    xtics[i] = i;
+                    ratio = (double) B / baseSize;
+                    if (ratio > 1.0)
+                        xaxis[i] = "INF";
+                    else
+                        xaxis[i] = Double.toString(ratio) + "x";
+                    entry = new DivPaperEntry(dbName, wlName, n, budget, null);
+                    if (drawRatio)
+                        addPointRatioDIVEquivBIP(xtics[i], entry, points, isDesign);
+                    else 
+                        addPointDIVEquivBIP(xtics[i], entry, points, isDesign);
+                }
+                
+                plotName = dbName + "_" + wlName + "_number_replica" + Integer.toString(n);
                 if (drawRatio)
-                    addPointRatioDIVEquivBIP(xtics[i], entry, points, isDesign);
+                    plotName += "_ratio";
+                else
+                    plotName += "_absolute";
+                
+                xname = "Number of replicas";
+                if (drawRatio)
+                    yname = "TotalCost Improvement (%)";
                 else 
-                    addPointDIVEquivBIP(xtics[i], entry, points, isDesign);
+                    yname = "ExpTotalCost";
+                
+                drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                        competitors, figsDir, points);
+                
+                plots.add(new Plot("figs/" + plotName, 
+                        " Database = " + dbName + " workload = " + wlName +
+                        " Varying space budget, n = " + n, 0.5));
             }
-            
-            plotName = dbName + "_" + wlName + "_space_" + Double.toString(ratio); 
-            if (drawRatio)
-                plotName += "_ratio";
-            else
-                plotName += "_absolute";
-            
-            xname = "Number of replicas";
-            if (drawRatio)
-                yname = "TotalCost Improvement (%)";
-            else 
-                yname = "TotalCost";
-            
-            drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
-                    competitors, figsDir, points);
-            
-            plots.add(new Plot("figs/" + plotName, 
-                    " Database = " + dbName + " workload = " + wlName +
-                    " Varying number replicas, B = " + Double.toString(ratio), 0.5));
+        }
+        
+        // varying number of replicas
+        if (isReplica) {
+            int n;
+            for (double  B : listBudgets) {
+               
+                numX = listNumberReplicas.size();
+                double[] xtics = new double[numX];
+                String[] xaxis = new String[numX];
+                List<Point> points = new ArrayList<Point>();
+                ratio = (double) B / baseSize;
+                budget = convertBudgetToMB (B);
+                
+                for (int i = 0; i < numX; i++) {
+                    n = listNumberReplicas.get(i);
+                    xtics[i] = i;
+                    
+                    xaxis[i] = Integer.toString(n);
+                    entry = new DivPaperEntry(dbName, wlName, n, budget, null);
+                    if (drawRatio)
+                        addPointRatioDIVEquivBIP(xtics[i], entry, points, isDesign);
+                    else 
+                        addPointDIVEquivBIP(xtics[i], entry, points, isDesign);
+                }
+                
+                plotName = dbName + "_" + wlName + "_space_" + Double.toString(ratio); 
+                if (drawRatio)
+                    plotName += "_ratio";
+                else
+                    plotName += "_absolute";
+                
+                xname = "Number of replicas";
+                if (drawRatio)
+                    yname = "TotalCost Improvement (%)";
+                else 
+                    yname = "ExpTotalCost";
+                
+                drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
+                        competitors, figsDir, points);
+                
+                plots.add(new Plot("figs/" + plotName, 
+                        " Database = " + dbName + " workload = " + wlName +
+                        " Varying number replicas, B = " + Double.toString(ratio), 0.5));
+            }
         }
     }
     
@@ -722,7 +731,7 @@ public class DIVPaper extends DivTestSetting
         double[] xtics = new double[numX];
         String[] xaxis = new String[numX];
         List<Point> points = new ArrayList<Point>();
-        ratio = (double) B / Math.pow(2, 30) / 10;
+        ratio = (double) B / baseSize;
         budget = convertBudgetToMB (B);
         
         int i = 0;
@@ -811,7 +820,7 @@ public class DIVPaper extends DivTestSetting
         
         plotName = dbName + "_" + wlName + "_online_windows_" + windowDuration;
         xname = "Query";
-        yname = "Expected Cost Improvement (%)";
+        yname = "Improvement (%)";
         
         drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                 competitors, figsDir, points);
@@ -877,8 +886,8 @@ public class DIVPaper extends DivTestSetting
         }
        
         plotName = dbName + "_" + wlName + "elastic";
-        xname = "Reconfiguration cost (x10^6)";
-        yname = "Expected cost";
+        xname = "Materialization cost";
+        yname = "ExpTotalCost";
      
         drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                 competitors, figsDir, points);
@@ -909,7 +918,7 @@ public class DIVPaper extends DivTestSetting
         List<Double> alphas = new ArrayList<Double>();
         for (RobustPaperEntry entry : entries)
             alphas.add(entry.failureFactor);
-        fileDesign = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
+        fileDesign = new File(rawDataDir, wlName + "_" + DESIGN_DETAIL_DB2_FILE);
         mapDesign = readDivResult(fileDesign);
         List<Double> costDesignFailures = costUnderFailure(alphas, mapDesign);
         
@@ -937,8 +946,8 @@ public class DIVPaper extends DivTestSetting
         
         Rt.p(" time = " + time);
         plotName = dbName + "_" + wlName + "_failure";
-        xname = "Prob. of failure";
-        yname = "TotalCost";
+        xname = "Probability of failure (a)";
+        yname = "ExpTotalCost";
 
         drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                 competitors, figsDir, points);
@@ -965,7 +974,7 @@ public class DIVPaper extends DivTestSetting
         List<RoutingUnseenQueriesEntry> entries = readUnseenQueriesResult(file);
         
         // ---------------------------------------------
-        String[] competitors = {"UNIF", "RITA-routing", "RITA-bestcase"};
+        String[] competitors = {"UNIF", "RITA"};
         int numX = entries.size();
 
         double[] xtics = new double[numX];
@@ -979,7 +988,7 @@ public class DIVPaper extends DivTestSetting
             
             points.add(new Point(i, entry.costUNIF));
             points.add(new Point(i, entry.costSplitting));
-            points.add(new Point(i, entry.costBestCase));
+            //points.add(new Point(i, entry.costBestCase));
         }
         
         plotName = dbName + "_" + wlName + "_routing_unseen_queries";
@@ -1201,8 +1210,8 @@ public class DIVPaper extends DivTestSetting
         }
         
         plotName = dbName + "_" + wlName + "_imbalance";
-        xname = "Load-imbalance factor";        
-        yname = "TotalCost ";
+        xname = "Load skew (t)";        
+        yname = "ExpTotalCost";
         
         drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
                 competitors, figsDir, points);

@@ -65,7 +65,7 @@ public class DivTestSetting
         
     // update weight = 10^{updateRatio} * size_of_relation
     // default value
-    protected static double updateRatio = Math.pow(10, -3);
+    protected static double updateRatio = Math.pow(10, -2);
     protected static String folder;
     
     protected static DB2Advisor db2Advis;
@@ -152,10 +152,10 @@ public class DivTestSetting
                         = (InumPreparedSQLStatement) io.prepareExplain(sql);
                 ExplainedSQLStatement inumExplain = preparedStmt.explain(new HashSet<Index>());
                 Table tbl = inumExplain.getUpdatedTable();
-                //int fUpdate = (int) (updateRatio * tbl.getCardinality());
-                int fUpdate = 1; 
+                int fUpdate = (int) (updateRatio * tbl.getCardinality());
+                // TODO: Might adjust the weight later
                 sql.setStatementWeight(fUpdate);
-                //Rt.p(" fupdate = " + fUpdate);
+                Rt.p(" fupdate = " + fUpdate);
             }
        
         

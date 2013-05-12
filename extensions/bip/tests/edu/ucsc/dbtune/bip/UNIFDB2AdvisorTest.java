@@ -64,6 +64,7 @@ public class UNIFDB2AdvisorTest extends DIVPaper
             }
             else {
                 updateCost += costs.get(i) * workload.get(i).getStatementWeight();
+                Rt.p(" weight = " + workload.get(i).getStatementWeight());
                 countUpdate++;
             }
         Rt.p("TOTAL COST WITHOUT INDEX CONFIGURATION = "

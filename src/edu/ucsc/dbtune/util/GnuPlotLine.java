@@ -135,7 +135,8 @@ public class GnuPlotLine {
         ps.println("set terminal postscript eps enhanced monochrome 26");
         ps.println("set output \"" + name + ".eps\"");
         // ps.println("#set xrange [ 0 : 4.6]");
-        ps.println("set yrange [ " + (Math.ceil(minY / factor) - 1) + " : " + Math.ceil(maxY / factor) + "]");
+        //ps.println("set yrange [ " + (Math.ceil(minY / factor) - 1) + " : " + Math.ceil(maxY / factor) + "]");
+        ps.println("set yrange [ 0 : " + Math.ceil(maxY / factor) + "]");
         // ps.println("#set logscale y");
         ps.println("set xlabel offset 0,0.5 \"" + xName + "\"");
         ps.print("set ylabel offset 2,0 \"" + yName);

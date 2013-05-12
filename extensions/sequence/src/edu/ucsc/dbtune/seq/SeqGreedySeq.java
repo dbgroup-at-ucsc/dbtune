@@ -38,7 +38,7 @@ public class SeqGreedySeq {
                         + confs.length);
             }
             */
-            final SeqOptimal optimal = new SeqOptimal(cost, cost.source,
+            SeqOptimal optimal = new SeqOptimal(cost, cost.source,
                     cost.destination, queries, steps2);
             final SeqStepConf[] best = optimal.getBestSteps();
             if (best != null) {

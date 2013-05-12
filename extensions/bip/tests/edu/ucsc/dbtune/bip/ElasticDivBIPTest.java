@@ -42,7 +42,11 @@ public class ElasticDivBIPTest extends AdaptiveDivBIPTest
         prepareWorkload();
         
         initializeOnlineObject();
-        runElasticityM();
+        // vary number of replicas         
+        runElasticity();
+        // vary m
+        //runElasticityM();
+        
         // move this functionality to DivPaper later
         LatexGenerator.generateLatex(latexFile, outputDir, plots);
     }
@@ -150,7 +154,7 @@ public class ElasticDivBIPTest extends AdaptiveDivBIPTest
         // base mat. cost
         //double baseMatCost = reConfigurationCost 
           //                    * Math.pow(2,  -3);
-        double baseMatCost = 17 * Math.pow(10, 6);
+        double baseMatCost = 17 * Math.pow(10, 7);
         for (int i = 0; i <= 4; i++) 
             entry.listReconfiguationCosts.add(baseMatCost + 
                         i * 18 * Math.pow(10, 6));
