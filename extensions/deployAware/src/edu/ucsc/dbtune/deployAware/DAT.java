@@ -19,6 +19,7 @@ import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.bip.core.AbstractBIPSolver;
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumPlan;
@@ -45,7 +46,7 @@ public class DAT {
 
     public DATOutput runDAT(DATParameter param) throws IloException {
         // TODO: set epgap to 0.1
-        return runDAT(param, 0.1);
+        return runDAT(param, 0.05);
     }
 
     public DATOutput runDAT(DATParameter param, double epGap) throws IloException {
@@ -198,6 +199,19 @@ public class DAT {
         return windows[windowId].getCost(cplex, db, optimizer);
     }
 
+    /**
+     * TODO
+     * Trung's modification
+     * @param windowId
+     * @param db
+     * @param optimizer
+     * @return
+     * @throws Exception
+     */
+    public void showUsedIndex(int windowId, DatabaseSystem db, InumOptimizer optimizer) throws Exception {
+        windows[windowId].showUsedIndex(cplex, db, optimizer);
+    }
+    
     public static void saveDebugInfo(Rx window, DATParameter param, CPlexWrapper cplex, DATWindow w)
             throws IloException {
         window.setAttribute("cost", w.getCost(cplex));

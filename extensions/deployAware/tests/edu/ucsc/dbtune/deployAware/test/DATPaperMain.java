@@ -47,8 +47,8 @@ public class DATPaperMain {
         //        windowOnly = true;
         //         rerunAllExp=true;
         //        params.spaceFactor.def = 0.1;
-        deployAwareTuning();
-        //workloadSequence();
+        //deployAwareTuning();
+        workloadSequence();
         //         figsDir = new File(params.figsDir, "dat");
         //         figsDir.mkdirs();
         //         params.m.def=1;
@@ -574,10 +574,10 @@ public class DATPaperMain {
         } else {
             //useDB2Optimizer = true;
             //verifyByDB2Optimizer=true;
-            /*
+            
             Rt.p("=== Expt 1: Varying space budget =============");
             run(params.spaceFactor, "space", "Varying space budget");
-            */
+            
             /*
             Rt.p("=== Expt 1: Time for varying space budget =============");
             runUseRunningTime(params.spaceFactor, "space", "Varying space budget, use running time");
@@ -608,7 +608,7 @@ public class DATPaperMain {
             /*
             run2(params.percentageUpdate, params.l, "updateL", "Varying percentage update and number of indexes per window");
             */
-            run2(params.percentageUpdate, params.spaceFactor, "spaceUpdate", "Varying percentage update and space factor");
+            //run2(params.percentageUpdate, params.spaceFactor, "spaceUpdate", "Varying percentage update and space factor");
             
             /*
             Rt.p("=== Expt 5: Varying workload input sizes =============");

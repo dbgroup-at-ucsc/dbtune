@@ -51,6 +51,14 @@ public class SeqConfiguration {
         return allIndexes;
     }
 
+    public HashSet<Index> getIndexes(DatabaseSystem db) throws Exception {
+        double cost = 0;
+        HashSet<Index> allIndexes = new HashSet<Index>();
+        for (SeqIndex index : indices)
+                allIndexes.add(index.inumIndex.loadIndex(db));
+        return allIndexes;
+    }
+    
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		for (SeqIndex i : indices) {

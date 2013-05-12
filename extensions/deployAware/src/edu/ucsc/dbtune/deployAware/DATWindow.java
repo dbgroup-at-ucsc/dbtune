@@ -6,14 +6,18 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloObjective;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Set;
 
 import edu.ucsc.dbtune.DatabaseSystem;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
 import edu.ucsc.dbtune.optimizer.ExplainedSQLStatement;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
 import edu.ucsc.dbtune.seq.bip.def.SeqInumIndex;
 import edu.ucsc.dbtune.util.Rt;
@@ -106,6 +110,45 @@ public class DATWindow {
             cost += qcost;
         }
         return cost;
+    }
+    
+    // -------------------------------------------------------------
+    // TODO: Trung's modification
+    // -------------------------------------------------------------
+    public void showUsedIndex(CPlexWrapper cplex, DatabaseSystem db, InumOptimizer optimizer) throws Exception {
+        
+        HashSet<Index> allIndexes = new HashSet<Index>();
+        for (int j = 0; j < totalIndices; j++)
+            if (cplex.getValue(this.present[j]) == 1)
+                allIndexes.add(costModel.indices.get(j).loadIndex(db));
+        int count = 0;
+        for (DATQuery query : queries) {
+            ExplainedSQLStatement explain = optimizer.explain(query.q.sql, allIndexes);
+            
+            System.out.println(explain.getTotalCost());
+            if (count == 12) {
+                Rt.p(" query " + query.q.sql.toString());
+                Set<Index> test = new HashSet<Index>();
+                
+                for (Index i : explain.getUsedConfiguration()) {
+                    Rt.p(i.toString());
+                    if (i.getTable().getName().contains("CATALOG_SALES"))
+                        test.add(i);
+                }
+                Rt.p(" cost = " + explain.getTotalCost());
+                Rt.p("-----------------");
+                
+                Rt.p(" test conf " + test);
+                ExplainedSQLStatement explain1 = optimizer.explain(query.q.sql, test);
+                for (Index i : explain1.getUsedConfiguration()) {
+                    Rt.p(i.toString());
+                }
+                
+            }
+            count++;
+            
+        }
+        
     }
 
     public int getCreated(CPlexWrapper cplex) throws IloException {

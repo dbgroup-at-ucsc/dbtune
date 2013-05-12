@@ -56,7 +56,7 @@ public class DATPaperParams {
                 p.windowSize = p.avgCreateCost * value;
         }
     });
-    public Set spaceFactor = new Set(0.2, "space", new double[] {0.1, 0.2, 0.4, 0.8, 5}, new String[] {
+    public Set spaceFactor = new Set(0.2, "space", new double[] {0.1}, new String[] {
            "0.1x", "0.2x", "0.4x", "0.8x", "INF"}, new Callback() {
         @Override
         public void callback(TestSet set, DATExp p, double value) {

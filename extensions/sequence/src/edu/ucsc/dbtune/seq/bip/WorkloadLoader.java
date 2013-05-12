@@ -183,6 +183,7 @@ public class WorkloadLoader {
     }
 
     public DatabaseSystem getDb() throws Exception {
+        
         if (db == null)
             db = newDatabaseSystem(en);
         return db;
@@ -195,6 +196,12 @@ public class WorkloadLoader {
         return db2optimizer;
     }
 
+    public InumOptimizer getInumOptimizer() throws Exception {
+        db = getDb();
+        InumOptimizer optimizer = (InumOptimizer) db.getOptimizer();
+        return optimizer;
+    }
+    
     /**
      * Trung's implementation
      * 

@@ -1,5 +1,9 @@
 package edu.ucsc.dbtune.deployAware;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import edu.ucsc.dbtune.bip.core.IndexTuningOutput;
@@ -38,5 +42,17 @@ public class DATOutput extends IndexTuningOutput {
             }
             System.out.println();
         }
+    }
+    
+    public Set<Integer> getUsedIndexesWindow(int w)
+    {
+        Set<Integer> indexes = new HashSet<Integer>();
+        
+        for (int j = 0; j < ws[w].indexUsed.length; j++) {
+            if (ws[w].indexUsed[j])
+                indexes.add(j);
+        }
+        
+        return indexes;
     }
 }

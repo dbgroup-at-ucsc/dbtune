@@ -490,6 +490,29 @@ public class SeqCost {
         return cost;
     }
 
+    public void showCost(int stepId, DatabaseSystem db, InumOptimizer optimizer, SeqStepConf conf) throws Exception {
+        
+        HashSet<Index> indexes = conf.configuration.getIndexes(db);
+        int count = 0;
+        Rt.p(" List of indexes ");
+        for (Index i : indexes)
+            Rt.p(i.toString());
+        Rt.p("end");
+        for (SeqQuery query : sequence[stepId].queries) {
+            ExplainedSQLStatement explain = optimizer.explain(query.sql, indexes);
+            System.out.println(explain.getTotalCost());
+            if (count == 12) {
+                Rt.p(" query " + query.sql.getSQL());
+                for (Index i : explain.getUsedConfiguration())
+                    Rt.p(i.toString());
+                Rt.p(" cost = " + explain.getTotalCost());
+                Rt.p("-----------------");
+            }
+            count++;
+        }
+    }
+
+    
     public double getCost(SeqQuerySet queries, SeqConfiguration conf) throws SQLException {
         double cost = 0;
         for (SeqQuery q : queries.queries)

@@ -44,7 +44,7 @@ public class DATQuery {
         }
         for (DATInumPlan plan : plans) {
             double pcost = plan.getCost(cplex);
-            // Rt.p(this.q.id + " " + plan.p.id + " " + pcost);
+            //Rt.p(this.q.id + " " + plan.p.id + " " + pcost);
             cost += pcost;
         }
         return cost*q.weight;

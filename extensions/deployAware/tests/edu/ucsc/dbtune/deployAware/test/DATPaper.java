@@ -3,7 +3,12 @@ package edu.ucsc.dbtune.deployAware.test;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import edu.ucsc.dbtune.DatabaseSystem;
@@ -11,6 +16,7 @@ import edu.ucsc.dbtune.deployAware.DAT;
 import edu.ucsc.dbtune.deployAware.DATOutput;
 import edu.ucsc.dbtune.deployAware.DATParameter;
 import edu.ucsc.dbtune.optimizer.DB2Optimizer;
+import edu.ucsc.dbtune.optimizer.InumOptimizer;
 import edu.ucsc.dbtune.seq.SeqCost;
 import edu.ucsc.dbtune.seq.SeqGreedySeq;
 import edu.ucsc.dbtune.seq.bip.SeqInumCost;
@@ -226,6 +232,11 @@ public class DATPaper {
             windowSizeS = Double.toString(p.windowSize);
         p("windowSize=%s m=%d l=%d alpha=%f beta=%f space=%,.0f", windowSizeS, m, l, alpha, beta, p.spaceBudge);
 
+        // --- GREEDY -------------------------------
+        List< Set<Integer>> usedIndexGreedy
+            = new ArrayList<Set<Integer>>();
+        // -----------------------------------------
+        
         double greedyRunningTime = 0;
         double datRunningTime = 0;
         {
@@ -263,13 +274,21 @@ public class DATPaper {
             this.finalCostGreedy = 0.0;
             // -------------------------------------------
             
+                
             for (int i = 0; i < m; i++) {
                 SeqStepConf conf = greedySeq.bestPath[i + 1];
                 SeqIndex[] indices = conf.configuration.indices;
                 double tc = seqCost.getCost(greedySeq.bestPath[i].configuration, conf.configuration);
                 // boolean[] indexUsed = new boolean[seqCost.indicesV.size()];
-                // for (SeqIndex index : indices)
-                // indexUsed[index.id] = true;
+                
+                // TODO: TRUNG's modification
+                Set<Integer> usedIndexes = new HashSet<Integer>();
+                for (SeqIndex index : indices)
+                    usedIndexes.add(index.id);
+                Rt.p(" window " + usedIndexes);
+                usedIndexGreedy.add(usedIndexes);
+                // -------------------------------
+                
                 // DATWindow.costWithIndex(cost, indexUsed);
                 greedyWindowCosts[i] = conf.queryCost
                         + (seqCost.addTransitionCostToObjective ? conf.transitionCost : 0);
@@ -312,6 +331,21 @@ public class DATPaper {
                 Rt.p(" INUM / DB2 = " + (this.greedySeq / costDB2));
             
             }
+            
+            {
+                // TODO: Trung's modification
+                DatabaseSystem db = p.loader.getDb();
+                p.loader.openConnection();
+                InumOptimizer optimizer = p.loader.getInumOptimizer();
+                   
+                for (int k = 0; k < m; k++) {
+                    Rt.p("**** window " + k );
+                    SeqStepConf conf = greedySeq.bestPath[k + 1];
+                    seqCost.showCost(k, db, optimizer, conf);
+                }
+            }
+            
+            // ----------------------------------------------
             greedyRunningTime = timer.getSecondElapse();
             p("GREEDY-SEQ time: %.2f s", timer.getSecondElapse());
             p("Obj value: %,.0f", this.greedySeq);
@@ -326,6 +360,13 @@ public class DATPaper {
             DAT dat = new DAT();
             Rt.p("BIP EP gap = " + p.bipEpGap);
             DATOutput output = dat.runDAT(params, p.bipEpGap);
+            
+            // Trung's modification -----------------------
+            Rt.p(" SHOW OUTPUT ");
+            output.print();
+            Rt.p("list of used indexes at window 4: "
+                    + output.getUsedIndexesWindow(4));
+            // --------------------------------------------
             this.dat = output.totalCost;
             // Trung's modification -----------------------
             this.intCostBip = output.intCost;
@@ -343,6 +384,35 @@ public class DATPaper {
                         output.ws[i].drop, space);
             }
             
+            {   
+                // TODO: Trung's modification
+                DatabaseSystem db = p.loader.getDb();
+                //p.loader.openConnection();
+                InumOptimizer optimizer = p.loader.getInumOptimizer();
+                int W = 2;
+                Rt.p( " show query plans FOR WINDOW "+W);
+                dat.showUsedIndex(W, db, optimizer);
+            }
+                  
+            
+            {
+                // TODO: compare
+                for (int w = 0; w < m; w++){
+                    Set<Integer> temp = new HashSet<Integer>();
+                    temp.addAll(output.getUsedIndexesWindow(w));
+                    temp.retainAll(usedIndexGreedy.get(w));
+                    int bipOnly = output.getUsedIndexesWindow(w).size()
+                            - temp.size();
+                    int greedyOnly = usedIndexGreedy.get(w).size()
+                                - temp.size();
+                    
+                    Rt.p(" window " + w
+                            + " same indexes = "
+                            + temp.size()
+                            + " BIP only = " + bipOnly
+                            + " GREEDY Only = " + greedyOnly);
+                }
+            }
             if (useDB2Optimizer || verifyByDB2Optimizer) {
                 p("verifying window cost");
                 double costDB2 = 0.0;

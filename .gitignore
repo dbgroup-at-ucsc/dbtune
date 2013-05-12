@@ -26,3 +26,4 @@ resources/*/*/*.lp
 .scala_dependencies
 .settings
 .viminfo
+.class
