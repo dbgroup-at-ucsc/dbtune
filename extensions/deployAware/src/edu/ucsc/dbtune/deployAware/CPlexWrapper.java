@@ -17,7 +17,7 @@ public class CPlexWrapper {
         Rt.p("gap = " + gap);
         // -- Trung's hardcoding (maximum 120 seconds to run a BIP)
         cplex.setParam(IloCplex.DoubleParam.TiLim, 150);
-        //cplex.setOut(null);
+        cplex.setOut(null);
         cplex.setWarning(null);
     }
 

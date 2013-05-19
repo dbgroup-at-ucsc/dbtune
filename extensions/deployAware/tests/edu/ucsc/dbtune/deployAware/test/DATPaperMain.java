@@ -234,6 +234,7 @@ public class DATPaperMain {
         out.close();
     }
     
+    
     public void run2(DATPaperParams.Set inputs1, DATPaperParams.Set inputs2, String name, String desc) throws Exception {
         for (TestSet set : sets) {
             DATExp p = def(set, name, desc);
@@ -694,7 +695,7 @@ public class DATPaperMain {
             public void callback(TestSet set, DATExp p, double value) {
                 double[] weights = new double[(int) params.m.def];                
                 Arrays.fill(weights, 1);
-                weights[0] = 1;
+                weights[0] = 10;
                 p.windowWeights = weights;
             }
         });

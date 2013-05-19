@@ -237,6 +237,13 @@ public class DATPaper {
             = new ArrayList<Set<Integer>>();
         // -----------------------------------------
         
+        // ----------------------------------------
+        List<WorkloadCostWindow> wcGreedy = 
+                        new ArrayList<WorkloadCostWindow>();
+        List<WorkloadCostWindow> wcBip = 
+                new ArrayList<WorkloadCostWindow>();
+        // ----------------------------------------
+        
         double greedyRunningTime = 0;
         double datRunningTime = 0;
         {
@@ -297,6 +304,12 @@ public class DATPaper {
                     space += index.inumIndex.storageCost;
                 p("GREEDY-SEQ window " + i + ": cost=%,.0f createCost=%,.0f usedIndexes=%d space=%,d",
                         greedyWindowCosts[i], tc, indices.length, space);
+                
+                // Trung's modification -----------------------------
+                WorkloadCostWindow wc = new WorkloadCostWindow(i, tc,
+                                            greedyWindowCosts[i] - tc);
+                wcGreedy.add(wc);
+                // ---------------------------------------------------
                 if (i < m - 1) {
                     this.greedySeq += alpha * greedyWindowCosts[i];
                     // Trung's modification ------------------
@@ -331,7 +344,7 @@ public class DATPaper {
                 Rt.p(" INUM / DB2 = " + (this.greedySeq / costDB2));
             
             }
-            
+            /*
             {
                 // TODO: Trung's modification
                 DatabaseSystem db = p.loader.getDb();
@@ -344,7 +357,7 @@ public class DATPaper {
                     seqCost.showCost(k, db, optimizer, conf);
                 }
             }
-            
+            */
             // ----------------------------------------------
             greedyRunningTime = timer.getSecondElapse();
             p("GREEDY-SEQ time: %.2f s", timer.getSecondElapse());
@@ -361,12 +374,6 @@ public class DATPaper {
             Rt.p("BIP EP gap = " + p.bipEpGap);
             DATOutput output = dat.runDAT(params, p.bipEpGap);
             
-            // Trung's modification -----------------------
-            Rt.p(" SHOW OUTPUT ");
-            output.print();
-            Rt.p("list of used indexes at window 4: "
-                    + output.getUsedIndexesWindow(4));
-            // --------------------------------------------
             this.dat = output.totalCost;
             // Trung's modification -----------------------
             this.intCostBip = output.intCost;
@@ -382,8 +389,12 @@ public class DATPaper {
                 p("DAT Window %d: cost=%,.0f createCost=%,.0f usedIndexes=%d create=%d drop=%d space=%,d", i,
                         datWindowCosts[i], output.ws[i].createCost, output.ws[i].present, output.ws[i].create,
                         output.ws[i].drop, space);
+                
+                WorkloadCostWindow wc = new WorkloadCostWindow(i, output.ws[i].createCost,
+                        datWindowCosts[i] - output.ws[i].createCost); 
+                wcBip.add(wc);
             }
-            
+            /*
             {   
                 // TODO: Trung's modification
                 DatabaseSystem db = p.loader.getDb();
@@ -393,8 +404,8 @@ public class DATPaper {
                 Rt.p( " show query plans FOR WINDOW "+W);
                 dat.showUsedIndex(W, db, optimizer);
             }
-                  
-            
+              */    
+            /*
             {
                 // TODO: compare
                 for (int w = 0; w < m; w++){
@@ -413,6 +424,7 @@ public class DATPaper {
                             + " GREEDY Only = " + greedyOnly);
                 }
             }
+            */
             if (useDB2Optimizer || verifyByDB2Optimizer) {
                 p("verifying window cost");
                 double costDB2 = 0.0;
@@ -450,6 +462,26 @@ public class DATPaper {
             dat.close();
         }
         
+        
+        // TODO: Trung's implementation
+        {
+            Rt.p("DETAILED PERFORMANCE GREEDY");
+            for (WorkloadCostWindow wc : wcGreedy)
+                System.out.println(wc);
+            
+            Rt.p("DETAILED PERFORMANCE BIP");
+            for (WorkloadCostWindow wc : wcBip)
+                System.out.println(wc);
+            
+            Rt.p("RATIO of ECOST");
+            for (int j = 0; j < wcGreedy.size(); j++) {
+                double ratio = wcBip.get(j).eCost / wcGreedy.get(j).eCost; 
+                System.out.println(ratio);
+                System.out.println(ratio);
+            }
+        }
+        
+        
         if (p.plotLabelZ != null) {
             p.plot.startNewX(p.plotX, p.plotLabel, p.plotZ, p.plotLabelZ);
         } else {
@@ -480,5 +512,31 @@ public class DATPaper {
         if (Math.abs((1 - alpha) / alpha - _1mada) > 1E-5)
             throw new Error();
         return alpha;
+    }
+    
+    public static class WorkloadCostWindow
+    {
+        public int windowID;
+        public double dCost;
+        public double eCost;
+        
+        
+        public WorkloadCostWindow(int w, double dCost, double eCost)
+        {
+            this.windowID = w;
+            this.dCost = dCost;
+            this.eCost = eCost;
+        }
+        
+        @Override
+        public String toString()
+        {
+            StringBuilder sb = new StringBuilder();
+            
+            sb.append(this.windowID).append(" ")
+               .append(this.dCost).append(" ")
+               .append(this.eCost).append("\n");
+            return sb.toString();
+        }
     }
 }
