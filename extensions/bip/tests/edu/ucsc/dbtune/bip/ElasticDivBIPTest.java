@@ -23,6 +23,7 @@ import edu.ucsc.dbtune.workload.Workload;
 public class ElasticDivBIPTest extends AdaptiveDivBIPTest 
 {   
     private static int nDeploys;
+    private static boolean isNumReplicas = false;
     
     @Test
     public void main() throws Exception
@@ -42,10 +43,14 @@ public class ElasticDivBIPTest extends AdaptiveDivBIPTest
         prepareWorkload();
         
         initializeOnlineObject();
-        // vary number of replicas         
-        runElasticity();
-        // vary m
-        //runElasticityM();
+        
+        if (isNumReplicas)
+            // vary number of replicas         
+            runElasticity();
+        else {
+            // vary m
+            runElasticityM();
+        }
         
         // move this functionality to DivPaper later
         LatexGenerator.generateLatex(latexFile, outputDir, plots);
@@ -90,10 +95,13 @@ public class ElasticDivBIPTest extends AdaptiveDivBIPTest
         
         // derive the reconfiguration costs
         // base mat. cost
-        double baseMatCost = reConfigurationCost 
-                                * Math.pow(2,  -3);
-        for (int i = 1; i <= 5; i++) 
-            entry.listReconfiguationCosts.add(baseMatCost * i);
+        //double baseMatCost = reConfigurationCost 
+          //                    * Math.pow(2,  -3);
+        // TODO: hard-code here for the expt. 
+        double baseMatCost = 4 * Math.pow(10, 7);
+        for (int i = 0; i <= 4; i++) 
+            entry.listReconfiguationCosts.add(baseMatCost + 
+                        i * baseMatCost);
         
         
         for (int m = 1; m <= 3; m++) {
@@ -105,9 +113,9 @@ public class ElasticDivBIPTest extends AdaptiveDivBIPTest
                                          , m, logger, descs));
             entry.totalTime += logger.getTotalRunningTime();
             
-            elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_FILE);
+            elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_M_FILE);
             elasticFile.delete();
-            elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_FILE);
+            elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_M_FILE);
             elasticFile.createNewFile();
             // serialize result
             serializeElasticResult(entry, elasticFile);
@@ -154,10 +162,11 @@ public class ElasticDivBIPTest extends AdaptiveDivBIPTest
         // base mat. cost
         //double baseMatCost = reConfigurationCost 
           //                    * Math.pow(2,  -3);
-        double baseMatCost = 17 * Math.pow(10, 7);
+        // TODO: hard-code here for the expt. 
+        double baseMatCost = 4 * Math.pow(10, 7);
         for (int i = 0; i <= 4; i++) 
             entry.listReconfiguationCosts.add(baseMatCost + 
-                        i * 18 * Math.pow(10, 6));
+                        i * baseMatCost);
         
         
         for (nDeploys = nReplicas - 1; nDeploys <= nReplicas + 1; nDeploys++) {
@@ -168,9 +177,9 @@ public class ElasticDivBIPTest extends AdaptiveDivBIPTest
                                          , nDeploys, logger, descs));
             entry.totalTime += logger.getTotalRunningTime();
             
-            elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_FILE);
+            elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_N_FILE);
             elasticFile.delete();
-            elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_FILE);
+            elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_N_FILE);
             elasticFile.createNewFile();
             // serialize result
             serializeElasticResult(entry, elasticFile);

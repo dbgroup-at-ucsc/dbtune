@@ -41,6 +41,8 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
     protected static RoutingUnseenQueriesEntry entry;
     protected static List<RoutingUnseenQueriesEntry> entries;
     
+    protected static int maxRound = 10;
+    
     @Test
     public void main() throws Exception
     {
@@ -75,6 +77,7 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
             sqlStatements.add(sql);
         wlTotal = new Workload(sqlStatements);
         
+        
         // 1. Best case scenarios
         LogListener logger = LogListener.getInstance();
         WorkloadCostDetail wc = DivBIPFunctionalTest.testDivSimplify(nReplicas, B, 
@@ -83,7 +86,7 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
         queryPlanDescs = div.getQueryPlanDescs();
         
         // 2. split into training and testing data set
-        int maxRound = 10;
+        
         int id;
         int countTraining;
         // store result
@@ -130,14 +133,14 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
             
             Rt.p(" Total cost BEST CASE = " + totalCostBestCase);
             Rt.p(" Total cost SPLITTING = " + totalCostSplitting);
-            Rt.p(" BEST CASE / SPLITTING = " + (totalCostBestCase / totalCostSplitting));
+            //Rt.p(" BEST CASE / SPLITTING = " + (totalCostBestCase / totalCostSplitting));
             Rt.p(" Total cost UNIF = " + totalCostUNIF);
             Rt.p(" RATIO SPLITTING / UNIF = " + (totalCostSplitting / totalCostUNIF));
         
             // TODO: recording the result
             // recording cost unseen only
             entry.costUNIF = totalCostUNIF;
-            entry.costBestCase = totalCostBestCase;
+            entry.costBestCase = totalCostBestCase; 
             entries.add(entry);
             storeResult();
         }
@@ -234,7 +237,7 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
         
         Rt.p(" cost seen = " + totalCostSeen);
         Rt.p(" cost unseen = " + totalCostUnseen);
-        return (totalCostUnseen);
+        return (totalCostSeen + totalCostUnseen);
     }
     
     /**
@@ -254,14 +257,14 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
         List<Double> costs = computeCostsDB2(wlTraining, recommendation);
         double queryCost = 0.0;
         double updateCost = 0.0;
-        /*
+        
         for (int i = 0; i < wlTraining.size(); i++)
             if (wlTraining.get(i).getSQLCategory().isSame(SELECT))
                 queryCost += costs.get(i) * wlTraining.get(i).getStatementWeight();
             else
                 updateCost += costs.get(i) * wlTraining.get(i).getStatementWeight();
         costTraining = queryCost + updateCost;
-        */
+        
         queryCost = updateCost = 0.0;
         costs = computeCostsDB2(wlTesting, recommendation);
         for (int i = 0; i < wlTesting.size(); i++)
@@ -271,9 +274,9 @@ public class RoutingUnseenQueriesDivTest extends DIVPaper
                 updateCost += costs.get(i) * wlTesting.get(i).getStatementWeight();
         costTesting = queryCost + updateCost;
         
-        //Rt.p(" UNIF cost training = " + costTraining);
+        Rt.p(" UNIF cost training = " + costTraining);
         Rt.p(" UNIF cost testing = " + costTesting);
         
-        return (costTesting);
+        return (costTesting + costTraining);
     }
 }

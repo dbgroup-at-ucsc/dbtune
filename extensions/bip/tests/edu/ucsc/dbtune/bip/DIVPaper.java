@@ -57,7 +57,8 @@ public class DIVPaper extends DivTestSetting
     protected static final String DESIGN_DETAIL_DB2_FILE = "design_detail_db2.bin";
     
     protected static final String ONLINE_FILE = "online.bin";
-    protected static final String ELASTIC_FILE = "elastic.bin";
+    protected static final String ELASTIC_N_FILE = "elastic_n.bin";
+    protected static final String ELASTIC_M_FILE = "elastic_m.bin";
     protected static final String FAILURE_FILE = "failure.bin";
     protected static final String IMBALANCE_GREEDY_FILE = "imbalance_greedy.bin";
     
@@ -137,7 +138,7 @@ public class DIVPaper extends DivTestSetting
             // ratio
             //drawEquivalent(dbName, wlName, true, false);
             // absolute value
-            drawEquivalent(dbName, wlName, false, true, true, false);
+            drawEquivalent(dbName, wlName, false, true, false, true);
             /*
             boolean isDesign = false;
             // draw ratio with design
@@ -160,12 +161,18 @@ public class DIVPaper extends DivTestSetting
         if (isUnseeQueries)
             drawUnseenQueries();
 
+        if (isImbalance)
+            drawImbalance();
         
         if (isOnline)
             drawOnline();
 
-        if (isElastic)
-            drawElastic();
+        if (isElastic) {
+            // num replicas
+            drawElastic(true);
+            // routing factor
+            drawElastic(false);
+        }
         
         if (isAnalyzeConfiguration)
             analyzeDivConfiguration();
@@ -288,9 +295,9 @@ public class DIVPaper extends DivTestSetting
                 else
                     plotName += "_absolute";
                 
-                xname = "Number of replicas";
+                xname = "Space budget (b)";
                 if (drawRatio)
-                    yname = "TotalCost Improvement (%)";
+                    yname = "ExpTotalCost Improvement (%)";
                 else 
                     yname = "ExpTotalCost";
                 
@@ -760,7 +767,7 @@ public class DIVPaper extends DivTestSetting
         plotName = dbName + "_" + wlName + "_update_constraint";
         plotName += "_absolute";
             
-        xname = "Ratio of update cost of RITA over UNIF";
+        xname = "Ratio of the update cost of RITA over UNIF";
         yname = "QueryCost";
             
         drawLineGnuPlot(plotName, xname, yname, xaxis, xtics, 
@@ -850,10 +857,15 @@ public class DIVPaper extends DivTestSetting
      * 
      * 
      ***************************************************/
-    public static void drawElastic() throws Exception
+    public static void drawElastic(boolean isNumReplicas) throws Exception
     {   
         int numX;
-        elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_FILE);
+        
+        if (isNumReplicas)
+            elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_N_FILE);
+        else 
+            elasticFile = new File(rawDataDir, wlName + "_" + ELASTIC_M_FILE);
+        
         ElasticPaperEntry entry = readElasticResult(elasticFile);
         
         numX = entry.listReconfiguationCosts.size();
@@ -869,9 +881,15 @@ public class DIVPaper extends DivTestSetting
         
         String[] competitors = new String[entry.listNumberReplicas.size()
                                           + 1];
-        for (int i = 0; i < entry.listNumberReplicas.size(); i++)
-            competitors[i] = "m = " + Integer.toString(
-                     entry.listNumberReplicas.get(i));
+        for (int i = 0; i < entry.listNumberReplicas.size(); i++) {
+            if (isNumReplicas)
+                competitors[i] = "N = " + Integer.toString(
+                        entry.listNumberReplicas.get(i));
+            else {
+                competitors[i] = "m = " + Integer.toString(
+                        entry.listNumberReplicas.get(i));
+            }
+        }
         competitors[entry.listNumberReplicas.size()] = "CURRENT";
         
         int n;
@@ -885,7 +903,11 @@ public class DIVPaper extends DivTestSetting
             points.add(new Point(xtics[i], entry.currentCost));
         }
        
-        plotName = dbName + "_" + wlName + "elastic";
+        if (isNumReplicas)
+            plotName = dbName + "_" + wlName + "elastic_n";
+        else 
+            plotName = dbName + "_" + wlName + "elastic_m";
+        
         xname = "Materialization cost";
         yname = "ExpTotalCost";
      
@@ -988,6 +1010,9 @@ public class DIVPaper extends DivTestSetting
             
             points.add(new Point(i, entry.costUNIF));
             points.add(new Point(i, entry.costSplitting));
+            Rt.p(" UNIF = " + entry.costUNIF
+                    + " SPLITTING = "
+                    + entry.costSplitting);
             //points.add(new Point(i, entry.costBestCase));
         }
         
@@ -1069,7 +1094,7 @@ public class DIVPaper extends DivTestSetting
                 + "time GREEDY = " + timeGreedy
                 + " avg GREEDY TIME = " + (timeGreedy / numX),
                 0.5));
-        */
+       */
     }
     
     protected static List<Double> costUnderFailure(List<Double> alphas, Map<DivPaperEntry, Double> mapVal)
@@ -1125,16 +1150,16 @@ public class DIVPaper extends DivTestSetting
         DivPaperEntry entry = new DivPaperEntry(dbName, wlName, nReplicas, 
                 convertBudgetToMB(B), null);
         // 1. Read the result from UNIF file
-        unifFile = new File(rawDataDir, wlName + "_" + UNIF_DB2_FILE);
+        unifFile = new File(rawDataDir, wlName + "_" + UNIF_DETAIL_DB2_FILE);
         mapUnif = readDivResult(unifFile);
         Rt.p(" read from file = " + unifFile.getAbsolutePath());
         
         // 2. Read the result from DIV file
-        divFile = new File(rawDataDir, wlName + "_" + DIV_DB2_FILE);
+        divFile = new File(rawDataDir, wlName + "_" + DIV_DETAIL_DB2_FILE);
         mapDiv = readDivResult(divFile);
         
         // 3. Read the result from Design file
-        designFile = new File(rawDataDir, wlName + "_" + DESIGN_DB2_FILE);
+        designFile = new File(rawDataDir, wlName + "_" + DESIGN_DETAIL_DB2_FILE);
         mapDesign = readDivResult(designFile);
         
         // traverse the map
