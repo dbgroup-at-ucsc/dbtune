@@ -11,13 +11,15 @@ public interface PlayableAdvisor extends Advisor
 {
     /**
      */
-    void stop();
+    void pause();
 
     /**
+     * @throws SQLException
      */
     void play() throws SQLException;
 
     /**
+     * @throws SQLException
      */
     void next() throws SQLException;
 }

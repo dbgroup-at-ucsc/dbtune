@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.ImageIcon;
+import javax.swing.JFrame;
 
 import edu.ucsc.dbtune.advisor.WorkloadObserverAdvisor;
 
@@ -46,13 +47,13 @@ public class TabbedSwingVisualizer extends SwingVisualizer
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-        );
+            layout.createParallelGroup(
+                javax.swing.GroupLayout.Alignment.LEADING).addComponent(
+                    jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE));
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-        );
+            layout.createParallelGroup(
+                javax.swing.GroupLayout.Alignment.LEADING).addComponent(
+                    jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE));
 
         pack();
 
@@ -61,6 +62,8 @@ public class TabbedSwingVisualizer extends SwingVisualizer
 
         ImageIcon img = new ImageIcon("resources/images/ucsc-seal.jpg");
         setIconImage(img.getImage());
+
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
 
     /**

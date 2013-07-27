@@ -62,6 +62,16 @@ public class DB2WorkloadReader extends QueryLogReader
         int counter = 1;
 
         while (rs.next()) {
+            String stmt = rs.getString("stmt_text").toLowerCase().trim();
+
+            if (stmt.contains("sysibmadm.") ||
+                    stmt.contains("systools.") ||
+                    stmt.contains("syscat.") ||
+                    stmt.startsWith("flush") ||
+                    stmt.startsWith("call") ||
+                    stmt.startsWith("set"))
+                continue;
+
             newStmts.add(
                     new SQLStatement(rs.getString("stmt_text"), workload, sqls.size() + counter));
             counter++;

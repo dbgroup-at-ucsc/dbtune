@@ -40,8 +40,8 @@ public class WFITRecommendationRankTable extends SwingVisualizer
         columnNames = new String[3];
 
         columnNames[0] = "RANK";
-        columnNames[1] = "SCORE";
-        columnNames[2] = "INDEXES";
+        columnNames[1] = "INDEXES";
+        columnNames[2] = "SCORE";
 
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
@@ -72,8 +72,8 @@ public class WFITRecommendationRankTable extends SwingVisualizer
             String[] row = new String[3];
 
             row[0] = (i + 1) + "";
-            row[1] = score.getValue() + "";
-            row[2] = getNameListString(new ArrayList<Index>(score.getKey()));
+            row[1] = getNameListString(new ArrayList<Index>(score.getKey()));
+            row[2] = score.getValue() + "";
 
             dataValues[i++] = row;
         }

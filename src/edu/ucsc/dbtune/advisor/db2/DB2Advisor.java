@@ -19,7 +19,7 @@ import static edu.ucsc.dbtune.util.OptimizerUtils.getBaseOptimizer;
 
 /**
  * Generates a recommendation according to the db2advis program.
- * 
+ *
  * @author Ivo Jimenez
  */
 public class DB2Advisor extends AbstractAdvisor
@@ -29,7 +29,7 @@ public class DB2Advisor extends AbstractAdvisor
 
     /**
      * constructor.
-     * 
+     *
      * @param dbms
      *      system connected representing a DB2 instance
      * @param spaceBudget
@@ -68,6 +68,24 @@ public class DB2Advisor extends AbstractAdvisor
                     "   '',1,0,0,0,0,'')");
 
         stmt.close();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isCandidateSetFixed()
+    {
+        throw new RuntimeException("Not implemented");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public RecommendationStatistics getOptimalRecommendationStatistics()
+    {
+        throw new RuntimeException("Not implemented");
     }
 
     /**

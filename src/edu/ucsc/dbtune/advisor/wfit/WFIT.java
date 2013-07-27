@@ -61,6 +61,8 @@ public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor, Wi
      *      workload that the advisor will be observing
      * @param initialSet
      *      initial candidate set
+     * @param isPaused
+     *      whether the advisor goes on automatically after instantiating or pauses
      * @param maxNumberOfStates
      *      maximum number of states per partition
      * @param maxHotSetSize
@@ -75,13 +77,14 @@ public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor, Wi
         DatabaseSystem db,
         Workload workload,
         Set<Index> initialSet,
+        boolean isPaused,
         int maxNumberOfStates,
         int maxHotSetSize,
         int indexStatisticsWindowSize,
         int numberOfPartitionIterations)
     {
-        this(db, workload, initialSet, new IBGDoiFinder(), maxNumberOfStates, maxHotSetSize, 
-                indexStatisticsWindowSize, numberOfPartitionIterations);
+        this(db, workload, initialSet, isPaused, new IBGDoiFinder(), maxNumberOfStates, 
+                maxHotSetSize, indexStatisticsWindowSize, numberOfPartitionIterations);
     }
 
     /**
@@ -137,8 +140,8 @@ public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor, Wi
             int indexStatisticsWindowSize,
             int numberOfPartitionIterations)
     {
-        this(db, NO_WORKLOAD, initialSet, new IBGDoiFinder(), maxNumberOfStates, maxHotSetSize,
-                indexStatisticsWindowSize, numberOfPartitionIterations);
+        this(db, NO_WORKLOAD, initialSet, true, new IBGDoiFinder(), maxNumberOfStates, 
+                maxHotSetSize, indexStatisticsWindowSize, numberOfPartitionIterations);
     }
 
     /**
@@ -151,6 +154,8 @@ public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor, Wi
      *      workload that the advisor will be observing
      * @param initialSet
      *      initial candidate set
+     * @param isPaused
+     *      whether the advisor goes on automatically after instantiating or pauses
      * @param doiFinder
      *      interaction finder
      * @param maxNumberOfStates
@@ -167,13 +172,14 @@ public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor, Wi
             DatabaseSystem db,
             Workload workload,
             Set<Index> initialSet,
+            boolean isPaused,
             DegreeOfInteractionFinder doiFinder,
             int maxNumberOfStates,
             int maxHotSetSize,
             int indexStatisticsWindowSize,
             int numberOfPartitionIterations)
     {
-        super(workload);
+        super(workload, isPaused);
 
         this.db = db;
         this.doiFinder = doiFinder;
@@ -191,10 +197,10 @@ public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor, Wi
         this.stats = new WFITRecommendationStatistics("WFIT" + maxNumberOfStates);
         this.optStats = new WFITRecommendationStatistics("OPT");
 
-        if (initialSet.isEmpty())
+        //if (initialSet.isEmpty())
             this.isCandidateSetFixed = false;
-        else
-            this.isCandidateSetFixed = true;
+        //else
+            //this.isCandidateSetFixed = true;
     }
 
     /**
@@ -444,5 +450,16 @@ public class WFIT extends WorkloadObserverAdvisor implements VoteableAdvisor, Wi
             return;
 
         stats.getLastEntry().update(getRecommendation());
+    }
+
+    /**
+     * returns the db.
+     *
+     * @return
+     *      the db
+     */
+    public DatabaseSystem getDatabase()
+    {
+        return db;
     }
 }

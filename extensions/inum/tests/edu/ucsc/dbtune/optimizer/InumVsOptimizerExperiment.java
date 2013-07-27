@@ -15,6 +15,7 @@ import static java.lang.Math.min;
 import com.google.common.collect.Sets;
 
 import edu.ucsc.dbtune.DatabaseSystem;
+import edu.ucsc.dbtune.advisor.wfit.WFIT;
 import edu.ucsc.dbtune.advisor.candidategeneration.CandidateGenerator;
 import edu.ucsc.dbtune.metadata.Index;
 import edu.ucsc.dbtune.metadata.Table;
@@ -72,7 +73,7 @@ public final class InumVsOptimizerExperiment
     /**
      * Name of the workload to run the experiment on.
      */
-    private static String workloadName = "tpcds-small";
+    private static String workloadName = "tpcds-inum";
 
     /**
      * Number of maximum what-if calls on a statement. If {@link #numberOfSubsets} is less than this 
@@ -102,9 +103,11 @@ public final class InumVsOptimizerExperiment
         candGen = CandidateGenerator.Factory.newCandidateGenerator(env, delegate);
         crashReport = new StringBuilder();
 
+        /*
         if (!(optimizer instanceof InumOptimizer))
             throw new Exception("Expecting INUM optimizer");
-        
+        */
+
         loadWorkloads(db.getConnection());
     }
 
@@ -194,30 +197,46 @@ public final class InumVsOptimizerExperiment
         int startedAt = 0;
         int stoppedAt = 0;
 
+        WFIT wfit = new WFIT(db, allIndexes, env.getMaxNumStates(), env.getMaxNumIndexes(), 
+                env.getIndexStatisticsWindow(), env.getNumPartitionIterations() );
+
+        time = System.nanoTime();
+
         for (SQLStatement sql : wl) {
             currentSql = sql;
-            queryNumber++;
+            //queryNumber++;
 
             try {
+                /*
                 time = System.nanoTime();
 
                 final PreparedSQLStatement pSql = optimizer.prepareExplain(sql);
 
                 prepareTime = System.nanoTime() - time;
 
+                System.out.println("prepare ended");
+                System.out.println("####################");
+
                 totalNumberOfWhatIfCalls += whatIfCallNumber;
                 whatIfCallNumber = 0;
+                */
 
                 for (Set<Index> conf : subsets()) {
+                    wfit.processNewStatement(sql);
 
+                    /*
                     whatIfCallNumber++;
 
                     time = System.nanoTime();
                     explainedByInum = pSql.explain(conf);
                     inumTime = System.nanoTime() - time;
+                    System.out.println("inum ended");
+                    System.out.println("####################");
                     time = System.nanoTime();
                     explainedByOptimizer = delegate.explain(sql, conf);
                     optimizerTime = System.nanoTime() - time;
+                    System.out.println("opt ended");
+                    System.out.println("####################");
 
                     entriesForStmt = min(numberOfSubsets, maxNumberOfWhatIfCallsPerStatement);
                     startedAt = totalNumberOfWhatIfCalls + 1;
@@ -250,6 +269,7 @@ public final class InumVsOptimizerExperiment
 
                     if (whatIfCallNumber == maxNumberOfWhatIfCallsPerStatement)
                         break;
+                    */
                 }
                 /*
                   A - TOTAL
@@ -271,7 +291,6 @@ public final class InumVsOptimizerExperiment
                   K - explain time ratio (AVERAGE(optimizer-explain-time_i / INUM-explain-time_i))
                   L - INUM avg what-if (INUM prepare / #what-if calls + avg explain)
                   M - Overall ratio (AVERAGE(optimizer explain time / (INUM prepare / #what-if calls + avg explain)))
-                */
 
                 if (startedAt == 0)
                     startedAt = 1;
@@ -293,6 +312,8 @@ public final class InumVsOptimizerExperiment
 
                 // we need to add one for the aggregate
                 totalNumberOfWhatIfCalls++;
+                */
+
             } catch (Exception ex) {
             //CHECKSTYLE:ON
                 StringWriter sw = new StringWriter();
@@ -307,6 +328,8 @@ public final class InumVsOptimizerExperiment
                 continue;
             }
         }
+        System.out.println("whatifcalls: " + db.getOptimizer().getWhatIfCount());
+        System.out.println("timiiiing: " + (System.nanoTime() - time));
         System.out.println(crashReport.toString());
 
         afterClass();

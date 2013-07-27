@@ -33,7 +33,26 @@ public abstract class WorkloadObserverAdvisor
 {
     private Workload workload;
     private LinkedList<SQLStatement> statementQueue;
-    private boolean isStopped;
+    private boolean isPaused;
+
+    /**
+     * Constructs a workload-observer advisor that will be listening for statements that correspond 
+     * to the given workload. If {@code isPaused = true}, it will enqueue new statements and won't 
+     * process them until {@code next()} or {@code play()} is invoked.
+     *
+     * @param workload
+     *      the workload that the advisor is observing.
+     * @param isPaused
+     *      whether to start the advisor in a paused state.
+     */
+    protected WorkloadObserverAdvisor(Workload workload, boolean isPaused)
+    {
+        this.workload = workload;
+        this.isPaused = isPaused;
+        this.statementQueue = new LinkedList<SQLStatement>();
+
+        EventBusFactory.getEventBusInstance().register(this);
+    }
 
     /**
      * Constructs a workload-observer advisor that will be listening for statements that correspond 
@@ -45,11 +64,7 @@ public abstract class WorkloadObserverAdvisor
      */
     protected WorkloadObserverAdvisor(Workload workload)
     {
-        this.workload = workload;
-        this.isStopped = false;
-        this.statementQueue = new LinkedList<SQLStatement>();
-
-        EventBusFactory.getEventBusInstance().register(this);
+        this(workload, false);
     }
 
     /**
@@ -80,7 +95,7 @@ public abstract class WorkloadObserverAdvisor
         // check that the statement being added corresponds to the workload being observed
         if (statement.getWorkload().equals(workload)) {
 
-            if (isStopped) {
+            if (isPaused) {
                 statementQueue.add(statement);
             } else {
                 processNewStatement(statement);
@@ -97,21 +112,23 @@ public abstract class WorkloadObserverAdvisor
     @Override
     public void play() throws SQLException
     {
-        isStopped = false;
+        isPaused = false;
 
         for (SQLStatement sql : statementQueue) {
             processNewStatement(sql);
             post();
         }
+
+        statementQueue.clear();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void stop()
+    public void pause()
     {
-        isStopped = true;
+        isPaused = true;
     }
 
     /**

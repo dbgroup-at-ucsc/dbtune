@@ -3,16 +3,18 @@
 # Depends on having JAVA_HOME on the environment
 # Has to be run from the DBTune root directory
 
-INIT="bin/init.scala"
-DBTUNE="lib/dbtune.jar"
-DB2="lib/db2jcc4-9.7.5.jar"
-JFREECHART="lib/jcommon-1.0.17.jar:lib/jfreechart-1.0.14.jar"
-GUAVA="lib/guava-11.0.1.jar"
-MYSQL="lib/mysql-5.1.17.jar"
-PG="lib/postgresql-9.0-801.jdbc4.jar"
-SCALA="lib/scala-library-2.9.2.jar:lib/scala-compiler-2.9.2.jar:lib/jline-2.9.2.jar"
+INIT="stuffy.scala"
+DBTUNE_CORE="../../build/classes"
+#DBTUNE_CORE="../../.bin/"
+DBTUNE_VIZ="../../extensions/viz/.bin/"
+DB2="../../lib/db2jcc4-9.7.5.jar"
+JFREECHART="../../extensions/viz/lib/jcommon-1.0.17.jar:../../extensions/viz/lib/jfreechart-1.0.14.jar"
+GUAVA="../../lib/guava-11.0.1.jar"
+MYSQL="../../lib/mysql-5.1.17.jar"
+PG="../../lib/postgresql-9.0-801.jdbc4.jar"
+SCALA="../../lib/scala-library-2.9.2.jar:../../lib/scala-compiler-2.9.2.jar:../../lib/jline-2.9.2.jar"
 
 rlwrap -a java -Xmx512M -Xms16M \
   -classpath .:$SCALA \
   scala.tools.nsc.MainGenericRunner \
-  -usejavacp -cp $CLI:$DB2:$DBTUNE:$JFREECHART:$GUAVA:$MYSQL:$PG:$VIZ -i $INIT -Yrepl-sync
+  -usejavacp -cp $CLI:$DB2:$DBTUNE_CORE:$DBTUNE_VIZ:$JFREECHART:$GUAVA:$MYSQL:$PG -i $INIT -Yrepl-sync

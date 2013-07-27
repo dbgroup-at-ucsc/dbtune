@@ -38,31 +38,39 @@ class WFIT(
     db: Database,
     wl: WorkloadStream,
     initialSet: Set[Index] = new HashSet[Index],
+    isPaused: Boolean = true,
     stateCnt: Integer = getInstance.getMaxNumStates,
     idxCnt: Integer = getInstance.getMaxNumIndexes,
     histSize: Integer = getInstance.getIndexStatisticsWindow,
     partitionIters: Integer = getInstance.getNumPartitionIterations)
   extends edu.ucsc.dbtune.advisor.wfit.WFIT(
-      db.DBMS, wl.workloadReader.getWorkload, initialSet, stateCnt, idxCnt, histSize,
-      partitionIters)
+      db.DBMS, wl.workloadReader.getWorkload, initialSet, isPaused, stateCnt, 
+      idxCnt, histSize, partitionIters)
 {
   val workload = wl
   val visualizer = newVisualizer(this)
 
+  def this(db: Database, workload: WorkloadStream, isPaused: Boolean) = {
+    this(db, workload, new HashSet[Index], isPaused, 
+        getInstance.getMaxNumStates)
+
+    this.getRecommendationStatistics.setAlgorithmName("WFIT")
+  }
+
   def this(db: Database, workload: WorkloadStream) = {
-    this(db, workload, new HashSet[Index], getInstance.getMaxNumStates)
+    this(db, workload, new HashSet[Index], true, getInstance.getMaxNumStates)
 
     this.getRecommendationStatistics.setAlgorithmName("WFIT")
   }
 
   def this(db: Database, workload: WorkloadStream, initialSet: Set[Index]) = {
-    this(db, workload, initialSet, getInstance.getMaxNumStates)
+    this(db, workload, initialSet, true, getInstance.getMaxNumStates)
 
     this.getRecommendationStatistics.setAlgorithmName("WFIT")
   }
 
   def this(db: Database, workload: WorkloadStream, stateCnt: Integer) = {
-    this(db, workload, new HashSet[Index], stateCnt)
+    this(db, workload, new HashSet[Index], true, stateCnt)
 
     this.getRecommendationStatistics.setAlgorithmName("WFIT" + stateCnt)
   }

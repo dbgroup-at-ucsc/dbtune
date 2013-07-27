@@ -59,11 +59,11 @@ public final class VisualizationFactory
                 new VoteableCandidateSetPartitionTable(advisor);
 
             tViz.add("Workload", workloadTable);
-            tViz.add("Candidates", recs);
-            tViz.add("Current Recommendation", currentRec);
-            tViz.add("Recommendation Rank", recRank);
-            tViz.add("Candidates Partitioning", partitionTable);
-            tViz.add("Total Work", twPlotter);
+            //tViz.add("Candidates", recs);
+            tViz.add("Candidates", partitionTable);
+            //tViz.add("Current Recommendation", currentRec);
+            tViz.add("Recommendation Score", recRank);
+            //tViz.add("Total Work", twPlotter);
 
             viz = tViz;
         } else {
